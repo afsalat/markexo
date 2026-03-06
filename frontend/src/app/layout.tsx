@@ -1,18 +1,19 @@
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/lib/cart';
 import { AuthProvider } from '@/context/AuthContext';
 import { CustomerAuthProvider } from '@/context/CustomerAuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' });
 
 export const metadata: Metadata = {
-    title: 'Markexo - Your Local Marketplace | Vorion Nexus Technology',
-    description: 'Shop from the best local shops in your city. Quality products, fast delivery, great prices.',
-    keywords: 'marketplace, local shopping, online store, ecommerce',
+    title: 'aorionMart- Premium D2C Store | Pay on Delivery',
+    description: 'Shop premium products with Cash on Delivery. Trusted, secure, and delivered to your doorstep. Pay when you receive.',
+    keywords: 'cash on delivery, COD shopping, online store, premium products, pay on delivery, trusted shopping',
 };
 
 export default function RootLayout({
@@ -21,15 +22,15 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
-            <body className={`${inter.variable} ${outfit.variable} font-sans`}>
-                <AuthProvider>
+        <html lang="en" className="dark">
+            <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-dark-900 text-white`}>
+                <ThemeProvider>
                     <CustomerAuthProvider>
                         <CartProvider>
                             <LayoutWrapper>{children}</LayoutWrapper>
                         </CartProvider>
                     </CustomerAuthProvider>
-                </AuthProvider>
+                </ThemeProvider>
             </body>
         </html>
     );

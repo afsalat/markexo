@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
-import { AUTH_URL } from '@/config/apiConfig';
+import { AUTH_URL, API_BASE_URL } from '@/config/apiConfig';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -27,7 +27,31 @@ export default function LoginPage() {
 
             if (res.ok) {
                 const data = await res.json();
-                login(data.access, data.refresh);
+
+                // Verify if user is actually an admin
+                try {
+                    const userRes = await fetch(`${API_BASE_URL}/admin/users/me/`, {
+                        headers: { 'Authorization': `Bearer ${data.access}` }
+                    });
+
+                    if (userRes.ok) {
+                        const userData = await userRes.json();
+                        const isAdmin = userData.is_superuser || userData.roles?.some((r: any) => r.name.toLowerCase() === 'admin');
+
+                        if (!isAdmin) {
+                            setError('Access Denied: You do not have permission to access the admin panel.');
+                            setLoading(false);
+                            return;
+                        }
+
+                        login(data.access, data.refresh, '/admin');
+                    } else {
+                        setError('Failed to verify user permissions.');
+                    }
+                } catch (userErr) {
+                    console.error("Permission check failed", userErr);
+                    setError('Unable to verify permissions.');
+                }
             } else {
                 const data = await res.json();
                 if (data.detail === 'No active account found with the given credentials') {
@@ -39,67 +63,67 @@ export default function LoginPage() {
         } catch (err) {
             setError('Unable to connect to the server. Please check your connection.');
         } finally {
-            setLoading(false);
+            if (!error) setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] transition-all duration-500">
+        <div className="min-h-screen bg-dark-900 flex items-center justify-center p-4 transition-all duration-500">
             <div className="max-w-sm w-full animate-fade-in">
                 <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-600 rounded-xl shadow-lg shadow-primary-200 text-white font-black text-2xl mb-3 transform hover:rotate-12 transition-transform cursor-default">
-                        M
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-accent-500 to-primary-600 rounded-xl shadow-lg shadow-accent-500/20 text-dark-900 font-black text-2xl mb-3 transform hover:rotate-12 transition-transform cursor-default">
+                        V
                     </div>
-                    <h1 className="text-2xl font-display font-black text-gray-900 tracking-tight mb-1">
-                        Markexo Admin
+                    <h1 className="text-2xl font-display font-black text-white tracking-tight mb-1">
+                        VorionMart Admin
                     </h1>
-                    <p className="text-gray-500 font-bold tracking-widest uppercase text-[10px] opacity-70">
+                    <p className="text-silver-500 font-bold tracking-widest uppercase text-[10px] opacity-70">
                         Secure Access Control Panel
                     </p>
                 </div>
 
-                <div className="bg-white rounded-[2rem] p-8 shadow-2xl shadow-gray-200/40 border border-gray-100 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary-50 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700 ease-out"></div>
+                <div className="bg-dark-800 rounded-[2rem] p-8 shadow-2xl shadow-dark-950/40 border border-dark-700 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-accent-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-110 transition-transform duration-700 ease-out"></div>
 
                     <form onSubmit={handleSubmit} className="relative z-10 space-y-4">
                         {error && (
-                            <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-2xl text-sm flex items-center gap-3 animate-shake">
-                                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center shrink-0">!</div>
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-2xl text-sm flex items-center gap-3 animate-shake">
+                                <div className="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center shrink-0 text-red-400">!</div>
                                 {error}
                             </div>
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700 ml-1">Admin Email</label>
+                            <label className="text-sm font-bold text-silver-300 ml-1">Admin Email</label>
                             <div className="relative group/input">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary-500 transition-colors" size={20} />
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500 group-focus-within/input:text-accent-500 transition-colors" size={20} />
                                 <input
                                     type="text"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@markexo.com"
-                                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all text-gray-900 font-medium text-sm"
+                                    placeholder="admin@vorionmart.com"
+                                    className="w-full pl-11 pr-4 py-3 bg-dark-900 border border-dark-600 rounded-xl outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all text-white font-medium text-sm placeholder:text-silver-600"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-700 ml-1">Password</label>
+                            <label className="text-sm font-bold text-silver-300 ml-1">Password</label>
                             <div className="relative group/input">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/input:text-primary-500 transition-colors" size={20} />
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500 group-focus-within/input:text-accent-500 transition-colors" size={20} />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="w-full pl-11 pr-11 py-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white transition-all text-gray-900 font-medium text-sm"
+                                    className="w-full pl-11 pr-11 py-3 bg-dark-900 border border-dark-600 rounded-xl outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all text-white font-medium text-sm placeholder:text-silver-600"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-silver-500 hover:text-silver-300 transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
@@ -109,7 +133,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3.5 bg-primary-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-700 transition-all shadow-lg shadow-primary-200 active:scale-[0.98] disabled:opacity-70 group mt-2"
+                            className="w-full py-3.5 bg-gradient-to-r from-accent-500 to-primary-600 text-dark-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:from-accent-400 hover:to-primary-500 transition-all shadow-lg shadow-accent-500/20 active:scale-[0.98] disabled:opacity-70 group mt-2"
                         >
                             {loading ? (
                                 <Loader2 className="animate-spin" size={24} />
@@ -123,7 +147,7 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <p className="text-center mt-6 text-[10px] text-gray-400 font-bold tracking-widest uppercase opacity-60">
+                <p className="text-center mt-6 text-[10px] text-silver-600 font-bold tracking-widest uppercase opacity-60">
                     Protected by Vorion Nexus Security
                 </p>
             </div>

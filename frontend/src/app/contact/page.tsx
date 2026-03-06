@@ -89,8 +89,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                                        <a href="mailto:support@markexo.com" className="text-primary-600 hover:underline">
-                                            support@markexo.com
+                                        <a href="mailto:support@vorionmart.in" className="text-primary-600 hover:underline">
+                                            support@vorionmart.in
                                         </a>
                                     </div>
                                 </div>
@@ -102,7 +102,7 @@ export default function ContactPage() {
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Phone</h3>
                                         <a href="tel:+911234567890" className="text-primary-600 hover:underline">
-                                            +91 123 456 7890
+                                            +91 735 621 6468
                                         </a>
                                     </div>
                                 </div>
@@ -115,7 +115,7 @@ export default function ContactPage() {
                                         <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
                                         <p className="text-gray-600">
                                             Vorion Nexus Technology<br />
-                                            Mumbai, Maharashtra<br />
+                                            Kozhikode, Kerala<br />
                                             India
                                         </p>
                                     </div>
@@ -157,8 +157,8 @@ export default function ContactPage() {
                                 <button
                                     onClick={() => setFormType('general')}
                                     className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${formType === 'general'
-                                            ? 'bg-primary-600 text-white shadow-lg'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-primary-600 text-white shadow-lg'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
                                     General Inquiry
@@ -166,8 +166,8 @@ export default function ContactPage() {
                                 <button
                                     onClick={() => setFormType('partner')}
                                     className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all ${formType === 'partner'
-                                            ? 'bg-primary-600 text-white shadow-lg'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        ? 'bg-primary-600 text-white shadow-lg'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                         }`}
                                 >
                                     Become a Partner

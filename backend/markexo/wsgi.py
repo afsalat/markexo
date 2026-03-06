@@ -1,5 +1,5 @@
 """
-WSGI config for Markexo project.
+WSGI config for VorionMart project.
 """
 import os
 from django.core.wsgi import get_wsgi_application

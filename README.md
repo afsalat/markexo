@@ -1,4 +1,4 @@
-# Markexo - Local Marketplace Platform
+# VorionMart - Local Marketplace Platform
 
 A modern e-commerce platform for local marketplace business by **Vorion Nexus Technology**.
 
@@ -28,9 +28,9 @@ A modern e-commerce platform for local marketplace business by **Vorion Nexus Te
 ## Project Structure
 
 ```
-markexo/
+VorionMart/
 ├── backend/           # Django Backend
-│   ├── markexo/       # Django project settings
+│   ├── VorionMart/       # Django project settings
 │   ├── api/           # REST API app
 │   └── manage.py
 │
@@ -85,7 +85,7 @@ Create `.env` file in backend folder:
 SECRET_KEY=your-secret-key
 DEBUG=True
 DB_ENGINE=django.db.backends.mysql
-DB_NAME=markexo
+DB_NAME=VorionMart
 DB_USER=your-db-user
 DB_PASSWORD=your-db-password
 DB_HOST=localhost

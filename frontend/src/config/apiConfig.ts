@@ -1,5 +1,5 @@
 /**
- * Central API configuration for Markexo
+ * Central API configuration for VorionMart
  * Dynamically determines the backend URL based on the current host.
  */
 

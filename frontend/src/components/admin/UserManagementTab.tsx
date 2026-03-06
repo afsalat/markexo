@@ -27,32 +27,32 @@ export default function UserManagementTab() {
 
     if (tabs.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm">
-                <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-dark-800 rounded-3xl border border-dark-700 shadow-sm">
+                <div className="w-16 h-16 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full flex items-center justify-center mb-4">
                     <Shield size={32} />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h3>
-                <p className="text-gray-500">You don't have permission to manage users or roles.</p>
+                <h3 className="text-xl font-bold text-white mb-2">Access Denied</h3>
+                <p className="text-silver-500">You don't have permission to manage users or roles.</p>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <div className="flex gap-2 border-b border-gray-200">
+            <div className="flex gap-2 border-b border-dark-700">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveSubTab(tab.id as any)}
                         className={`flex items-center gap-2 px-6 py-3 font-medium text-sm transition-colors relative ${activeSubTab === tab.id
-                            ? 'text-primary-600'
-                            : 'text-gray-500 hover:text-gray-700'
+                            ? 'text-accent-500'
+                            : 'text-silver-500 hover:text-white'
                             }`}
                     >
                         <tab.icon size={18} />
                         {tab.label}
                         {activeSubTab === tab.id && (
-                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent-500 shadow-[0_0_10px_rgba(235,255,0,0.5)]" />
                         )}
                     </button>
                 ))}

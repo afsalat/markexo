@@ -1,0 +1,61 @@
+--- Users and their Shops ---
+User: afsal (ID: 1), IsSuperuser: True, IsStaff: True
+  Owns NO Shops
+User: afsalat@gmail.com (ID: 2), IsSuperuser: False, IsStaff: False
+  Owns NO Shops
+User: afsal@gmail.com (ID: 3), IsSuperuser: False, IsStaff: False
+  Owns NO Shops
+User: afsalaat@gmail.com (ID: 4), IsSuperuser: False, IsStaff: False
+  Owns NO Shops
+User: ajmal@gmail.com (ID: 5), IsSuperuser: False, IsStaff: True
+  Owns NO Shops
+User: john@gmail.com (ID: 6), IsSuperuser: False, IsStaff: True
+  Owns Shops: ['kockolic']
+
+--- Products and their Shops ---
+Product: helmet adidas (ID: 47), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Statement Necklace Set (ID: 46), Shop: Book Worm (ID: 6), Shop Owner: No Owner
+Product: Kolhapuri Sandals - Brown (ID: 45), Shop: TechHub Electronics (ID: 2), Shop Owner: No Owner
+Product: Stiletto Heels - Black (ID: 44), Shop: Book Worm (ID: 6), Shop Owner: No Owner
+Product: Ethnic Juttis - Golden (ID: 43), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Bath Towel Set - White (ID: 42), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Velvet Curtains Pair - Maroon (ID: 41), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Crop Top - White (ID: 40), Shop: TechHub Electronics (ID: 2), Shop Owner: No Owner
+Product: Skinny Fit Jeans - Black (ID: 39), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Festive Anarkali Suit - Purple (ID: 38), Shop: Book Worm (ID: 6), Shop Owner: No Owner
+Product: Bridal Lehenga Set - Red Gold (ID: 37), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Kids Denim Jeans - Dark Blue (ID: 36), Shop: TechHub Electronics (ID: 2), Shop Owner: No Owner
+Product: Boys Kurta Set - Blue (ID: 35), Shop: Book Worm (ID: 6), Shop Owner: No Owner
+Product: Girls Party Frock - Pink (ID: 34), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Kurta Pajama Set - Cream (ID: 33), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Linen Summer Shirt - Beige (ID: 32), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Casual Polo T-Shirt - Navy (ID: 31), Shop: Sports Zone (ID: 5), Shop Owner: No Owner
+Product: Printed Rayon Kurti - Yellow (ID: 30), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Embroidered Anarkali Kurti - Green (ID: 29), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Chiffon Party Wear Saree (ID: 28), Shop: Sports Zone (ID: 5), Shop Owner: No Owner
+Product: Georgette Designer Saree - Pink (ID: 27), Shop: Book Worm (ID: 6), Shop Owner: No Owner
+Product: Kanjivaram Silk Saree - Maroon (ID: 26), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Banarasi Silk Saree - Royal Blue (ID: 25), Shop: Sports Zone (ID: 5), Shop Owner: No Owner
+Product: habit of money (ID: 24), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Summer Floral Dress (ID: 22), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Portable Bluetooth Speaker (ID: 21), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Building Blocks Set (ID: 20), Shop: Sports Zone (ID: 5), Shop Owner: No Owner
+Product: Face Care Combo (ID: 19), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Complete Drawing Kit (ID: 18), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Adjustable Dumbbells (ID: 17), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Ceramic Dinner Set (ID: 16), Shop: Sports Zone (ID: 5), Shop Owner: No Owner
+Product: Formal Dress Shirt (ID: 15), Shop: Home Essentials (ID: 4), Shop Owner: No Owner
+Product: Automatic Coffee Maker (ID: 14), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: High-Speed Blender (ID: 13), Shop: Fashion Forward (ID: 3), Shop Owner: No Owner
+Product: Slim Fit Denim Jeans (ID: 12), Shop: TechHub Electronics (ID: 2), Shop Owner: No Owner
+Product: Premium Cotton T-Shirt (ID: 11), Shop: Sports Zone (ID: 5), Shop Owner: No Owner
+Product: LED Desk Lamp 1528 (ID: 10), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Python Programming Book 7486 (ID: 9), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Yoga Mat 9308 (ID: 8), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Coffee Maker 5413 (ID: 7), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Blender 8996 (ID: 6), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Running Shoes 5441 (ID: 5), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Denim Jeans 2297 (ID: 4), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Cotton T-Shirt 6024 (ID: 3), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Smart Watch 1798 (ID: 2), Shop: Default Shop (ID: 1), Shop Owner: No Owner
+Product: Wireless Earbuds 8904 (ID: 1), Shop: Default Shop (ID: 1), Shop Owner: No Owner

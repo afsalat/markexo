@@ -1,0 +1,40 @@
+
+class ReturnOrderView(APIView):
+    """Allow customers to return their delivered orders."""
+    permission_classes = [AllowAny]
+    
+    def post(self, request, order_id):
+        # Get the order
+        order = get_object_or_404(Order, order_id=order_id)
+        
+        # Verify customer email matches
+        customer_email = request.data.get('customer_email')
+        if not customer_email or customer_email != order.customer.email:
+            return Response(
+                {'error': 'Invalid customer email'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Only allow return for delivered orders
+        if order.status.lower() != 'delivered':
+            return Response(
+                {'error': 'This order cannot be returned. Only delivered orders can be returned.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Return the order
+        order.status = 'returned'
+        # Append return reason to notes as we did in admin
+        return_reason = request.data.get('reason', 'Returned by customer')
+        order.notes = f"[Return Reason]: {return_reason}\n{order.notes or ''}"
+        order.refund_status = 'pending'
+        order.save()
+        
+        return Response(
+            {
+                'status': 'success',
+                'message': 'Order returned successfully',
+                'order_id': order.order_id
+            },
+            status=status.HTTP_200_OK
+        )

@@ -128,7 +128,7 @@ class Migration(migrations.Migration):
             name='SiteSetting',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('site_name', models.CharField(default='Markexo', max_length=200)),
+                ('site_name', models.CharField(default='VorionMart', max_length=200)),
                 ('site_tagline', models.CharField(blank=True, max_length=300)),
                 ('logo', models.ImageField(blank=True, null=True, upload_to='site/')),
                 ('contact_email', models.EmailField(blank=True, max_length=254)),

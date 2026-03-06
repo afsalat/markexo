@@ -1,5 +1,5 @@
 """
-Django settings for Markexo project.
+Django settings for VorionMart project.
 """
 import os
 from pathlib import Path
@@ -9,7 +9,7 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-markexo-dev-key-change-in-production')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-VorionMart-dev-key-change-in-production')
 
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
@@ -106,7 +106,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 100,
 }
 
 from datetime import timedelta

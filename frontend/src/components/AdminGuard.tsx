@@ -12,15 +12,31 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
 
     useEffect(() => {
         if (!loading) {
-            if (!isAuthenticated && pathname.startsWith('/admin') && pathname !== '/admin/login') {
-                router.push('/admin/login');
-            } else if (isAuthenticated && pathname === '/admin/login') {
-                router.push('/admin');
+            const normalizedPath = pathname?.toLowerCase() || '';
+            if (!isAuthenticated) {
+                if (normalizedPath.startsWith('/admin') && normalizedPath !== '/admin/login') {
+                    router.push('/admin/login');
+                } else if (normalizedPath.startsWith('/partner') &&
+                    !normalizedPath.includes('/partner/login') &&
+                    !normalizedPath.includes('/partner/register')) {
+                    router.push('/partner/login');
+                }
+            } else {
+                if (normalizedPath === '/admin/login') {
+                    router.push('/admin');
+                } else if (normalizedPath === '/partner/login') {
+                    router.push('/partner');
+                }
             }
         }
     }, [isAuthenticated, loading, pathname, router]);
 
-    if (loading) {
+    const normalizedPath = pathname?.toLowerCase() || '';
+    const isPublicPath =
+        (normalizedPath.startsWith('/partner') && (normalizedPath.includes('/partner/login') || normalizedPath.includes('/partner/register'))) ||
+        (normalizedPath.startsWith('/admin') && normalizedPath === '/admin/login');
+
+    if (loading && !isPublicPath) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
                 <div className="relative">
@@ -35,7 +51,12 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
     }
 
     // Allow public pages and login page regardless of auth status here (auth logic handled by useEffect)
-    if (!isAuthenticated && pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    const isProtectedAdmin = normalizedPath.startsWith('/admin') && normalizedPath !== '/admin/login';
+    const isProtectedPartner = normalizedPath.startsWith('/partner') &&
+        !normalizedPath.includes('/partner/login') &&
+        !normalizedPath.includes('/partner/register');
+
+    if (!isAuthenticated && (isProtectedAdmin || isProtectedPartner)) {
         return null;
     }
 

@@ -8,7 +8,7 @@ import { API_BASE_URL } from '@/config/apiConfig';
 interface AuthContextType {
     token: string | null;
     user: AdminUser | null;
-    login: (token: string, refreshToken: string) => void;
+    login: (token: string, refreshToken: string, redirectPath?: string) => void;
     logout: () => void;
     isAuthenticated: boolean;
     loading: boolean;
@@ -18,7 +18,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, storageKeyPrefix = 'admin' }: { children: React.ReactNode, storageKeyPrefix?: string }) {
     const [token, setToken] = useState<string | null>(null);
     const [user, setUser] = useState<AdminUser | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -49,9 +49,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = useCallback(() => {
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_refresh_token');
-        localStorage.removeItem('token_expiry');
+        localStorage.removeItem(`${storageKeyPrefix}_token`);
+        localStorage.removeItem(`${storageKeyPrefix}_refresh_token`);
+        localStorage.removeItem(`${storageKeyPrefix}_token_expiry`);
         setToken(null);
         setUser(null);
         setIsAuthenticated(false);
@@ -59,11 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
             router.push('/admin/login');
+        } else if (pathname.startsWith('/partner') && pathname !== '/partner/login') {
+            router.push('/partner/login');
         }
-    }, [router, pathname]);
+    }, [router, pathname, storageKeyPrefix]);
 
     const checkTokenExpiry = useCallback(() => {
-        const expiry = localStorage.getItem('token_expiry');
+        const expiry = localStorage.getItem(`${storageKeyPrefix}_token_expiry`);
         if (!expiry) return;
 
         const now = Date.now();
@@ -76,10 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
             setExpiryWarning(false);
         }
-    }, [logout]);
+    }, [logout, storageKeyPrefix]);
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('admin_token');
+        const storedToken = localStorage.getItem(`${storageKeyPrefix}_token`);
         if (storedToken) {
             setToken(storedToken);
             setIsAuthenticated(true);
@@ -90,19 +92,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const interval = setInterval(checkTokenExpiry, 30000);
         return () => clearInterval(interval);
-    }, [checkTokenExpiry]); // Removed fetchUser from here to avoid recursive calls if setLoading(true) is inside fetchUser
+    }, [checkTokenExpiry, storageKeyPrefix]); // Removed fetchUser from here to avoid recursive calls if setLoading(true) is inside fetchUser
 
-    const login = async (newToken: string, refreshToken: string) => {
-        localStorage.setItem('admin_token', newToken);
-        localStorage.setItem('admin_refresh_token', refreshToken);
+    const login = async (newToken: string, refreshToken: string, redirectPath: string = '/admin') => {
+        localStorage.setItem(`${storageKeyPrefix}_token`, newToken);
+        localStorage.setItem(`${storageKeyPrefix}_refresh_token`, refreshToken);
         const expiryTime = Date.now() + 60 * 60 * 1000;
-        localStorage.setItem('token_expiry', expiryTime.toString());
+        localStorage.setItem(`${storageKeyPrefix}_token_expiry`, expiryTime.toString());
 
         setToken(newToken);
         setIsAuthenticated(true);
         setExpiryWarning(false);
         await fetchUser(newToken);
-        router.push('/admin');
+        router.push(redirectPath);
     };
 
     const hasPermission = (codename: string): boolean => {

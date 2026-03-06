@@ -1,1 +1,1 @@
-# Markexo Django Project
+# VorionMart Django Project

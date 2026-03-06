@@ -1,5 +1,5 @@
 /**
- * API utility functions for Markexo
+ * API utility functions for VorionMart
  */
 
 import { API_BASE_URL } from '@/config/apiConfig';
@@ -16,7 +16,6 @@ export interface Shop {
     phone: string;
     email: string;
     image: string | null;
-    commission_rate: number;
     is_active: boolean;
     product_count: number;
 }
@@ -65,6 +64,22 @@ export interface CartItem {
     quantity: number;
 }
 
+export interface Review {
+    id: number;
+    product: number;
+    product_name: string;
+    customer: number;
+    customer_name: string;
+    customer_email: string;
+    rating: number;
+    comment: string;
+    verified: boolean;
+    created_at: string;
+    created_at_formatted: string;
+    name?: string; // For backward compatibility
+    date?: string; // For backward compatibility
+}
+
 export interface Order {
     id: number;
     order_id: string;
@@ -74,7 +89,6 @@ export interface Order {
         phone: string;
     };
     total_amount: number;
-    commission_amount: number;
     status: string;
     status_display: string;
     delivery_address: string;
@@ -127,6 +141,31 @@ export async function fetchSettings() {
     return res.json();
 }
 
+export async function fetchReviews(productId?: number) {
+    const url = productId ? `${API_URL}/reviews/?product=${productId}` : `${API_URL}/reviews/`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Failed to fetch reviews');
+    return res.json();
+}
+
+export async function createReview(reviewData: {
+    product: number;
+    rating: number;
+    comment: string;
+}) {
+    const token = localStorage.getItem('customer_token');
+    const res = await fetch(`${API_URL}/reviews/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify(reviewData),
+    });
+    if (!res.ok) throw new Error('Failed to create review');
+    return res.json();
+}
+
 export async function createOrder(orderData: {
     customer_name: string;
     customer_email: string;
@@ -152,10 +191,26 @@ export async function fetchOrder(orderId: string) {
     return res.json();
 }
 
+export async function fetchCustomerOrders(email: string) {
+    const res = await fetch(`${API_URL}/orders/my-orders/?email=${encodeURIComponent(email)}`);
+    if (!res.ok) throw new Error('Failed to fetch orders');
+    return res.json();
+}
+
 // Admin API functions
 export async function fetchAdminStats() {
     const res = await fetch(`${API_URL}/admin/stats/`);
     if (!res.ok) throw new Error('Failed to fetch stats');
+    return res.json();
+}
+
+export async function fetchAdminAnalytics(token: string) {
+    const res = await fetch(`${API_URL}/admin/analytics/`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    if (!res.ok) throw new Error('Failed to fetch analytics');
     return res.json();
 }
 
@@ -229,3 +284,105 @@ export async function deleteShop(id: number) {
     });
     if (!res.ok) throw new Error('Failed to delete shop');
 }
+
+// Cart API functions
+export async function fetchCart(customerId: string) {
+    const res = await fetch(`${API_URL}/cart/`, {
+        headers: { 'X-Customer-Id': customerId },
+    });
+    if (!res.ok) throw new Error('Failed to fetch cart');
+    return res.json();
+}
+
+export async function addToCart(customerId: string, productId: number, quantity: number = 1) {
+    const res = await fetch(`${API_URL}/cart/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Customer-Id': customerId
+        },
+        body: JSON.stringify({ product_id: productId, quantity }),
+    });
+    if (!res.ok) throw new Error('Failed to add to cart');
+    return res.json();
+}
+
+export async function updateCartItem(customerId: string, productId: number, quantity: number) {
+    const res = await fetch(`${API_URL}/cart/`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Customer-Id': customerId
+        },
+        body: JSON.stringify({ product_id: productId, quantity }),
+    });
+    if (!res.ok) throw new Error('Failed to update cart');
+    return res.json();
+}
+
+export async function removeFromCart(customerId: string, productId: number) {
+    const res = await fetch(`${API_URL}/cart/`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Customer-Id': customerId
+        },
+        body: JSON.stringify({ product_id: productId }),
+    });
+    if (!res.ok) throw new Error('Failed to remove from cart');
+    return res.json();
+}
+
+export async function clearCart(customerId: string) {
+    const res = await fetch(`${API_URL}/cart/`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Customer-Id': customerId
+        },
+        body: JSON.stringify({ clear_all: true }),
+    });
+    if (!res.ok) throw new Error('Failed to clear cart');
+    return res.json();
+}
+
+// Auth API functions
+export async function loginUser(credentials: any) {
+    const res = await fetch(`${API_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Login failed');
+    }
+    return res.json();
+}
+
+export async function registerUser(userData: any) {
+    const res = await fetch(`${API_URL}/auth/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(JSON.stringify(errorData) || 'Registration failed');
+    }
+    return res.json();
+}
+
+export async function registerPartner(partnerData: any) {
+    const res = await fetch(`${API_URL}/auth/register-partner/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(partnerData),
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(JSON.stringify(errorData) || 'Partner registration failed');
+    }
+    return res.json();
+}
+

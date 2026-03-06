@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 
 interface DashboardChartsProps {
-    revenueHistory: { date: string; revenue: number }[];
+    revenueHistory: { date: string; revenue: number; profit: number }[];
     statusDistribution: { status: string; count: number }[];
 }
 
@@ -24,37 +24,53 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Revenue Trend Line Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 font-display">Revenue Trend (Last 7 Days)</h3>
+            {/* Revenue & Profit Trend Line Chart */}
+            <div className="bg-dark-800 p-6 rounded-2xl shadow-sm border border-dark-700">
+                <h3 className="text-lg font-bold text-white mb-6 font-display">Revenue & Profit Trend (Last 7 Days)</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={revenueHistory}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
                             <XAxis
                                 dataKey="date"
                                 tickFormatter={formatDate}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#6B7280', fontSize: 12 }}
+                                tick={{ fill: '#9ca3af', fontSize: 12 }}
                             />
                             <YAxis
                                 tickFormatter={(value) => `₹${value >= 1000 ? (value / 1000) + 'k' : value}`}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#6B7280', fontSize: 12 }}
+                                tick={{ fill: '#9ca3af', fontSize: 12 }}
                             />
                             <Tooltip
-                                formatter={(value: any) => [formatCurrency(Number(value)), 'Revenue']}
+                                formatter={(value: any, name: any) => [
+                                    formatCurrency(Number(value)),
+                                    name === 'revenue' ? 'Revenue' : 'Profit'
+                                ]}
                                 labelFormatter={formatDate}
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                contentStyle={{ backgroundColor: '#1f2937', borderRadius: '12px', border: '1px solid #374151', color: '#f3f4f6' }}
+                                itemStyle={{ color: '#e5e7eb' }}
+                                labelStyle={{ color: '#9ca3af' }}
                             />
+                            <Legend />
                             <Line
                                 type="monotone"
                                 dataKey="revenue"
+                                name="revenue"
                                 stroke="#3B82F6"
                                 strokeWidth={3}
                                 dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                                activeDot={{ r: 6, strokeWidth: 0 }}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="profit"
+                                name="profit"
+                                stroke="#10B981"
+                                strokeWidth={3}
+                                dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
                                 activeDot={{ r: 6, strokeWidth: 0 }}
                             />
                         </LineChart>
@@ -63,8 +79,8 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
             </div>
 
             {/* Order Status Distribution Pie Chart */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 mb-6 font-display">Order Status Distribution</h3>
+            <div className="bg-dark-800 p-6 rounded-2xl shadow-sm border border-dark-700">
+                <h3 className="text-lg font-bold text-white mb-6 font-display">Order Status Distribution</h3>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -77,19 +93,21 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
                                 paddingAngle={5}
                                 dataKey="count"
                                 nameKey="status"
+                                fill="#8884d8"
                             >
                                 {statusDistribution.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="#1f2937" strokeWidth={2} />
                                 ))}
                             </Pie>
                             <Tooltip
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                contentStyle={{ backgroundColor: '#1f2937', borderRadius: '12px', border: '1px solid #374151', color: '#f3f4f6' }}
+                                itemStyle={{ color: '#e5e7eb' }}
                                 formatter={(value: any) => [value, 'Orders']}
                             />
                             <Legend
                                 verticalAlign="bottom"
                                 height={36}
-                                formatter={(value) => <span className="text-sm text-gray-600 capitalize">{value}</span>}
+                                formatter={(value) => <span className="text-sm text-silver-400 capitalize">{value}</span>}
                             />
                         </PieChart>
                     </ResponsiveContainer>

@@ -1,26 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DashboardStats, Order, Product, Shop, Subscription, Customer, Banner, SiteSetting, Category } from '@/types/admin';
+import { PartnerDashboardStats, DashboardStats, Order, Product, Shop, Customer, Banner, SiteSetting, Category } from '@/types/admin';
 import Sidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardTab from '@/components/admin/DashboardTab';
+import PartnerDashboardTab from '@/components/admin/PartnerDashboardTab';
 import OrdersTab from '@/components/admin/OrdersTab';
 import ProductsTab from '@/components/admin/ProductsTab';
 import CategoriesTab from '@/components/admin/CategoriesTab';
 import ShopsTab from '@/components/admin/ShopsTab';
-import SubscriptionsTab from '@/components/admin/SubscriptionsTab';
 import CustomersTab from '@/components/admin/CustomersTab';
 import EnquiriesTab from '@/components/admin/EnquiriesTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
 import BannersTab from '@/components/admin/BannersTab';
 import SettingsTab from '@/components/admin/SettingsTab';
+import ReturnsTab from '@/components/admin/ReturnsTab';
+import PaymentsTab from '@/components/admin/PaymentsTab';
+import SupplierAPITab from '@/components/admin/SupplierAPITab';
+import ProductAnalyticsTab from '@/components/admin/ProductAnalyticsTab';
+import PartnerRequestsTab from '@/components/admin/PartnerRequestsTab';
+import PartnersTab from '@/components/admin/PartnersTab';
+import PartnerPayoutsTab from '@/components/admin/PartnerPayoutsTab';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 
 const API_BASE_URL = API_URL;
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'shops' | 'subscriptions' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings';
+// TODO: Consolidate 'partner-requests' into 'partners' eventually?
+type TabType = 'dashboard' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'categories' | 'shops' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'supplier-api' | 'partner-requests' | 'partners' | 'partner-payouts';
 
 export default function AdminPage() {
     const { token, user, hasPermission, loading: authLoading } = useAuth();
@@ -30,6 +38,7 @@ export default function AdminPage() {
 
     // Data State
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [partnerStats, setPartnerStats] = useState<PartnerDashboardStats | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
     const [shops, setShops] = useState<Shop[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -55,7 +64,14 @@ export default function AdminPage() {
             };
 
             addReq(null, `${API_BASE_URL}/admin/stats/`, 'stats'); // Dashboard permission checked on backend
-            addReq('view_product', `${API_BASE_URL}/admin/products/`, 'products');
+            addReq(null, `${API_BASE_URL}/admin/partner-stats/`, 'partnerStats'); // Partner stats
+
+            // Filter products for partners
+            let productsUrl = `${API_BASE_URL}/admin/products/`;
+            if (user && !user.is_superuser) {
+                productsUrl += `?created_by=${user.id}`;
+            }
+            addReq('view_product', productsUrl, 'products');
             addReq('view_shop', `${API_BASE_URL}/admin/shops/`, 'shops');
             addReq('view_category', `${API_BASE_URL}/admin/categories/`, 'categories');
             addReq('view_customer', `${API_BASE_URL}/admin/customers/`, 'customers');
@@ -70,6 +86,7 @@ export default function AdminPage() {
                 if (res.ok) {
                     const data = await res.json();
                     if (label === 'stats') setStats(data);
+                    if (label === 'partnerStats') setPartnerStats(data);
                     if (label === 'products') setProducts(data.results || data);
                     if (label === 'shops') setShops(data.results || data);
                     if (label === 'categories') setCategories(data.results || data);
@@ -97,45 +114,51 @@ export default function AdminPage() {
             // Give it a bit of time, if auth is done but loading still true and no user, show error
             if (!authLoading && !user) {
                 return (
-                    <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm animate-fade-in">
-                        <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mb-4 text-2xl font-bold">!</div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Load Failure</h2>
-                        <p className="text-gray-500 max-w-md mb-6">We couldn't load your admin profile. This might be due to a connection issue or a missing session.</p>
-                        <button onClick={() => window.location.reload()} className="bg-primary-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-primary-700 shadow-lg">Retry Loading</button>
+                    <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-dark-800 rounded-3xl border border-dark-700 shadow-sm animate-fade-in">
+                        <div className="w-20 h-20 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mb-4 text-2xl font-bold border border-amber-500/20">!</div>
+                        <h2 className="text-2xl font-bold text-white mb-2">Profile Load Failure</h2>
+                        <p className="text-silver-500 max-w-md mb-6">We couldn't load your admin profile. This might be due to a connection issue or a missing session.</p>
+                        <button onClick={() => window.location.reload()} className="bg-accent-600 text-dark-900 px-6 py-2 rounded-xl font-bold hover:bg-accent-500 shadow-lg shadow-accent-500/20 transition-all">Retry Loading</button>
                     </div>
                 );
             }
             return (
                 <div className="flex items-center justify-center min-h-[400px]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500"></div>
                 </div>
             );
         }
 
         const Denied = () => (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-white rounded-3xl border border-gray-100 shadow-sm animate-fade-in">
-                <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-dark-800 rounded-3xl border border-dark-700 shadow-sm animate-fade-in">
+                <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
                     <svg width={40} height={40} fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-10 h-10">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m11 3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
-                <p className="text-gray-500 max-w-md">You do not have the required permissions to view this section. Please contact your system administrator if you believe this is an error.</p>
+                <h2 className="text-2xl font-bold text-white mb-2">Access Restricted</h2>
+                <p className="text-silver-500 max-w-md">You do not have the required permissions to view this section. Please contact your system administrator if you believe this is an error.</p>
             </div>
         );
 
         const checkMap: Record<TabType, string | null> = {
             dashboard: null,
+            analytics: 'view_product',
             orders: 'view_order',
+            returns: 'view_order',
+            payments: 'view_order',
             products: 'view_product',
             categories: 'view_category',
             shops: 'view_shop',
-            subscriptions: 'view_subscription',
+            'partner-requests': 'view_shop',
             customers: 'view_customer',
             enquiries: 'view_enquiry',
             'user-management': 'view_user',
             banners: 'view_banner',
-            settings: 'view_sitesetting'
+            settings: 'view_sitesetting',
+            'supplier-api': 'view_sitesetting',
+            partners: 'add_user', // Use add_user as proxy permission for now
+            'partner-payouts': 'add_user'
         };
 
         const reqPerm = checkMap[activeTab];
@@ -144,22 +167,33 @@ export default function AdminPage() {
         switch (activeTab) {
             case 'dashboard':
                 if (stats) return <DashboardTab stats={stats} setActiveTab={setActiveTab} />;
+                if (partnerStats) return <PartnerDashboardTab stats={partnerStats} />;
                 return (
-                    <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Welcome back, {user?.first_name || user?.username}!</h2>
-                        <p className="text-gray-500">You have successfully logged into the admin panel. Use the sidebar to navigate to the sections you have access to.</p>
+                    <div className="bg-dark-800 rounded-3xl p-8 border border-dark-700 shadow-sm">
+                        <h2 className="text-xl font-bold text-white mb-4">Welcome back, {user?.first_name || user?.username}!</h2>
+                        <p className="text-silver-500">You have successfully logged into the admin panel. Your dashboard data is currently unavailable (Permission Denied). Use the sidebar to navigate to the sections you have access to.</p>
                     </div>
                 );
+            case 'analytics':
+                return <ProductAnalyticsTab />;
             case 'orders':
                 return <OrdersTab />;
+            case 'returns':
+                return <ReturnsTab />;
+            case 'payments':
+                return <PaymentsTab />;
             case 'products':
                 return <ProductsTab products={products} shops={shops} categories={categories} onRefresh={fetchData} />;
             case 'categories':
                 return <CategoriesTab categories={categories} onRefresh={fetchData} />;
             case 'shops':
                 return <ShopsTab shops={shops} onRefresh={fetchData} />;
-            case 'subscriptions':
-                return <SubscriptionsTab />;
+            case 'partners':
+                return <PartnersTab />;
+            case 'partner-payouts':
+                return <PartnerPayoutsTab />;
+            case 'partner-requests':
+                return <PartnerRequestsTab />;
             case 'customers':
                 return <CustomersTab customers={customers} />;
             case 'enquiries':
@@ -170,13 +204,15 @@ export default function AdminPage() {
                 return <BannersTab banners={banners} />;
             case 'settings':
                 return <SettingsTab settings={settings} />;
+            case 'supplier-api':
+                return <SupplierAPITab />;
             default:
                 return null;
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-dark-900 text-silver-100">
             {/* Mobile Header */}
             <AdminHeader sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
@@ -199,7 +235,7 @@ export default function AdminPage() {
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
