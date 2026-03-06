@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['localhost', '127.0.0.1'],
+        domains: ['localhost', '127.0.0.1', 'vorionmart.com'],
         remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'vorionmart.com',
+                pathname: '/media/**',
+            },
             {
                 protocol: 'http',
                 hostname: 'localhost',
@@ -12,7 +17,7 @@ const nextConfig = {
         ],
     },
     env: {
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://vorionmart.com/api',
     },
 }
 
