@@ -17,7 +17,8 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
         return `₹${new Intl.NumberFormat('en-IN').format(value)}`;
     };
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr: any) => {
+        if (!dateStr) return '';
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     };
