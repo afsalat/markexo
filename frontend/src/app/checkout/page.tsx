@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
+import { API_BASE_URL } from '@/config/apiConfig';
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -175,7 +176,7 @@ export default function CheckoutPage() {
             console.log('📦 Creating order with data:', orderData);
 
             // Call API to create order
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api'}/orders/create/`;
+            const apiUrl = `${API_BASE_URL}/orders/create/`;
             console.log('🌐 API URL:', apiUrl);
 
             const response = await fetch(apiUrl, {

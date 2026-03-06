@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Product, Shop, Category } from '@/types/admin';
 import { ArrowLeft, Upload, CheckCircle, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+import { API_BASE_URL } from '@/config/apiConfig';
 
 interface ProductFormProps {
     productId?: number;
