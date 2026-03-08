@@ -123,15 +123,15 @@ export default function ProductsTab({ products, shops, categories, onRefresh }: 
     // Show products list
     return (
         <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
                 <h1 className="font-display text-2xl font-bold text-white">Products</h1>
-                <div className="flex gap-4">
-                    <div className="flex bg-dark-800 p-1 rounded-lg border border-dark-700">
+                <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+                    <div className="flex bg-dark-800 p-1 rounded-lg border border-dark-700 w-full sm:w-auto overflow-x-auto custom-scrollbar whitespace-nowrap hidden-scrollbar">
                         {(['all', 'pending', 'approved'] as const).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
-                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filterStatus === status
+                                className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filterStatus === status
                                     ? 'bg-accent-600 text-white shadow-lg shadow-accent-500/20'
                                     : 'text-silver-500 hover:text-white'
                                     }`}
@@ -143,10 +143,10 @@ export default function ProductsTab({ products, shops, categories, onRefresh }: 
                     {canAdd && (
                         <button
                             onClick={handleAddNew}
-                            className="bg-accent-600 text-white px-4 py-2 rounded-lg hover:bg-accent-500 flex items-center gap-2 font-medium transition-colors shadow-lg shadow-accent-500/20"
+                            className="bg-accent-600 text-white px-4 py-2 rounded-lg hover:bg-accent-500 flex items-center justify-center gap-2 font-medium transition-colors shadow-lg shadow-accent-500/20 shrink-0"
                         >
                             <Plus size={20} />
-                            Add Product
+                            <span className="hidden sm:inline">Add Product</span>
                         </button>
                     )}
                 </div>

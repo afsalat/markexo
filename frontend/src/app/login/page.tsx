@@ -34,7 +34,7 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-dark-900">
             {/* Left Side - Image/Brand */}
-            <div className="hidden lg:flex flex-col justify-center p-12 bg-dark-800 relative overflow-hidden border-r border-dark-700">
+            <div className="hidden lg:flex flex-col justify-center p-12 bg-dark-800 relative overflow-hidden border-r border-dark-700" data-aos="fade-right">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent-600/20 to-primary-900/40 opacity-90" />
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-10" />
 
@@ -49,7 +49,7 @@ export default function LoginPage() {
                             { value: '10k+', label: 'Products' },
                             { value: '500+', label: 'Local Shops' }
                         ].map((stat, i) => (
-                            <div key={i} className="bg-dark-700/50 backdrop-blur-sm rounded-2xl p-4 text-center border border-dark-600">
+                            <div key={i} className="bg-dark-700/50 backdrop-blur-sm rounded-2xl p-4 text-center border border-dark-600" data-aos="zoom-in" data-aos-delay={i * 100 + 300}>
                                 <div className="font-bold text-2xl mb-1 text-accent-500">{stat.value}</div>
                                 <div className="text-sm text-silver-400">{stat.label}</div>
                             </div>
@@ -59,7 +59,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex flex-col justify-center p-6 sm:p-12 lg:p-24 bg-dark-900 relative">
+            <div className="flex flex-col justify-center p-6 sm:p-12 lg:p-24 bg-dark-900 relative" data-aos="fade-left">
                 {/* Back Button */}
                 <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-silver-400 hover:text-accent-500 transition-colors">
                     <ArrowLeft size={20} />

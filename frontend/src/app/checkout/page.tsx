@@ -231,7 +231,7 @@ export default function CheckoutPage() {
 
     if (items.length === 0 && !orderPlaced) {
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-dark-900">
+            <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-dark-900" data-aos="fade-up">
                 <ShoppingBag size={80} className="text-dark-600 mb-6" />
                 <h1 className="font-display text-2xl font-bold text-white mb-2">Your cart is empty</h1>
                 <p className="text-silver-500 mb-8">Add some products before checkout.</p>
@@ -244,7 +244,7 @@ export default function CheckoutPage() {
 
     if (orderPlaced) {
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-dark-900 py-12">
+            <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-dark-900 py-12" data-aos="fade-up">
                 <div className="w-20 h-20 bg-accent-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
                     <Check size={40} className="text-accent-500" />
                 </div>
@@ -324,7 +324,7 @@ export default function CheckoutPage() {
             <div className="container mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Form Area */}
-                    <div className="flex-1">
+                    <div className="flex-1" data-aos="fade-right" data-aos-delay="100">
                         <form onSubmit={handleSubmit}>
                             {step === 1 && (
                                 <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 animate-fade-in">
@@ -659,7 +659,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Order Summary */}
-                    <div className="lg:w-96">
+                    <div className="lg:w-96" data-aos="fade-left" data-aos-delay="200">
                         <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 sticky top-24">
                             <h2 className="font-display text-xl font-bold text-white mb-6">Order Summary</h2>
 

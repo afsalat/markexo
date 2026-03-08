@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product, Shop, Category } from '@/types/admin';
-import { ArrowLeft, Upload, CheckCircle, X } from 'lucide-react';
+import { ArrowLeft, Upload, CheckCircle, X, Plus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 
@@ -37,7 +37,8 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
         category_id: '',
         meesho_url: '',
         image: null as File | null,
-        gallery_images: [] as File[]
+        gallery_images: [] as File[],
+        specifications: [] as { key: string, value: string }[]
     });
 
     // Load product data if editing
@@ -123,7 +124,10 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
                             category_id: product.category?.id ? product.category.id.toString() : (product.category_id ? product.category_id.toString() : ''),
                             meesho_url: (product as any).meesho_url || '',
                             image: null as File | null,
-                            gallery_images: [] as File[]
+                            gallery_images: [] as File[],
+                            specifications: (product as any).specifications
+                                ? Object.entries((product as any).specifications).map(([key, value]) => ({ key, value: String(value) }))
+                                : []
                         };
 
                         console.log('Setting form data:', newFormData);
@@ -164,6 +168,21 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
         }
     };
 
+    const handleSpecChange = (index: number, field: 'key' | 'value', value: string) => {
+        const newSpecs = [...formData.specifications];
+        newSpecs[index][field] = value;
+        setFormData(prev => ({ ...prev, specifications: newSpecs }));
+    };
+
+    const addSpec = () => {
+        setFormData(prev => ({ ...prev, specifications: [...prev.specifications, { key: '', value: '' }] }));
+    };
+
+    const removeSpec = (index: number) => {
+        const newSpecs = formData.specifications.filter((_, i) => i !== index);
+        setFormData(prev => ({ ...prev, specifications: newSpecs }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -193,6 +212,18 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
 
         if (formData.image) {
             data.append('image', formData.image);
+        }
+
+        if (formData.specifications.length > 0) {
+            const specsObj = formData.specifications.reduce((acc, curr) => {
+                if (curr.key.trim() && curr.value.trim()) {
+                    acc[curr.key.trim()] = curr.value.trim();
+                }
+                return acc;
+            }, {} as Record<string, string>);
+            data.append('specifications', JSON.stringify(specsObj));
+        } else {
+            data.append('specifications', JSON.stringify({}));
         }
 
         formData.gallery_images.forEach((file, index) => {
@@ -501,6 +532,54 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
                                 )}
                             </label>
                         </div>
+                    </div>
+
+                    {/* Specifications */}
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-medium text-silver-300">Specifications (Key-Value Pairs)</label>
+                            <button
+                                type="button"
+                                onClick={addSpec}
+                                className="text-xs flex items-center gap-1 bg-dark-700 hover:bg-dark-600 text-silver-300 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                            >
+                                <Plus size={14} /> Add Spec
+                            </button>
+                        </div>
+                        {formData.specifications.length === 0 ? (
+                            <div className="text-center py-6 border-2 border-dashed border-dark-600 rounded-lg text-silver-500 text-sm">
+                                No specifications added yet.
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {formData.specifications.map((spec, index) => (
+                                    <div key={index} className="flex gap-3 items-start">
+                                        <input
+                                            type="text"
+                                            value={spec.key}
+                                            onChange={(e) => handleSpecChange(index, 'key', e.target.value)}
+                                            placeholder="e.g. Brand"
+                                            className="flex-1 px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700 placeholder-silver-600"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={spec.value}
+                                            onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
+                                            placeholder="e.g. Vorion"
+                                            className="flex-1 px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700 placeholder-silver-600"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeSpec(index)}
+                                            className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors border border-red-500/20 flex-shrink-0"
+                                            title="Remove Specification"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Featured Checkbox */}

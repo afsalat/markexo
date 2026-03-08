@@ -46,7 +46,7 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
                     <img
                         src="/logo-white-text.png"
                         alt="VorionMart Logo"
-                        className="h-24 w-auto object-contain"
+                        className="h-32 w-auto object-contain"
                     />
                 </Link>
             </div>

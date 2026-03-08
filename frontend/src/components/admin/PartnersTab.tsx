@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Shield, Store, Mail, Phone, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Shield, Mail, Phone, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import PartnerForm from './PartnerForm';
@@ -13,7 +13,6 @@ interface Partner {
     last_name: string;
     is_active: boolean;
     shop_id: number | null;
-    shop_name: string;
     shop_city: string;
     shop_phone: string;
     commission_rate: string;
@@ -116,7 +115,7 @@ export default function PartnersTab() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
                 <input
                     type="text"
-                    placeholder="Search by name, email, or shop..."
+                    placeholder="Search by name or email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full bg-dark-800 border border-dark-700 rounded-xl pl-10 pr-4 py-3 text-white placeholder-silver-500 focus:outline-none focus:border-accent-500 transition-colors shadow-sm"
@@ -129,7 +128,6 @@ export default function PartnersTab() {
                         <thead className="bg-dark-700/50">
                             <tr>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Partner</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Shop</th>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Contact</th>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Status</th>
                                 <th className="text-right px-6 py-3 text-xs font-medium text-silver-500 uppercase">Actions</th>
@@ -138,7 +136,7 @@ export default function PartnersTab() {
                         <tbody className="divide-y divide-dark-700">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center">
+                                    <td colSpan={4} className="px-6 py-8 text-center">
                                         <div className="flex justify-center">
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500"></div>
                                         </div>
@@ -146,7 +144,7 @@ export default function PartnersTab() {
                                 </tr>
                             ) : partners.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-silver-500">
+                                    <td colSpan={4} className="px-6 py-8 text-center text-silver-500">
                                         No partners found.
                                     </td>
                                 </tr>
@@ -170,21 +168,6 @@ export default function PartnersTab() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {partner.shop_name ? (
-                                                <div>
-                                                    <div className="font-medium text-white flex items-center gap-1">
-                                                        <Store size={14} className="text-accent-500" />
-                                                        {partner.shop_name}
-                                                    </div>
-                                                    <div className="text-xs text-silver-500">
-                                                        {partner.shop_city} • {parseFloat(partner.commission_rate)}% Comm.
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <span className="text-silver-600 text-sm italic">No Shop</span>
-                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm text-silver-400 flex items-center gap-2">

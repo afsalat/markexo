@@ -154,22 +154,22 @@ function ProductsPageContent() {
             {/* Page Header */}
             <div className="bg-dark-900 border-b border-dark-700">
                 <div className="w-full max-w-[1920px] mx-auto px-6 lg:px-12 py-6">
-                    <nav className="text-sm text-silver-500 mb-2">
+                    <nav className="text-sm text-silver-500 mb-2" data-aos="fade-down" data-aos-delay="0">
                         <Link href="/" className="hover:text-accent-500">Home</Link>
                         <span className="mx-2">/</span>
                         <span className="text-white">{getPageTitle()}</span>
                     </nav>
-                    <h1 className="font-display text-3xl font-bold text-white">
+                    <h1 className="font-display text-3xl font-bold text-white" data-aos="fade-right" data-aos-delay="100">
                         {getPageTitle()}
                     </h1>
-                    <p className="text-silver-500 mt-1">{filteredProducts.length} products found</p>
+                    <p className="text-silver-500 mt-1" data-aos="fade-right" data-aos-delay="200">{filteredProducts.length} products found</p>
                 </div>
             </div>
 
             <div className="w-full max-w-[1920px] mx-auto px-6 lg:px-12 py-8">
                 <div className="flex gap-8">
                     {/* Filters Sidebar - Desktop */}
-                    <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-28 self-start max-h-[calc(100vh-7rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                    <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-28 self-start max-h-[calc(100vh-7rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']" data-aos="fade-right" data-aos-delay="300">
                         <div className="bg-dark-800 rounded-2xl p-5 border border-dark-700 shadow-lg shadow-dark-950/20">
                             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-dark-700">
                                 <SlidersHorizontal size={18} className="text-accent-500" />
@@ -268,7 +268,7 @@ function ProductsPageContent() {
                     {/* Products Grid */}
                     <div className="flex-1">
                         {/* Toolbar */}
-                        <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+                        <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 mb-6 flex items-center justify-between gap-4" data-aos="fade-up" data-aos-delay="400">
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
                                 className="lg:hidden flex items-center gap-2 px-4 py-2 border border-dark-600 text-white rounded-lg hover:bg-dark-700"
@@ -325,8 +325,8 @@ function ProductsPageContent() {
 
                         {/* Products */}
                         <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-                            {filteredProducts.map((product) => (
-                                <div key={product.id} className={`product-card group relative bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent-500/20 hover:border-accent-500/40 ${viewMode === 'list' ? 'flex' : ''}`}>
+                            {filteredProducts.map((product, index) => (
+                                <div key={product.id} data-aos="fade-up" data-aos-delay={(index % 12) * 50} className={`product-card group relative bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-accent-500/20 hover:border-accent-500/40 ${viewMode === 'list' ? 'flex' : ''}`}>
                                     <Link href={`/products/${product.slug}`} className={`block relative overflow-hidden ${viewMode === 'list' ? 'flex flex-1' : ''}`}>
                                         {/* Image Container */}
                                         <div className={`relative bg-dark-700 overflow-hidden ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'aspect-[4/5]'}`}>
@@ -431,7 +431,7 @@ function ProductsPageContent() {
                         </div>
 
                         {filteredProducts.length === 0 && (
-                            <div className="text-center py-16">
+                            <div className="text-center py-16" data-aos="fade-up">
                                 <ShoppingCart size={64} className="mx-auto text-dark-600 mb-4" />
                                 <h3 className="text-xl font-semibold text-white mb-2">No products found</h3>
                                 <p className="text-silver-500">Try adjusting your filters</p>

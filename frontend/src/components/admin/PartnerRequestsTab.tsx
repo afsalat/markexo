@@ -82,8 +82,8 @@ export default function PartnerRequestsTab() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-2xl font-bold text-white flex flex-wrap items-center gap-3">
                     <Store className="text-accent-500" />
                     Partner Requests
                     <span className="bg-accent-500/10 text-accent-500 text-sm px-3 py-1 rounded-full border border-accent-500/20">
@@ -92,9 +92,10 @@ export default function PartnerRequestsTab() {
                 </h2>
                 <button
                     onClick={fetchRequests}
-                    className="p-2 bg-dark-800 rounded-lg hover:bg-dark-700 text-silver-400 hover:text-white transition-colors"
+                    className="p-2 bg-dark-800 rounded-lg w-full sm:w-auto hover:bg-dark-700 text-silver-400 hover:text-white transition-colors flex justify-center items-center"
                 >
                     <Loader size={20} className={loading ? 'animate-spin' : ''} />
+                    <span className="ml-2 sm:hidden text-sm font-medium">Refresh</span>
                 </button>
             </div>
 
@@ -106,7 +107,7 @@ export default function PartnerRequestsTab() {
                     >
                         <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
-                                <h3 className="text-xl font-bold text-white">{shop.name}</h3>
+                                <h3 className="text-xl font-bold text-white">{shop.email}</h3>
                                 <span className="md:hidden text-xs bg-yellow-500/10 text-yellow-500 px-2 py-1 rounded-full">Pending</span>
                             </div>
 

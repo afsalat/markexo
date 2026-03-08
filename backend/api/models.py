@@ -144,6 +144,7 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
     image = models.ImageField(upload_to='products/', blank=True, null=True)
     meesho_url = models.URLField(blank=True, help_text="Internal reference for sourcing")
+    specifications = models.JSONField(default=dict, blank=True, help_text="Key-value pairs for product specs")
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     

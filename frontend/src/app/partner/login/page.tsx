@@ -22,19 +22,27 @@ export default function PartnerLoginPage() {
             const res = await fetch(AUTH_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: email, password }),
+                body: JSON.stringify({ email, password }),
             });
 
             if (res.ok) {
                 const data = await res.json();
+                // Check if partner has been approved (is_staff = true)
+                if (!data.user?.is_staff) {
+                    setError('Your account is pending admin approval. Please wait for approval before logging in.');
+                    setLoading(false);
+                    return;
+                }
                 // Login specific for partners -> redirect to /partner
                 login(data.access, data.refresh, '/partner');
             } else {
                 const data = await res.json();
-                if (data.detail === 'No active account found with the given credentials') {
+                // non_field_errors comes from backend ValidationError, detail from DRF default
+                const errorMsg = data.detail || (data.non_field_errors && data.non_field_errors[0]) || 'Invalid email or password. Please try again.';
+                if (errorMsg === 'No active account found with the given credentials') {
                     setError('Your account has been deactivated. Please contact support.');
                 } else {
-                    setError(data.detail || 'Invalid email or password. Please try again.');
+                    setError(errorMsg);
                 }
             }
         } catch (err) {

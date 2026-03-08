@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { registerPartner } from '@/lib/api';
-import { Mail, Lock, User, ArrowRight, ArrowLeft, Building, MapPin, Phone, FileText } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ArrowLeft, MapPin, Phone, FileText } from 'lucide-react';
 
 export default function PartnerRegisterPage() {
     const { login } = useAuth();
@@ -18,7 +18,6 @@ export default function PartnerRegisterPage() {
         password: '',
         password_confirm: '',
         // Shop fields
-        shop_name: '',
         shop_city: '',
         shop_phone: ''
     });
@@ -49,7 +48,6 @@ export default function PartnerRegisterPage() {
                 email: formData.email,
                 password: formData.password,
                 password_confirm: formData.password_confirm,
-                shop_name: formData.shop_name,
                 shop_city: formData.shop_city,
                 shop_phone: formData.shop_phone
             });
@@ -201,25 +199,7 @@ export default function PartnerRegisterPage() {
                             </div>
                         </div>
 
-                        {/* Shop Information */}
                         <div className="space-y-4">
-                            <h3 className="text-lg font-semibold text-white">Shop Information</h3>
-
-                            <div>
-                                <label className="block text-sm font-medium text-silver-300 mb-2">Shop Name</label>
-                                <div className="relative">
-                                    <Building className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
-                                    <input
-                                        type="text"
-                                        required
-                                        className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
-                                        placeholder="Your Shop Name"
-                                        value={formData.shop_name}
-                                        onChange={(e) => setFormData({ ...formData, shop_name: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-silver-300 mb-2">City</label>

@@ -114,26 +114,26 @@ export default function HomePage() {
                 <div className="container mx-auto px-4 py-20 md:py-32 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
                         {/* Badge */}
-                        <div className="inline-flex items-center gap-2 bg-dark-700/50 border border-dark-600 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-in">
+                        <div data-aos="fade-down" data-aos-delay="100" className="inline-flex items-center gap-2 bg-dark-700/50 border border-dark-600 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6">
                             <span className="w-2 h-2 bg-accent-500 rounded-full animate-pulse" />
                             <span className="text-silver-300">💵 Cash on Delivery Available</span>
                         </div>
 
                         {/* Main Heading */}
-                        <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up text-white">
+                        <h1 data-aos="fade-up" data-aos-delay="200" className="font-display text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-white">
                             The Future of Shopping.
                             <br />
                             <span className="gradient-text-accent">Delivered.</span>
                         </h1>
 
                         {/* Subheading */}
-                        <p className="text-lg md:text-xl text-silver-400 mb-8 max-w-2xl mx-auto animate-slide-up">
+                        <p data-aos="fade-up" data-aos-delay="300" className="text-lg md:text-xl text-silver-400 mb-8 max-w-2xl mx-auto">
                             Premium products from verified sellers. Pay when you receive.
                             No risk, no hassle, pure convenience.
                         </p>
 
                         {/* CTA Buttons */}
-                        <div className="flex flex-wrap justify-center gap-4 animate-slide-up">
+                        <div data-aos="fade-up" data-aos-delay="400" className="flex flex-wrap justify-center gap-4">
                             <Link href="/products" className="btn-primary flex items-center gap-2 text-lg px-8 py-4">
                                 Shop Now <ArrowRight size={20} />
                             </Link>
@@ -143,7 +143,7 @@ export default function HomePage() {
                         </div>
 
                         {/* Trust Indicators */}
-                        <div className="flex flex-wrap justify-center gap-6 mt-10 text-silver-400 text-sm">
+                        <div data-aos="fade-up" data-aos-delay="500" className="flex flex-wrap justify-center gap-6 mt-10 text-silver-400 text-sm">
                             <span className="flex items-center gap-2">
                                 <CreditCard size={18} className="text-accent-500" />
                                 Pay on Delivery
@@ -167,7 +167,7 @@ export default function HomePage() {
             <section className="py-8 bg-dark-800 border-y border-dark-700">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <div className="flex items-center gap-3">
+                        <div data-aos="fade-up" data-aos-delay="0" className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center">
                                 <CreditCard className="text-accent-500" size={24} />
                             </div>
@@ -176,7 +176,7 @@ export default function HomePage() {
                                 <p className="text-sm text-silver-500">Pay when you receive</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div data-aos="fade-up" data-aos-delay="100" className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center">
                                 <Truck className="text-accent-500" size={24} />
                             </div>
@@ -185,7 +185,7 @@ export default function HomePage() {
                                 <p className="text-sm text-silver-500">2-5 business days</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div data-aos="fade-up" data-aos-delay="200" className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center">
                                 <Shield className="text-accent-500" size={24} />
                             </div>
@@ -194,7 +194,7 @@ export default function HomePage() {
                                 <p className="text-sm text-silver-500">100% protected</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div data-aos="fade-up" data-aos-delay="300" className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-accent-500/10 rounded-xl flex items-center justify-center">
                                 <Clock className="text-accent-500" size={24} />
                             </div>
@@ -212,7 +212,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-900">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <h2 className="font-display text-2xl md:text-3xl font-bold text-white">Shop by Category</h2>
                             <p className="text-silver-500 mt-1">Find what you&apos;re looking for</p>
@@ -223,10 +223,12 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {categories.map((category) => (
+                        {categories.map((category, index) => (
                             <Link
                                 key={category.slug}
                                 href={`/products?category=${category.slug}`}
+                                data-aos="zoom-in"
+                                data-aos-delay={index * 50}
                                 className="group relative bg-dark-800 border border-dark-600 rounded-2xl p-6 text-center overflow-hidden hover:border-accent-500/50 transition-all duration-300"
                             >
                                 <div className="absolute inset-0 bg-gradient-to-b from-accent-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -243,7 +245,6 @@ export default function HomePage() {
                                         <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300">{category.icon}</div>
                                     )}
                                     <h3 className="font-semibold text-white mb-1 group-hover:text-accent-500 transition-colors">{category.name}</h3>
-                                    <p className="text-silver-500 text-sm">{category.count} items</p>
                                 </div>
                             </Link>
                         ))}
@@ -256,7 +257,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-800">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <Zap className="text-accent-500" size={24} />
@@ -270,10 +271,12 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                        {trendingProducts.map((product) => (
+                        {trendingProducts.map((product, index) => (
                             <Link
                                 key={product.id}
                                 href={`/products/${product.slug}`}
+                                data-aos="fade-up"
+                                data-aos-delay={index * 100}
                                 className="group product-card"
                             >
                                 <div className="aspect-square bg-dark-700 flex items-center justify-center relative overflow-hidden">
@@ -310,7 +313,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-900">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <h2 className="font-display text-2xl md:text-3xl font-bold text-white">Featured Products</h2>
                             <p className="text-silver-500 mt-1">Handpicked just for you</p>
@@ -321,8 +324,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {featuredProducts.map((product) => (
-                            <div key={product.id} className="product-card group">
+                        {featuredProducts.map((product, index) => (
+                            <div key={product.id} className="product-card group" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <Link href={`/products/${product.slug}`} className="block">
                                     {/* Image Container */}
                                     <div className="relative aspect-square overflow-hidden bg-dark-700">
@@ -431,7 +434,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-800">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <Award className="text-accent-500" size={24} />
@@ -445,8 +448,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {bestSellers.map((product) => (
-                            <div key={product.id} className="product-card group">
+                        {bestSellers.map((product, index) => (
+                            <div key={product.id} className="product-card group" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <Link href={`/products/${product.slug}`} className="block">
                                     <div className="relative aspect-square overflow-hidden bg-dark-700">
                                         {product.image ? (
@@ -510,7 +513,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-900">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <Package className="text-accent-500" size={24} />
@@ -524,8 +527,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {newArrivals.map((product) => (
-                            <div key={product.id} className="product-card group">
+                        {newArrivals.map((product, index) => (
+                            <div key={product.id} className="product-card group" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <Link href={`/products/${product.slug}`} className="block">
                                     <div className="relative aspect-square overflow-hidden bg-dark-700">
                                         {product.image ? (
@@ -590,7 +593,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-800">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <Zap className="text-accent-500" size={24} />
@@ -604,8 +607,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {dealsOfTheDay.map((product) => (
-                            <div key={product.id} className="product-card group relative">
+                        {dealsOfTheDay.map((product, index) => (
+                            <div key={product.id} className="product-card group relative" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <div className="absolute top-2 left-2 z-10 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
                                     50% OFF
                                 </div>
@@ -669,7 +672,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-900">
                 <div className="container mx-auto px-4">
-                    <div className="flex justify-between items-center mb-8">
+                    <div className="flex justify-between items-center mb-8" data-aos="fade-up">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
                                 <Star className="text-accent-500" size={24} />
@@ -683,8 +686,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {suggestedProducts.map((product) => (
-                            <div key={product.id} className="product-card group">
+                        {suggestedProducts.map((product, index) => (
+                            <div key={product.id} className="product-card group" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <Link href={`/products/${product.slug}`} className="block">
                                     <div className="relative aspect-square overflow-hidden bg-dark-700">
                                         {product.image ? (
@@ -748,14 +751,14 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-800">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-12">
+                    <div className="text-center mb-12" data-aos="fade-up">
                         <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">What Our Customers Say</h2>
                         <p className="text-silver-500">Real experiences from real people</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {testimonials.map((testimonial) => (
-                            <div key={testimonial.id} className="bg-dark-700 border border-dark-600 rounded-2xl p-6 hover:border-accent-500/30 transition-colors">
+                        {testimonials.map((testimonial, index) => (
+                            <div key={testimonial.id} className="bg-dark-700 border border-dark-600 rounded-2xl p-6 hover:border-accent-500/30 transition-colors" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <div className="flex items-center gap-1 mb-4">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <Star key={star} size={18} className={star <= testimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-dark-500'} />
@@ -793,7 +796,7 @@ export default function HomePage() {
             <section className="py-16 bg-dark-800 border-t border-dark-700">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                        <div className="relative">
+                        <div className="relative" data-aos="fade-right">
                             <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent-500/10 rounded-full blur-3xl" />
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary-600/10 rounded-full blur-3xl" />
 
@@ -824,7 +827,7 @@ export default function HomePage() {
                             </div>
                         </div>
 
-                        <div>
+                        <div data-aos="fade-left">
                             <span className="text-accent-500 font-bold tracking-wider text-sm uppercase mb-2 block">Our Story</span>
                             <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-6">
                                 Redefining Your <br />
@@ -856,13 +859,13 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-900">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-12">
+                    <div className="text-center mb-12" data-aos="fade-up">
                         <h2 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">Why Choose VorionMart?</h2>
                         <p className="text-silver-500">Your trusted premium marketplace</p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        <div className="text-center group">
+                        <div className="text-center group" data-aos="fade-up" data-aos-delay="0">
                             <div className="w-20 h-20 bg-gradient-to-br from-accent-500/20 to-accent-500/5 border border-accent-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:border-accent-500 transition-all">
                                 <Award className="text-accent-500" size={36} />
                             </div>
@@ -870,7 +873,7 @@ export default function HomePage() {
                             <p className="text-silver-300 font-medium">Verified Sellers</p>
                             <p className="text-sm text-silver-500 mt-1">Quality assured</p>
                         </div>
-                        <div className="text-center group">
+                        <div className="text-center group" data-aos="fade-up" data-aos-delay="100">
                             <div className="w-20 h-20 bg-gradient-to-br from-accent-500/20 to-accent-500/5 border border-accent-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:border-accent-500 transition-all">
                                 <Package className="text-accent-500" size={36} />
                             </div>
@@ -878,7 +881,7 @@ export default function HomePage() {
                             <p className="text-silver-300 font-medium">Products</p>
                             <p className="text-sm text-silver-500 mt-1">Premium selection</p>
                         </div>
-                        <div className="text-center group">
+                        <div className="text-center group" data-aos="fade-up" data-aos-delay="200">
                             <div className="w-20 h-20 bg-gradient-to-br from-accent-500/20 to-accent-500/5 border border-accent-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:border-accent-500 transition-all">
                                 <Heart className="text-accent-500" size={36} />
                             </div>
@@ -886,7 +889,7 @@ export default function HomePage() {
                             <p className="text-silver-300 font-medium">Happy Customers</p>
                             <p className="text-sm text-silver-500 mt-1">5-star reviews</p>
                         </div>
-                        <div className="text-center group">
+                        <div className="text-center group" data-aos="fade-up" data-aos-delay="300">
                             <div className="w-20 h-20 bg-gradient-to-br from-accent-500/20 to-accent-500/5 border border-accent-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 group-hover:border-accent-500 transition-all">
                                 <Truck className="text-accent-500" size={36} />
                             </div>
@@ -903,7 +906,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-16 bg-dark-800 border-t border-dark-700">
                 <div className="container mx-auto px-4">
-                    <div className="max-w-4xl mx-auto">
+                    <div className="max-w-4xl mx-auto" data-aos="fade-up">
                         <div className="text-center mb-10">
                             <h2 className="font-display text-2xl md:text-3xl font-bold text-white">Have a Question?</h2>
                             <p className="text-silver-500 mt-2">Send us a message and we&apos;ll get back to you shortly.</p>
