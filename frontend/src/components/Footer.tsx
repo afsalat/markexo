@@ -59,7 +59,7 @@ export default function Footer() {
                             <img
                                 src="/logo-white-text.png"
                                 alt="VorionMart"
-                                className="h-14 w-auto object-contain"
+                                className="h-24 w-auto object-contain"
                             />
                         </Link>
                         <p className="text-silver-400 mb-4 text-sm leading-relaxed">

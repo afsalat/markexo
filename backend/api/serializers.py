@@ -10,6 +10,14 @@ from .models import (
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner
 )
 
+def get_image_url(request, image_field):
+    """Helper clearly returns an absolute URL for an image file."""
+    if image_field and hasattr(image_field, 'url'):
+        if request:
+            return request.build_absolute_uri(image_field.url)
+        return image_field.url
+    return None
+
 
 class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -129,9 +137,15 @@ class ShopSerializer(serializers.ModelSerializer):
 
 class ShopListSerializer(serializers.ModelSerializer):
     """Simplified shop serializer for listings."""
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Shop
         fields = ['id', 'name', 'slug', 'image', 'city']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -157,6 +171,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class CategoryListSerializer(serializers.ModelSerializer):
     """Simplified category serializer for listings."""
     product_count = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
@@ -165,11 +180,21 @@ class CategoryListSerializer(serializers.ModelSerializer):
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
 
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
+
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = ['id', 'image', 'is_primary']
+        
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -184,7 +209,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             'id', 'product', 'product_name', 'customer', 'customer_name', 'customer_email',
             'rating', 'comment', 'verified', 'created_at', 'created_at_formatted'
         ]
-        read_only_fields = ['id', 'verified', 'created_at']
+        read_only_fields = ['id', 'verified', 'created_at', 'customer']
 
     def get_created_at_formatted(self, obj):
         return obj.created_at.strftime('%Y-%m-%d')
@@ -196,6 +221,10 @@ class ReviewSerializer(serializers.ModelSerializer):
             try:
                 customer = Customer.objects.get(user=request.user)
                 validated_data['customer'] = customer
+                
+                # Check for existing review
+                if Review.objects.filter(customer=customer, product=validated_data['product']).exists():
+                    raise serializers.ValidationError({"detail": "You have already reviewed this product."})
             except Customer.DoesNotExist:
                 raise serializers.ValidationError("Customer profile not found.")
         return super().create(validated_data)
@@ -208,6 +237,7 @@ class PublicProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -215,8 +245,13 @@ class PublicProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'description', 'price', 'sale_price',
             'current_price', 'discount_percent', 'stock', 'sku',
             'category', 'category_name', 'image', 'images',
+            'meesho_url', 'specifications',
             'is_featured', 'is_active', 'rating', 'review_count', 'created_at'
         ]
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -255,9 +290,39 @@ class ProductSerializer(serializers.ModelSerializer):
             'current_price', 'discount_percent', 'profit_margin', 'profit_percent',
             'stock', 'sku',
             'shop', 'shop_name', 'shop_id', 'category', 'category_name', 'category_id', 'image', 'images', 'uploaded_images',
-            'meesho_url', 'is_featured', 'is_active', 'approval_status', 'views', 'sold_count', 'rating', 'review_count', 
+            'meesho_url', 'specifications', 'is_featured', 'is_active', 'approval_status', 'views', 'sold_count', 'rating', 'review_count', 
             'created_at', 'created_by_name', 'created_by_email'
         ]
+
+    def to_internal_value(self, data):
+        import json
+        # When submitted as multipart/form-data, specifications arrives as a raw JSON string.
+        # Parse it into a Python dict before DRF JSONField validation runs.
+        if hasattr(data, 'get') and 'specifications' in data:
+            specs_raw = data.get('specifications')
+            if isinstance(specs_raw, str):
+                try:
+                    parsed = json.loads(specs_raw)
+                except (ValueError, TypeError):
+                    parsed = {}
+                if hasattr(data, '_mutable'):
+                    data = data.copy()
+                    data._mutable = True
+                    data['specifications'] = json.dumps(parsed)
+                    data._mutable = False
+                else:
+                    data = dict(data)
+                    data['specifications'] = parsed
+        return super().to_internal_value(data)
+
+    def validate_specifications(self, value):
+        import json
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except (ValueError, TypeError):
+                return {}
+        return value or {}
 
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images', [])
@@ -494,6 +559,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         if not user.is_active:
             raise serializers.ValidationError('User account is disabled.')
         
+        # staff restriction removed intentionally to allow customer login
+        
         # Generate tokens
         from rest_framework_simplejwt.tokens import RefreshToken
         refresh = RefreshToken.for_user(user)
@@ -563,7 +630,6 @@ class PartnerRegistrationSerializer(serializers.Serializer):
     password_confirm = serializers.CharField(write_only=True)
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    shop_name = serializers.CharField(max_length=200)
     shop_description = serializers.CharField(required=False, allow_blank=True)
     shop_address = serializers.CharField(required=False, allow_blank=True)
     shop_city = serializers.CharField(max_length=100)
@@ -590,7 +656,7 @@ class PartnerRegistrationSerializer(serializers.Serializer):
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
-            is_staff=True  # Partners need staff access
+            is_staff=False  # Will be set to True when admin approves
         )
         
         # Assign Partner role if it exists
@@ -600,9 +666,15 @@ class PartnerRegistrationSerializer(serializers.Serializer):
         except Group.DoesNotExist:
             pass  # Role doesn't exist yet, user just won't have special permissions
         
+        shop_name = validated_data.get('shop_name')
+        if not shop_name:
+            shop_name = f"{validated_data.get('first_name', '')}'s Shop".strip()
+            if not shop_name or shop_name == "'s Shop":
+                shop_name = f"Shop-{user.email}"
+
         # Create the shop
         shop = Shop.objects.create(
-            name=validated_data['shop_name'],
+            name=shop_name,
             description=validated_data.get('shop_description', ''),
             owner=user,
             email=validated_data['email'],
@@ -629,7 +701,7 @@ class AdminPartnerSerializer(serializers.Serializer):
     
     # Shop Fields (write_only=True ensures we don't try to read them from User instance automatically)
     shop_id = serializers.IntegerField(read_only=True)
-    shop_name = serializers.CharField(max_length=200, write_only=True)
+    shop_name = serializers.CharField(max_length=200, write_only=True, required=False, allow_blank=True)
     shop_description = serializers.CharField(required=False, allow_blank=True, write_only=True)
     shop_address = serializers.CharField(required=False, allow_blank=True, write_only=True)
     shop_city = serializers.CharField(max_length=100, write_only=True)
@@ -708,6 +780,11 @@ class AdminPartnerSerializer(serializers.Serializer):
 
         # Extract Shop Data
         shop_name = validated_data.get('shop_name')
+        if not shop_name:
+            shop_name = f"{first_name}'s Shop".strip()
+            if not shop_name or shop_name == "'s Shop":
+                shop_name = f"Shop-{email}"
+
         shop_desc = validated_data.get('shop_description', '')
         shop_addr = validated_data.get('shop_address', '')
         shop_city = validated_data.get('shop_city')

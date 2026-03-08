@@ -117,8 +117,11 @@ export async function fetchProduct(slug: string) {
     return res.json();
 }
 
-export async function fetchCategories() {
-    const res = await fetch(`${API_URL}/categories/`);
+export async function fetchCategories(params?: Record<string, string>) {
+    const searchParams = new URLSearchParams(params);
+    const queryString = searchParams.toString();
+    const url = queryString ? `${API_URL}/categories/?${queryString}` : `${API_URL}/categories/`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch categories');
     return res.json();
 }
@@ -153,16 +156,20 @@ export async function createReview(reviewData: {
     rating: number;
     comment: string;
 }) {
-    const token = localStorage.getItem('customer_token');
+    const token = localStorage.getItem('access_token');
     const res = await fetch(`${API_URL}/reviews/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': token ? `Bearer ${token}` : '',
+            'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(reviewData),
     });
-    if (!res.ok) throw new Error('Failed to create review');
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (err.detail) throw new Error(err.detail);
+        throw new Error(JSON.stringify(err) || 'Failed to create review');
+    }
     return res.json();
 }
 
@@ -368,7 +375,25 @@ export async function registerUser(userData: any) {
     });
     if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(JSON.stringify(errorData) || 'Registration failed');
+
+        let errorMessage = 'Registration failed';
+        if (typeof errorData === 'object' && errorData !== null) {
+            // Check for specific field errors (e.g. { "email": ["user with this email already exists."] })
+            const firstErrorKey = Object.keys(errorData)[0];
+            if (firstErrorKey && Array.isArray(errorData[firstErrorKey])) {
+                errorMessage = errorData[firstErrorKey][0];
+            } else if (errorData.detail) {
+                errorMessage = errorData.detail;
+            } else if (errorData.message) {
+                errorMessage = errorData.message;
+            } else if (errorData.non_field_errors) {
+                errorMessage = errorData.non_field_errors[0];
+            } else {
+                errorMessage = JSON.stringify(errorData);
+            }
+        }
+
+        throw new Error(errorMessage);
     }
     return res.json();
 }

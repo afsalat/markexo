@@ -26,7 +26,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
 
     return (
         <div className="animate-fade-in space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" data-aos="fade-down">
                 <h1 className="font-display text-2xl font-bold text-white">Partner Dashboard</h1>
                 <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-sm font-medium">
                     You earn 30% of profit per sale
@@ -34,7 +34,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-aos="fade-up">
                 {/* My Earnings - Hero Card */}
                 <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-900/20 rounded-2xl p-6 shadow-lg border border-emerald-500/30 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -131,7 +131,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
             </div>
 
             {/* Recent Orders Section */}
-            <div className="bg-dark-800 rounded-3xl border border-dark-700 overflow-hidden">
+            <div className="bg-dark-800 rounded-3xl border border-dark-700 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
                 <div className="p-6 border-b border-dark-700 flex justify-between items-center">
                     <h2 className="text-xl font-bold text-white font-display">Recent Sales</h2>
                     <span className="text-sm text-silver-500">Last 10 orders</span>

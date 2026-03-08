@@ -8,12 +8,12 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ sidebarOpen, setSidebarOpen }: AdminHeaderProps) {
     return (
-        <div className="lg:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
+        <div className="lg:hidden bg-dark-900 border-b border-dark-800 p-4 flex items-center justify-between sticky top-0 z-40">
+            <Link href="/admin" className="flex items-center gap-2">
                 <img
-                    src="/logo-black-text.jpg"
+                    src="/logo-white-text.png"
                     alt="VorionMart Logo"
-                    className="h-16 w-auto object-contain"
+                    className="h-14 w-auto object-contain"
                 />
             </Link>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2">

@@ -177,9 +177,9 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
 
             <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                 <h1 className="font-display text-2xl font-bold text-white">Orders</h1>
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex flex-wrap gap-3 items-center w-full sm:w-auto flex-1 justify-start sm:justify-end">
                     {/* View Toggle */}
-                    <div className="flex gap-1 bg-dark-800 p-1 rounded-lg border border-dark-700">
+                    <div className="flex gap-1 bg-dark-800 p-1 rounded-lg border border-dark-700 shrink-0">
                         <button
                             onClick={() => setViewMode('table')}
                             className={`p-2 rounded transition-colors ${viewMode === 'table' ? 'bg-accent-500/10 text-accent-500 shadow-sm' : 'text-silver-500 hover:text-white'}`}
@@ -196,14 +196,14 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                         </button>
                     </div>
 
-                    <div className="relative">
+                    <div className="relative w-full sm:w-auto flex-1 min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
                         <input
                             type="text"
                             placeholder="Search orders..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-dark-700 rounded-lg outline-none focus:ring-2 focus:ring-accent-500 bg-dark-800 text-white placeholder-silver-600"
+                            className="w-full pl-10 pr-4 py-2 border border-dark-700 rounded-lg outline-none focus:ring-2 focus:ring-accent-500 bg-dark-800 text-white placeholder-silver-600"
                         />
                     </div>
                     <div className="relative">

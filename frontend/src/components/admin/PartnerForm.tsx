@@ -20,7 +20,6 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
         first_name: '',
         last_name: '',
         is_active: true,
-        shop_name: '',
         shop_description: '',
         shop_address: '',
         shop_city: '',
@@ -37,7 +36,6 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                 first_name: partner.first_name || '',
                 last_name: partner.last_name || '',
                 is_active: partner.is_active,
-                shop_name: partner.shop_name || '',
                 shop_description: partner.shop_description || '',
                 shop_address: partner.shop_address || '',
                 shop_city: partner.shop_city || '',
@@ -204,17 +202,7 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                     <div className="space-y-6">
                         <h3 className="text-lg font-semibold text-accent-500 border-b border-dark-700 pb-2">Shop Details</h3>
 
-                        <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-1">Shop Name</label>
-                            <input
-                                type="text"
-                                name="shop_name"
-                                required
-                                value={formData.shop_name}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-accent-500 outline-none"
-                            />
-                        </div>
+                        {/* Removed Shop Name Field */}
 
                         <div>
                             <label className="block text-sm font-medium text-silver-300 mb-1">Description</label>

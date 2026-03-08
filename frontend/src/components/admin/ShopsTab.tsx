@@ -35,11 +35,11 @@ export default function ShopsTab({ shops, onRefresh }: ShopsTabProps) {
         setLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL} /admin/shops / `, {
+            const response = await fetch(`${API_BASE_URL}/admin/shops/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token} `
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(formData),
             });
@@ -76,12 +76,12 @@ export default function ShopsTab({ shops, onRefresh }: ShopsTabProps) {
 
     return (
         <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
                 <h1 className="font-display text-2xl font-bold text-white">Partner Shops</h1>
                 {canAdd && (
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="btn-primary flex items-center gap-2 shadow-lg shadow-accent-500/20"
+                        className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 shadow-lg shadow-accent-500/20"
                     >
                         <Plus size={18} /> Add Shop
                     </button>
@@ -93,7 +93,7 @@ export default function ShopsTab({ shops, onRefresh }: ShopsTabProps) {
                     <table className="w-full">
                         <thead className="bg-dark-900/50 border-b border-dark-700">
                             <tr>
-                                <th className="text-left px-6 py-4 text-xs font-medium text-silver-500 uppercase">Shop Info</th>
+                                <th className="text-left px-6 py-4 text-xs font-medium text-silver-500 uppercase">Shop Owner</th>
                                 <th className="text-left px-6 py-4 text-xs font-medium text-silver-500 uppercase">Contact</th>
                                 <th className="text-left px-6 py-4 text-xs font-medium text-silver-500 uppercase">Status</th>
                             </tr>
@@ -115,10 +115,10 @@ export default function ShopsTab({ shops, onRefresh }: ShopsTabProps) {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 bg-accent-500/10 text-accent-500 border border-accent-500/20 rounded-lg flex items-center justify-center font-bold">
-                                                    {shop.name.charAt(0)}
+                                                    {shop.email.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-white">{shop.name}</p>
+                                                    <p className="font-semibold text-white">{shop.email}</p>
                                                     <p className="text-xs text-silver-500">{shop.city}</p>
                                                 </div>
                                             </div>
@@ -157,6 +157,7 @@ export default function ShopsTab({ shops, onRefresh }: ShopsTabProps) {
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
                             <div>
                                 <label className="block text-sm font-medium text-silver-300 mb-1">Shop Name</label>
                                 <input
@@ -166,7 +167,7 @@ export default function ShopsTab({ shops, onRefresh }: ShopsTabProps) {
                                     value={formData.name}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none bg-dark-700 text-white placeholder-silver-600"
-                                    placeholder="e.g. Fresh Mart"
+                                    placeholder="e.g. John's Electronics"
                                 />
                             </div>
 

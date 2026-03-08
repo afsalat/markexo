@@ -9,7 +9,7 @@ export default function CartPage() {
 
     if (items.length === 0) {
         return (
-            <div className="min-h-[60vh] bg-dark-900 flex flex-col items-center justify-center px-4">
+            <div className="min-h-[60vh] bg-dark-900 flex flex-col items-center justify-center px-4" data-aos="fade-up">
                 <ShoppingBag size={80} className="text-dark-600 mb-6" />
                 <h1 className="font-display text-2xl font-bold text-white mb-2">Your cart is empty</h1>
                 <p className="text-silver-500 mb-8">Looks like you haven&apos;t added anything yet.</p>
@@ -23,7 +23,7 @@ export default function CartPage() {
     return (
         <div className="min-h-screen bg-dark-900">
             {/* Page Header */}
-            <div className="bg-dark-800 border-b border-dark-700">
+            <div className="bg-dark-800 border-b border-dark-700" data-aos="fade-down" data-aos-delay="0">
                 <div className="container mx-auto px-4 py-6">
                     <nav className="text-sm text-silver-500 mb-2">
                         <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
@@ -38,7 +38,7 @@ export default function CartPage() {
             <div className="container mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Cart Items */}
-                    <div className="flex-1">
+                    <div className="flex-1" data-aos="fade-right" data-aos-delay="100">
                         <div className="bg-dark-800 border border-dark-700 rounded-2xl overflow-hidden">
                             {items.map((item, index) => (
                                 <div
@@ -117,7 +117,7 @@ export default function CartPage() {
                     </div>
 
                     {/* Order Summary */}
-                    <div className="lg:w-96">
+                    <div className="lg:w-96" data-aos="fade-left" data-aos-delay="200">
                         <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 sticky top-24">
                             <h2 className="font-display text-xl font-bold text-white mb-6">Order Summary</h2>
 

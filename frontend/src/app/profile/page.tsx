@@ -103,7 +103,7 @@ export default function ProfilePage() {
             <div className="container mx-auto px-4">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar */}
-                    <div className="lg:w-80">
+                    <div className="lg:w-80" data-aos="fade-right">
                         <div className="bg-white dark:bg-dark-800 dark:border dark:border-dark-700 rounded-2xl p-6 shadow-sm mb-6">
                             <div className="flex items-center gap-4 mb-6">
                                 <img
@@ -145,7 +145,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Content Area */}
-                    <div className="flex-1">
+                    <div className="flex-1" data-aos="fade-left" data-aos-delay="100">
                         {/* Overview Tab */}
                         {activeTab === 'overview' && (
                             <div className="space-y-6">

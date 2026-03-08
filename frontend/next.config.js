@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['localhost', '127.0.0.1', 'vorionmart.com'],
+        domains: ['vorionmart.com', 'localhost', '127.0.0.1'],
         remotePatterns: [
             {
                 protocol: 'https',
@@ -10,10 +10,9 @@ const nextConfig = {
             },
             {
                 protocol: 'http',
-                hostname: 'localhost',
-                port: '8000',
+                hostname: 'vorionmart.com',
                 pathname: '/media/**',
-            },
+            }
         ],
     },
     env: {

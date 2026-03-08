@@ -37,10 +37,10 @@ export default function DashboardTab({ stats, setActiveTab }: DashboardTabProps)
 
     return (
         <div className="animate-fade-in">
-            <h1 className="font-display text-2xl font-bold text-white mb-6">Dashboard</h1>
+            <h1 className="font-display text-2xl font-bold text-white mb-6" data-aos="fade-right">Dashboard</h1>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8" data-aos="fade-up">
                 <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
                     <div className="flex items-center justify-between mb-4">
                         <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
@@ -96,13 +96,15 @@ export default function DashboardTab({ stats, setActiveTab }: DashboardTabProps)
             </div>
 
             {/* Dashboard Charts */}
-            <DashboardCharts
-                revenueHistory={stats.revenue_history}
-                statusDistribution={stats.order_status_distribution}
-            />
+            <div data-aos="fade-up" data-aos-delay="100">
+                <DashboardCharts
+                    revenueHistory={stats.revenue_history}
+                    statusDistribution={stats.order_status_distribution}
+                />
+            </div>
 
             {/* Recent Orders */}
-            <div className="bg-dark-800 rounded-2xl shadow-sm overflow-hidden border border-dark-700">
+            <div className="bg-dark-800 rounded-2xl shadow-sm overflow-hidden border border-dark-700" data-aos="fade-up" data-aos-delay="200">
                 <div className="p-6 border-b border-dark-700 flex justify-between items-center">
                     <h2 className="font-display text-lg font-bold text-white">Recent Orders</h2>
                     <button onClick={() => setActiveTab('orders')} className="text-accent-500 text-sm font-medium hover:text-accent-400 hover:underline">

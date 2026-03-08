@@ -176,7 +176,7 @@ export default function ProductAnalyticsTab() {
                     <table className="w-full text-left text-sm text-silver-400">
                         <thead className="bg-dark-900/50 text-xs uppercase font-medium text-silver-500">
                             <tr>
-                                <th className="px-6 py-4">Shop Name</th>
+                                <th className="px-6 py-4">Profit</th>
                                 <th className="px-6 py-4">Owner Email</th>
                                 <th className="px-6 py-4 text-right">Total Payout</th>
                             </tr>

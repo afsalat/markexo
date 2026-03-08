@@ -11,9 +11,26 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' });
 
 export const metadata: Metadata = {
-    title: 'aorionMart- Premium D2C Store | Pay on Delivery',
-    description: 'Shop premium products with Cash on Delivery. Trusted, secure, and delivered to your doorstep. Pay when you receive.',
-    keywords: 'cash on delivery, COD shopping, online store, premium products, pay on delivery, trusted shopping',
+    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://vorionmart.com'),
+    title: {
+        template: '%s | VorionMart',
+        default: 'VorionMart - Premium D2C Store | Pay on Delivery',
+    },
+    description: 'Shop premium products with Cash on Delivery. Trusted, secure, and delivered to your doorstep. Pay when you receive. No hassle, pure convenience.',
+    keywords: ['ecommerce', 'cash on delivery', 'COD shopping', 'online store', 'premium products', 'pay on delivery', 'trusted shopping', 'India delivery'],
+    openGraph: {
+        title: 'VorionMart - Premium D2C Store',
+        description: 'Shop premium products with Cash on Delivery. Trusted, secure, and delivered to your doorstep.',
+        url: '/',
+        siteName: 'VorionMart',
+        locale: 'en_IN',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'VorionMart - Premium D2C Store',
+        description: 'Shop premium products with Cash on Delivery.',
+    },
 };
 
 export default function RootLayout({

@@ -11,7 +11,7 @@ from django.db.models.functions import TruncDay
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.models import User, Group, Permission
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, DjangoModelPermissions
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser, DjangoModelPermissions
 from decimal import Decimal
 
 from django.core.mail import send_mail
@@ -87,10 +87,15 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
     permission_classes = [AllowAny]
 
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return CategoryListSerializer
-        return CategorySerializer
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        return queryset
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -174,7 +179,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     """Public API for product reviews."""
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         queryset = Review.objects.all()
@@ -750,7 +755,11 @@ class AdminShopViewSet(viewsets.ModelViewSet):
         shop.is_active = True
         shop.save()
         
-        # Send email notification (placeholder)
+        # Grant staff access to the shop owner so they can login
+        if shop.owner:
+            shop.owner.is_staff = True
+            shop.owner.save(update_fields=['is_staff'])
+        
         return Response({'status': 'approved'})
 
     @action(detail=True, methods=['post'])
@@ -759,6 +768,12 @@ class AdminShopViewSet(viewsets.ModelViewSet):
         shop.approval_status = 'rejected'
         shop.is_active = False
         shop.save()
+        
+        # Revoke staff access from the shop owner
+        if shop.owner:
+            shop.owner.is_staff = False
+            shop.owner.save(update_fields=['is_staff'])
+        
         return Response({'status': 'rejected'})
 
 
