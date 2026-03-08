@@ -95,7 +95,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Configure properly in production
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all only in development
+if not DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "https://vorionmart.com",
+        "https://www.vorionmart.com",
+    ]
+    CSRF_TRUSTED_ORIGINS = [
+        "https://vorionmart.com",
+        "https://www.vorionmart.com",
+    ]
 
 # REST Framework settings
 REST_FRAMEWORK = {
