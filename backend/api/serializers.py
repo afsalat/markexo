@@ -11,10 +11,8 @@ from .models import (
 )
 
 def get_image_url(request, image_field):
-    """Helper clearly returns an absolute URL for an image file."""
+    """Returns a relative URL for an image file for production compatibility."""
     if image_field and hasattr(image_field, 'url'):
-        if request:
-            return request.build_absolute_uri(image_field.url)
         return image_field.url
     return None
 
@@ -104,6 +102,8 @@ class PartnerSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
     shop_name = serializers.CharField(source='assigned_shop.name', read_only=True)
     
+    profile_image = serializers.SerializerMethodField()
+    
     class Meta:
         model = Partner
         fields = [
@@ -115,6 +115,10 @@ class PartnerSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'employee_id', 'date_of_joining', 'created_at', 'updated_at']
     
+    def get_profile_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.profile_image)
+    
     def get_user_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}".strip()
 
@@ -122,6 +126,7 @@ class PartnerSerializer(serializers.ModelSerializer):
 
 class ShopSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -133,6 +138,10 @@ class ShopSerializer(serializers.ModelSerializer):
 
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
 
 
 class ShopListSerializer(serializers.ModelSerializer):
@@ -152,6 +161,7 @@ class CategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
     parent_name = serializers.CharField(source='parent.name', read_only=True)
     product_count = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
@@ -166,6 +176,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
 
 
 class CategoryListSerializer(serializers.ModelSerializer):
@@ -390,7 +404,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_image = serializers.ImageField(source='product.image', read_only=True)
+    product_image = serializers.SerializerMethodField()
     shop_name = serializers.CharField(source='shop.name', read_only=True)
     sku = serializers.CharField(source='product.sku', read_only=True)
 
@@ -404,6 +418,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
             'price', 'total', 'product_image', 'shop_name', 'sku',
             'mrp', 'original_price'
         ]
+
+    def get_product_image(self, obj):
+        request = self.context.get('request')
+        # product_image source is product.image
+        if obj.product and obj.product.image:
+            return get_image_url(request, obj.product.image)
+        return None
 
 
 class OrderStatusHistorySerializer(serializers.ModelSerializer):
@@ -478,9 +499,15 @@ class OrderCreateSerializer(serializers.Serializer):
 
 
 class BannerSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Banner
         fields = ['id', 'title', 'subtitle', 'image', 'link', 'is_active', 'order']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
 
 
 class SiteSettingSerializer(serializers.ModelSerializer):
