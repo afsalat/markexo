@@ -11,8 +11,10 @@ from .models import (
 )
 
 def get_image_url(request, image_field):
-    """Returns a relative URL for an image file for production compatibility."""
+    """Returns an absolute URL for an image file for production compatibility."""
     if image_field and hasattr(image_field, 'url'):
+        if request:
+            return request.build_absolute_uri(image_field.url)
         return image_field.url
     return None
 
