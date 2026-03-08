@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['vorionmart.com', 'localhost', '127.0.0.1'],
+        domains: ['vorionmart.com'],
         remotePatterns: [
             {
                 protocol: 'https',
