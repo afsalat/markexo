@@ -33,20 +33,12 @@ npm run dev
 
 ### Backend
 
-Use [backend/.env.example](/c:/Users/USER/Desktop/markexo/backend/.env.example) as the template for [backend/.env](/c:/Users/USER/Desktop/markexo/backend/.env).
-
-Required settings:
+Backend production values are defined directly in [settings.py](/c:/Users/USER/Desktop/markexo/backend/markexo/settings.py). Replace the placeholder values there before deploying:
 
 - `SECRET_KEY`
-- `ALLOWED_HOSTS`
-- Database settings when not using SQLite
-
-Important optional settings:
-
-- `CORS_ALLOWED_ORIGINS`
-- `CSRF_TRUSTED_ORIGINS`
-- `SERVE_MEDIA_FILES`
-- Email SMTP settings
+- MySQL database name, user, and password
+- SMTP host credentials
+- Allowed hosts and origins if your production domain changes
 
 ### Frontend
 
