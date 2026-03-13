@@ -1,6 +1,8 @@
 """
 Serializers for VorionMart API.
 """
+import logging
+
 from django.contrib.auth.models import User, Group, Permission
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -9,6 +11,8 @@ from .models import (
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner
 )
+
+logger = logging.getLogger(__name__)
 
 def get_image_url(request, image_field):
     """Returns an absolute URL for an image file for production compatibility."""
@@ -364,7 +368,7 @@ class ProductSerializer(serializers.ModelSerializer):
                         id__in=deleted_ids
                     ).delete()
             except (ValueError, TypeError) as e:
-                print(f"Error processing deleted_images: {e}")
+                logger.warning("Error processing deleted_images for product %s: %s", instance.id, e)
 
         # Standard update for direct fields
         for attr, value in validated_data.items():

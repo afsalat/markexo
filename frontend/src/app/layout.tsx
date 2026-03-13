@@ -6,12 +6,13 @@ import { AuthProvider } from '@/context/AuthContext';
 import { CustomerAuthProvider } from '@/context/CustomerAuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
+import { APP_URL } from '@/config/siteConfig';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' });
 
 export const metadata: Metadata = {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://vorionmart.com'),
+    metadataBase: new URL(APP_URL),
     title: {
         template: '%s | VorionMart',
         default: 'VorionMart - Premium D2C Store | Pay on Delivery',

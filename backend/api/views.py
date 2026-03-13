@@ -1,6 +1,8 @@
 """
 API Views for VorionMart marketplace.
 """
+import logging
+
 from rest_framework import viewsets, generics, status, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
@@ -32,6 +34,8 @@ from .serializers import (
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
     SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ============== Public API Views ==============
@@ -168,7 +172,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                 cache.set(cache_key, True, 60)
         except Exception as e:
             # Fallback if cache fails
-            print(f"View increment error: {e}")
+            logger.warning("View increment error for product %s: %s", instance.id, e)
             instance.views += 1
             instance.save(update_fields=['views'])
 
@@ -223,7 +227,7 @@ class CreateOrderView(APIView):
     def post(self, request):
         serializer = OrderCreateSerializer(data=request.data)
         if not serializer.is_valid():
-            print("❌ Validation errors:", serializer.errors)
+            logger.info("Order validation failed: %s", serializer.errors)
             return Response({
                 'error': 'Invalid order data',
                 'details': serializer.errors
@@ -1239,16 +1243,11 @@ class PartnerDashboardStatsView(APIView):
 
     def get(self, request):
         shops = Shop.objects.filter(owner=request.user)
-        
-        print(f"DEBUG: User {request.user.email} (ID: {request.user.id})")
-        print(f"DEBUG: Shops: {list(shops)}")
 
         # Get all order items for products created by the user
         items = OrderItem.objects.filter(
             product__created_by=request.user
         ).distinct()
-        
-        print(f"DEBUG: Items Count: {items.count()}")
 
         # Calculate Total Sales (Revenue for the shop)
         total_sales = items.aggregate(
@@ -1270,8 +1269,6 @@ class PartnerDashboardStatsView(APIView):
         # Divide by 100 after summation (or handle safely)
         raw_earnings = earnings_agg['earnings'] or Decimal('0.00')
         my_earnings = raw_earnings / Decimal('100.00')
-        
-        print(f"DEBUG: Calculated Earnings: {my_earnings}")
 
         # Recent Orders
         recent_order_ids = items.values_list('order', flat=True).distinct()[:10]

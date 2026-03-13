@@ -1,5 +1,6 @@
 import { Metadata, ResolvingMetadata } from 'next';
 import { fetchProduct } from '@/lib/api';
+import { APP_URL } from '@/config/siteConfig';
 
 type Props = {
     params: { slug: string }
@@ -52,7 +53,6 @@ export default async function ProductDetailLayout({
 
     try {
         const product = await fetchProduct(params.slug);
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vorionmart.com';
 
         jsonLd = {
             '@context': 'https://schema.org',
@@ -63,7 +63,7 @@ export default async function ProductDetailLayout({
             sku: product.id.toString(), // Minimum SKU string
             offers: {
                 '@type': 'Offer',
-                url: `${baseUrl}/products/${product.slug}`,
+                url: `${APP_URL}/products/${product.slug}`,
                 priceCurrency: 'INR',
                 price: product.current_price,
                 // Valid for generic SEO, Google needs valid dates occasionally. Extend by 1 year.

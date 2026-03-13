@@ -1,9 +1,8 @@
 import { MetadataRoute } from 'next';
 import { fetchProducts, fetchCategories } from '@/lib/api';
+import { APP_URL } from '@/config/siteConfig';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vorionmart.com';
-
     try {
         // Fetch dynamic data
         const [productsRes, categoriesRes] = await Promise.all([
@@ -17,19 +16,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // Base static routes
         const routes: MetadataRoute.Sitemap = [
             {
-                url: baseUrl,
+                url: APP_URL,
                 lastModified: new Date(),
                 changeFrequency: 'daily',
                 priority: 1,
             },
             {
-                url: `${baseUrl}/products`,
+                url: `${APP_URL}/products`,
                 lastModified: new Date(),
                 changeFrequency: 'daily',
                 priority: 0.8,
             },
             {
-                url: `${baseUrl}/categories`,
+                url: `${APP_URL}/categories`,
                 changeFrequency: 'weekly',
                 priority: 0.8,
             },
@@ -39,7 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         products.forEach((product: any) => {
             if (product.is_active) {
                 routes.push({
-                    url: `${baseUrl}/products/${product.slug}`,
+                    url: `${APP_URL}/products/${product.slug}`,
                     lastModified: new Date(),
                     changeFrequency: 'weekly',
                     priority: 0.9,
@@ -51,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // Adding them here helps crawlers find parameterized URLs
         categories.forEach((category: any) => {
             routes.push({
-                url: `${baseUrl}/products?category=${category.slug}`,
+                url: `${APP_URL}/products?category=${category.slug}`,
                 changeFrequency: 'weekly',
                 priority: 0.6,
             });
@@ -63,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // Fallback to basic routes if API fails
         return [
             {
-                url: baseUrl,
+                url: APP_URL,
                 lastModified: new Date(),
             }
         ];

@@ -1,120 +1,110 @@
-# VorionMart - Local Marketplace Platform
+# Markexo
 
-A modern e-commerce platform for local marketplace business by **Vorion Nexus Technology**.
+Marketplace application with a Django API (`backend/`) and a Next.js storefront/admin (`frontend/`).
 
-## Tech Stack
+## Stack
 
-- **Backend**: Django 4.2 + Django REST Framework
-- **Frontend**: Next.js 14 + React 18 + TypeScript
-- **Styling**: Tailwind CSS
-- **Database**: MySQL (SQLite for development)
+- Backend: Django 4.2, Django REST Framework, MySQL or SQLite
+- Frontend: Next.js 14, React 18, TypeScript
+- Styling: Tailwind CSS
 
-## Features
+## Development
 
-### Customer Side
-- 🛍️ Product catalog with filters and search
-- 🛒 Shopping cart with quantity management
-- 💳 Multi-step checkout flow
-- 📦 Order tracking
-
-### Admin Dashboard
-- 📊 Dashboard with revenue, orders, commission stats
-- 📋 Order management with status updates
-- 📦 Product management (CRUD)
-- 🏪 Partner shop management
-- 🖼️ Banner management
-- ⚙️ Site settings
-
-## Project Structure
-
-```
-VorionMart/
-├── backend/           # Django Backend
-│   ├── VorionMart/       # Django project settings
-│   ├── api/           # REST API app
-│   └── manage.py
-│
-└── frontend/          # Next.js Frontend
-    ├── src/
-    │   ├── app/       # Pages (App Router)
-    │   ├── components/# React components
-    │   └── lib/       # Utilities & API
-    └── package.json
-```
-
-## Getting Started
-
-### Backend Setup
+### Backend
 
 ```bash
 cd backend
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+venv\Scripts\activate
 pip install -r requirements.txt
-
-# Run migrations
 python manage.py migrate
-
-# Create superuser
-python manage.py createsuperuser
-
-# Run server
 python manage.py runserver
 ```
 
-### Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Run development server
 npm run dev
 ```
 
-### Environment Variables
+## Production Environment
 
-Create `.env` file in backend folder:
+### Backend
+
+Use [backend/.env.example](/c:/Users/USER/Desktop/markexo/backend/.env.example) as the template for [backend/.env](/c:/Users/USER/Desktop/markexo/backend/.env).
+
+Required settings:
+
+- `SECRET_KEY`
+- `ALLOWED_HOSTS`
+- Database settings when not using SQLite
+
+Important optional settings:
+
+- `CORS_ALLOWED_ORIGINS`
+- `CSRF_TRUSTED_ORIGINS`
+- `SERVE_MEDIA_FILES`
+- Email SMTP settings
+
+### Frontend
+
+Use [frontend/.env.production.example](/c:/Users/USER/Desktop/markexo/frontend/.env.production.example) as the template for your production env file.
+
+Required settings:
+
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_API_URL`
+
+Optional:
+
+- `NEXT_PUBLIC_MEDIA_URL`
+
+## Production Deploy Steps
+
+### Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py collectstatic --noinput
+gunicorn markexo.wsgi:application --bind 0.0.0.0:8000
 ```
-SECRET_KEY=your-secret-key
-DEBUG=True
-DB_ENGINE=django.db.backends.mysql
-DB_NAME=VorionMart
-DB_USER=your-db-user
-DB_PASSWORD=your-db-password
-DB_HOST=localhost
-DB_PORT=3306
+
+Notes:
+
+- Static files are served by WhiteNoise.
+- Media files should be served by your reverse proxy or object storage. Set `SERVE_MEDIA_FILES=True` only if you intentionally want Django to serve `/media/`.
+- If Django runs behind Nginx, Caddy, a load balancer, or a platform proxy, keep `USE_SECURE_PROXY_SSL_HEADER=True`.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run build
+npm run start
 ```
 
-Create `.env.local` file in frontend folder:
+Notes:
+
+- Next.js is configured with `output: "standalone"` for production-friendly deployment.
+- Remote image hosts are derived from the configured app, API, and media URLs.
+
+## Checks
+
+Backend:
+
+```bash
+cd backend
+python manage.py check --deploy
 ```
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+
+Frontend:
+
+```bash
+cd frontend
+npm run build
 ```
-
-## URLs
-
-- **Frontend**: http://localhost:3000
-- **Admin Dashboard**: http://localhost:3000/admin
-- **Django Admin**: http://localhost:8000/admin
-- **API**: http://localhost:8000/api
-
-## API Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/products/` | List products |
-| `GET /api/products/{slug}/` | Product detail |
-| `GET /api/categories/` | List categories |
-| `GET /api/shops/` | List shops |
-| `POST /api/orders/create/` | Create order |
-| `GET /api/admin/stats/` | Dashboard stats |
-
-## License
-
-© 2024 Vorion Nexus Technology. All rights reserved.
