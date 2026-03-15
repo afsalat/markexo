@@ -4,6 +4,7 @@ Serializers for VorionMart API.
 import logging
 
 from django.contrib.auth.models import User, Group, Permission
+from django.db import IntegrityError, transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
@@ -21,6 +22,27 @@ def get_image_url(request, image_field):
             return request.build_absolute_uri(image_field.url)
         return image_field.url
     return None
+
+
+def normalize_email_value(email):
+    return (email or '').strip().lower()
+
+
+def users_for_email(email):
+    normalized_email = normalize_email_value(email)
+    if not normalized_email:
+        return User.objects.none()
+    return User.objects.filter(email__iexact=normalized_email).order_by(
+        '-is_active', '-is_staff', '-date_joined', '-id'
+    )
+
+
+def email_exists(email, exclude_user=None):
+    queryset = users_for_email(email)
+    if exclude_user is not None:
+        exclude_id = exclude_user.pk if hasattr(exclude_user, 'pk') else exclude_user
+        queryset = queryset.exclude(pk=exclude_id)
+    return queryset.exists()
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -71,6 +93,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         groups_data = validated_data.pop('groups', [])
+        email = normalize_email_value(validated_data.get('email'))
+        if email and email_exists(email):
+            raise serializers.ValidationError({'email': 'Email already registered.'})
+        if email:
+            validated_data['email'] = email
         if 'is_staff' not in validated_data:
             validated_data['is_staff'] = True
         user = User.objects.create_user(**validated_data)
@@ -81,6 +108,13 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         groups_data = validated_data.pop('groups', None)
         password = validated_data.pop('password', None)
+        email = validated_data.get('email')
+
+        if email is not None:
+            email = normalize_email_value(email)
+            if email_exists(email, exclude_user=instance):
+                raise serializers.ValidationError({'email': 'Email already registered.'})
+            validated_data['email'] = email
         
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -573,24 +607,31 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             del self.fields['username']
     
     def validate(self, attrs):
-        email = attrs.get('email')
+        email = normalize_email_value(attrs.get('email'))
         password = attrs.get('password')
         
         if not email or not password:
             raise serializers.ValidationError('Email and password are required.')
         
-        # Find user by email
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        candidates = list(users_for_email(email))
+        if not candidates:
             raise serializers.ValidationError('No account found with this email.')
-        
-        # Check password
-        if not user.check_password(password):
+
+        matching_users = [user for user in candidates if user.check_password(password)]
+        if not matching_users:
             raise serializers.ValidationError('Invalid password.')
-        
-        if not user.is_active:
+
+        active_users = [user for user in matching_users if user.is_active]
+        if not active_users:
             raise serializers.ValidationError('User account is disabled.')
+
+        user = active_users[0]
+        if len(candidates) > 1:
+            logger.warning(
+                "Multiple users found for email %s; authenticated user id=%s",
+                email,
+                user.id,
+            )
         
         # staff restriction removed intentionally to allow customer login
         
@@ -632,9 +673,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = ('email', 'first_name', 'last_name', 'password', 'password_confirm')
         
     def validate(self, data):
+        data['email'] = normalize_email_value(data.get('email'))
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError("Passwords do not match.")
-        if User.objects.filter(email=data['email']).exists():
+        if email_exists(data['email']):
             raise serializers.ValidationError("Email already registered.")
         return data
 
@@ -669,56 +711,65 @@ class PartnerRegistrationSerializer(serializers.Serializer):
     shop_phone = serializers.CharField(max_length=20)
 
     def validate(self, data):
+        data['email'] = normalize_email_value(data.get('email'))
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
-        if User.objects.filter(email=data['email']).exists():
+        if email_exists(data['email']):
             raise serializers.ValidationError({"email": "Email already registered."})
-        if Shop.objects.filter(email=data['email']).exists():
+        if Shop.objects.filter(email__iexact=data['email']).exists():
             raise serializers.ValidationError({"email": "A shop with this email already exists."})
         if Shop.objects.filter(phone=data['shop_phone']).exists():
             raise serializers.ValidationError({"shop_phone": "A shop with this phone number already exists."})
         return data
 
+    @transaction.atomic
     def create(self, validated_data):
-        from django.contrib.auth.models import Group
-        
-        # Create the user
         user = User.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
             password=validated_data['password'],
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
-            is_staff=False  # Will be set to True when admin approves
+            is_staff=False
         )
-        
-        # Assign Partner role if it exists
+
         try:
             partner_group = Group.objects.get(name='Partner')
             user.groups.add(partner_group)
         except Group.DoesNotExist:
-            pass  # Role doesn't exist yet, user just won't have special permissions
-        
+            pass
+
         shop_name = validated_data.get('shop_name')
         if not shop_name:
             shop_name = f"{validated_data.get('first_name', '')}'s Shop".strip()
             if not shop_name or shop_name == "'s Shop":
                 shop_name = f"Shop-{user.email}"
 
-        # Create the shop
-        shop = Shop.objects.create(
-            name=shop_name,
-            description=validated_data.get('shop_description', ''),
-            owner=user,
-            email=validated_data['email'],
-            phone=validated_data['shop_phone'],
-            address=validated_data.get('shop_address', ''),
-            city=validated_data['shop_city'],
-            commission_rate=50.00,
-            is_active=True,
-            approval_status='pending'
-        )
-        
+        try:
+            shop = Shop.objects.create(
+                name=shop_name,
+                description=validated_data.get('shop_description', ''),
+                owner=user,
+                email=validated_data['email'],
+                phone=validated_data['shop_phone'],
+                address=validated_data.get('shop_address', ''),
+                city=validated_data['shop_city'],
+                commission_rate=50.00,
+                is_active=True,
+                approval_status='pending'
+            )
+        except IntegrityError as exc:
+            message = str(exc).lower()
+            if 'api_shop.email' in message:
+                raise serializers.ValidationError({"email": "A shop with this email already exists."})
+            if 'api_shop.phone' in message:
+                raise serializers.ValidationError({"shop_phone": "A shop with this phone number already exists."})
+            if 'api_shop.slug' in message:
+                raise serializers.ValidationError({"shop_name": "A similar shop name already exists. Please try a different shop name."})
+            if 'auth_user.username' in message or 'auth_user.email' in message:
+                raise serializers.ValidationError({"email": "Email already registered."})
+            raise serializers.ValidationError({"detail": "Unable to create partner account right now. Please try again."})
+
         return {'user': user, 'shop': shop}
 
 
@@ -783,14 +834,14 @@ class AdminPartnerSerializer(serializers.Serializer):
         from django.contrib.auth.models import Group
         
         # Extract User Data
-        email = validated_data.get('email')
+        email = normalize_email_value(validated_data.get('email'))
         password = validated_data.get('password')
         first_name = validated_data.get('first_name')
         last_name = validated_data.get('last_name', '')
         is_active = validated_data.get('is_active', True)
 
         # Check existing
-        if User.objects.filter(email=email).exists():
+        if email_exists(email):
             raise serializers.ValidationError({"email": "Email already registered."})
 
         # Create User
@@ -842,8 +893,12 @@ class AdminPartnerSerializer(serializers.Serializer):
         return user
 
     def update(self, instance, validated_data):
+        email = normalize_email_value(validated_data.get('email', instance.email))
+        if email_exists(email, exclude_user=instance):
+            raise serializers.ValidationError({"email": "Email already registered."})
+
         # Update User
-        instance.email = validated_data.get('email', instance.email)
+        instance.email = email
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.is_active = validated_data.get('is_active', instance.is_active)

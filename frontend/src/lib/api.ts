@@ -48,6 +48,9 @@ export interface Product {
     images: { id: number; image: string; is_primary: boolean }[];
     is_featured: boolean;
     is_active: boolean;
+    rating: number;
+    review_count: number;
+    sold_count?: number;
 }
 
 export interface Banner {
@@ -406,7 +409,24 @@ export async function registerPartner(partnerData: any) {
     });
     if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(JSON.stringify(errorData) || 'Partner registration failed');
+        let errorMessage = 'Partner registration failed';
+
+        if (typeof errorData === 'object' && errorData !== null) {
+            const firstErrorKey = Object.keys(errorData)[0];
+            if (firstErrorKey && Array.isArray(errorData[firstErrorKey])) {
+                errorMessage = errorData[firstErrorKey][0];
+            } else if (typeof errorData[firstErrorKey] === 'string') {
+                errorMessage = errorData[firstErrorKey];
+            } else if (errorData.detail) {
+                errorMessage = errorData.detail;
+            } else if (errorData.message) {
+                errorMessage = errorData.message;
+            } else if (errorData.non_field_errors?.[0]) {
+                errorMessage = errorData.non_field_errors[0];
+            }
+        }
+
+        throw new Error(errorMessage);
     }
     return res.json();
 }

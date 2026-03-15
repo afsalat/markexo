@@ -24,122 +24,154 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
         });
     };
 
+    const getStatusColor = (status: string) => {
+        if (status === 'delivered') return 'bg-green-500/10 text-green-400 border border-green-500/20';
+        if (status === 'cancelled') return 'bg-red-500/10 text-red-400 border border-red-500/20';
+        return 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20';
+    };
+
     return (
-        <div className="animate-fade-in space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" data-aos="fade-down">
-                <h1 className="font-display text-2xl font-bold text-white">Partner Dashboard</h1>
-                <span className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-sm font-medium">
+        <div className="animate-fade-in min-w-0 space-y-6">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center" data-aos="fade-down">
+                <h1 className="font-display text-2xl font-bold text-white sm:text-3xl">Partner Dashboard</h1>
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 sm:px-4 sm:text-sm">
                     You earn 30% of profit per sale
                 </span>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-aos="fade-up">
-                {/* My Earnings - Hero Card */}
-                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-900/20 rounded-2xl p-6 shadow-lg border border-emerald-500/30 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <DollarSign size={80} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" data-aos="fade-up">
+                <div className="group relative min-w-0 overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/20 to-emerald-900/20 p-4 shadow-lg sm:col-span-2 sm:p-6 xl:col-span-2">
+                    <div className="absolute right-0 top-0 p-3 opacity-10 transition-opacity group-hover:opacity-20 sm:p-4">
+                        <DollarSign size={64} className="sm:h-20 sm:w-20" />
                     </div>
                     <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="bg-emerald-500 rounded-lg p-2 text-white">
-                                <DollarSign size={20} />
+                        <div className="mb-2 flex items-center gap-2">
+                            <div className="rounded-lg bg-emerald-500 p-2 text-white">
+                                <DollarSign size={18} />
                             </div>
-                            <span className="text-emerald-300 font-medium">My Earnings</span>
+                            <span className="font-medium text-emerald-300">My Earnings</span>
                         </div>
-                        <p className="text-3xl font-bold text-white">{formatCurrency(stats.my_earnings)}</p>
-                        <p className="text-emerald-400 text-sm mt-1">Total Commission</p>
+                        <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.my_earnings)}</p>
+                        <p className="mt-1 text-sm text-emerald-400">Total Commission</p>
                     </div>
                 </div>
 
-                {/* Total Sales */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-                            <TrendingUp className="text-blue-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 sm:h-12 sm:w-12">
+                            <TrendingUp className="text-blue-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{formatCurrency(stats.total_sales)}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.total_sales)}</p>
                     <p className="text-sm text-silver-500">Shop Sales</p>
                 </div>
 
-                {/* Total Withdrawn */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-                            <DollarSign className="text-blue-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 sm:h-12 sm:w-12">
+                            <DollarSign className="text-blue-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{formatCurrency(stats.total_withdrawn || 0)}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.total_withdrawn || 0)}</p>
                     <p className="text-sm text-silver-500">Total Withdrawn</p>
                 </div>
 
-                {/* Wallet (Available) */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
-                            <TrendingUp className="text-emerald-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 sm:h-12 sm:w-12">
+                            <TrendingUp className="text-emerald-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{formatCurrency(stats.pending_amount || 0)}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.pending_amount || 0)}</p>
                     <p className="text-sm text-silver-500">Wallet Balance</p>
                 </div>
 
-                {/* Total Products */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
-                            <Package className="text-purple-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 sm:h-12 sm:w-12">
+                            <Package className="text-purple-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.total_products}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.total_products}</p>
                     <p className="text-sm text-silver-500">Active Products</p>
                 </div>
 
-                {/* Total Orders */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
-                            <ShoppingBag className="text-orange-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 sm:h-12 sm:w-12">
+                            <ShoppingBag className="text-orange-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.total_orders}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.total_orders}</p>
                     <p className="text-sm text-silver-500">Total Orders</p>
                 </div>
 
-                {/* Delivered Orders */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
-                            <Package className="text-green-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-green-500/20 bg-green-500/10 sm:h-12 sm:w-12">
+                            <Package className="text-green-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.delivered_orders}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.delivered_orders}</p>
                     <p className="text-sm text-silver-500">Delivered Orders</p>
                 </div>
 
-                {/* Returned Orders */}
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                            <Package className="text-red-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 sm:h-12 sm:w-12">
+                            <Package className="text-red-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.returned_orders}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.returned_orders}</p>
                     <p className="text-sm text-silver-500">Returned Orders</p>
                 </div>
             </div>
 
-            {/* Recent Orders Section */}
-            <div className="bg-dark-800 rounded-3xl border border-dark-700 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
-                <div className="p-6 border-b border-dark-700 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-white font-display">Recent Sales</h2>
+            <div className="overflow-hidden rounded-3xl border border-dark-700 bg-dark-800" data-aos="fade-up" data-aos-delay="100">
+                <div className="flex flex-col gap-2 border-b border-dark-700 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <h2 className="font-display text-lg font-bold text-white sm:text-xl">Recent Sales</h2>
                     <span className="text-sm text-silver-500">Last 10 orders</span>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+
+                <div className="space-y-3 p-4 md:hidden">
+                    {stats.recent_orders.length > 0 ? (
+                        stats.recent_orders.map((order) => (
+                            <div key={order.id} className="rounded-2xl border border-dark-700 bg-dark-700/40 p-4">
+                                <div className="mb-3 flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-white">{order.order_id}</p>
+                                        <p className="truncate text-xs text-silver-400">{order.customer?.name || 'Guest'}</p>
+                                    </div>
+                                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p className="text-silver-500">Date</p>
+                                        <p className="flex items-center gap-2 text-silver-300">
+                                            <Clock size={14} />
+                                            {formatDate(order.created_at)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-silver-500">Amount</p>
+                                        <p className="font-medium text-white">{formatCurrency(order.total_amount)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="rounded-2xl border border-dark-700 bg-dark-700/30 p-4 text-sm text-silver-500">
+                            No orders found yet. Share your shop link to start selling.
+                        </p>
+                    )}
+                </div>
+
+                <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full min-w-[720px] border-collapse text-left">
                         <thead>
-                            <tr className="border-b border-dark-700 text-silver-400 text-sm">
+                            <tr className="border-b border-dark-700 text-sm text-silver-400">
                                 <th className="p-4 font-medium">Order ID</th>
                                 <th className="p-4 font-medium">Date</th>
                                 <th className="p-4 font-medium">Customer</th>
@@ -150,19 +182,18 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
                         <tbody className="divide-y divide-dark-700 text-silver-200">
                             {stats.recent_orders.length > 0 ? (
                                 stats.recent_orders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-dark-700/50 transition-colors">
+                                    <tr key={order.id} className="transition-colors hover:bg-dark-700/50">
                                         <td className="p-4 font-medium text-white">{order.order_id}</td>
-                                        <td className="p-4 text-sm text-silver-400 flex items-center gap-2">
-                                            <Clock size={14} />
-                                            {formatDate(order.created_at)}
+                                        <td className="p-4 text-sm text-silver-400">
+                                            <span className="flex items-center gap-2">
+                                                <Clock size={14} />
+                                                {formatDate(order.created_at)}
+                                            </span>
                                         </td>
                                         <td className="p-4">{order.customer?.name || 'Guest'}</td>
                                         <td className="p-4 font-medium">{formatCurrency(order.total_amount)}</td>
                                         <td className="p-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${order.status === 'delivered' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                order.status === 'cancelled' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                    'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                                }`}>
+                                            <span className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
                                         </td>
@@ -171,7 +202,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
                             ) : (
                                 <tr>
                                     <td colSpan={5} className="p-8 text-center text-silver-500">
-                                        No orders found yet. Share your shop link to start selling!
+                                        No orders found yet. Share your shop link to start selling.
                                     </td>
                                 </tr>
                             )}

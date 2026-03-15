@@ -3,7 +3,7 @@ API Views for VorionMart marketplace.
 """
 import logging
 
-from rest_framework import viewsets, generics, status, permissions
+from rest_framework import viewsets, generics, status, permissions, serializers
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,6 +36,38 @@ from .serializers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def is_partner_user(user):
+    return bool(
+        user and
+        user.is_authenticated and
+        user.groups.filter(name='Partner').exists()
+    )
+
+
+def get_partner_catalog_shops():
+    return Shop.objects.all()
+
+
+def get_partner_products(user):
+    if not user or not user.is_authenticated:
+        return Product.objects.none()
+
+    return Product.objects.filter(created_by=user).distinct()
+
+
+def get_partner_payout_shops(user):
+    if not user or not user.is_authenticated:
+        return Shop.objects.none()
+
+    product_shop_ids = get_partner_products(user).exclude(shop__isnull=True).values_list('shop_id', flat=True)
+
+    return Shop.objects.filter(
+        Q(id__in=product_shop_ids) |
+        Q(owner=user) |
+        Q(email__iexact=user.email)
+    ).distinct()
 
 
 # ============== Public API Views ==============
@@ -609,7 +641,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'me':
-            return [IsAuthenticated(), IsAdminUser()]
+            return [IsAuthenticated()]
         return super().get_permissions()
 
     @action(detail=False, methods=['GET'])
@@ -1242,9 +1274,9 @@ class PartnerDashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        shops = Shop.objects.filter(owner=request.user)
+        products = get_partner_products(request.user)
+        payout_shops = get_partner_payout_shops(request.user)
 
-        # Get all order items for products created by the user
         items = OrderItem.objects.filter(
             product__created_by=request.user
         ).distinct()
@@ -1270,26 +1302,64 @@ class PartnerDashboardStatsView(APIView):
         raw_earnings = earnings_agg['earnings'] or Decimal('0.00')
         my_earnings = raw_earnings / Decimal('100.00')
 
-        # Recent Orders
         recent_order_ids = items.values_list('order', flat=True).distinct()[:10]
         recent_orders = Order.objects.filter(id__in=recent_order_ids).order_by('-created_at')
 
-        # Total products count - only count products created by this user
-        total_products = Product.objects.filter(
-            created_by=request.user
-        ).count()
+        total_products = products.count()
+        requested_amount = PayoutRequest.objects.filter(shop__in=payout_shops).exclude(
+            status='rejected'
+        ).aggregate(p=Sum('amount'))['p'] or Decimal('0.00')
+        total_withdrawn = PayoutRequest.objects.filter(
+            shop__in=payout_shops,
+            status='paid'
+        ).aggregate(p=Sum('amount'))['p'] or Decimal('0.00')
 
         return Response({
             'total_sales': total_sales,
             'my_earnings': my_earnings,
             'total_products': total_products,
-            'pending_amount': my_earnings - (PayoutRequest.objects.filter(shop__in=shops).exclude(status='rejected').aggregate(p=Sum('amount'))['p'] or Decimal('0.00')),
-            'total_withdrawn': PayoutRequest.objects.filter(shop__in=shops, status='paid').aggregate(p=Sum('amount'))['p'] or Decimal('0.00'),
+            'pending_amount': my_earnings - requested_amount,
+            'total_withdrawn': total_withdrawn,
             'total_orders': items.values('order').distinct().count(),
             'delivered_orders': items.filter(order__status='delivered').values('order').distinct().count(),
             'returned_orders': items.filter(order__status='returned').values('order').distinct().count(),
             'recent_orders': OrderSerializer(recent_orders, many=True, context={'request': request}).data
         })
+
+
+class PartnerShopListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        shops = get_partner_catalog_shops().order_by('name')
+        serializer = ShopSerializer(shops, many=True, context={'request': request})
+        return Response(serializer.data)
+
+
+class PartnerProductListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        queryset = get_partner_products(request.user).order_by('-created_at')
+
+        shop = request.query_params.get('shop')
+        if shop:
+            queryset = queryset.filter(shop_id=shop)
+
+        category = request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category_id=category)
+
+        status = request.query_params.get('approval_status')
+        if status:
+            queryset = queryset.filter(approval_status=status)
+
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        serializer = ProductSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
 class PayoutRequestViewSet(viewsets.ModelViewSet):
     """
@@ -1303,21 +1373,17 @@ class PayoutRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_staff or user.is_superuser:
+        if user.is_superuser or (user.is_staff and not is_partner_user(user)):
             return PayoutRequest.objects.all().order_by('-requested_at')
-        
-        # For partners, filter by their shop
-        # Assuming user owner has at least one shop, or we find shops owned by user
-        if hasattr(user, 'shops'):
-            return PayoutRequest.objects.filter(shop__owner=user).order_by('-requested_at')
-        return PayoutRequest.objects.none()
+
+        partner_shops = get_partner_payout_shops(user)
+        return PayoutRequest.objects.filter(shop__in=partner_shops).order_by('-requested_at')
 
     def perform_create(self, serializer):
         user = self.request.user
-        # Auto-assign shop based on user
-        shop = Shop.objects.filter(owner=user).first()
+        shop = get_partner_payout_shops(user).first()
         if not shop:
-            raise serializers.ValidationError({"error": "You do not have a shop assigned."})
+            raise serializers.ValidationError({"error": "Create a product with a shop selected before requesting a payout."})
         
         serializer.save(
             shop=shop,
@@ -1327,7 +1393,7 @@ class PayoutRequestViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # Only admins can update status/transaction_id
         user = self.request.user
-        if not user.is_staff and not user.is_superuser:
+        if not user.is_superuser and not (user.is_staff and not is_partner_user(user)):
             # If partner tries to update, prevent status change
             if 'status' in serializer.validated_data or 'transaction_id' in serializer.validated_data:
                 raise serializers.ValidationError({"error": "You cannot change the status of a payout request."})

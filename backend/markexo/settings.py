@@ -3,19 +3,23 @@ Django settings for VorionMart project.
 """
 from datetime import timedelta
 from pathlib import Path
+import os
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = False
+def env_list(name, default):
+    value = os.environ.get(name)
+    if value:
+        return [item.strip() for item in value.split(',') if item.strip()]
+    return default
+
+
+APP_URL = os.environ.get('APP_URL', 'https://vorionmart.com').rstrip('/')
+
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    'vorionmart.com',
-    'www.vorionmart.com',
-    'api.vorionmart.com',
-]
+ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', ['vorionmart.com', 'www.vorionmart.com'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -92,8 +96,8 @@ SERVE_MEDIA_FILES = False
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = ['https://vorionmart.com', 'https://www.vorionmart.com']
-CSRF_TRUSTED_ORIGINS = ['https://vorionmart.com', 'https://www.vorionmart.com']
+CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS', [APP_URL, 'https://www.vorionmart.com'])
+CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', [APP_URL, 'https://www.vorionmart.com'])
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -139,14 +143,14 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
-USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_HOST = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SESSION_COOKIE_SAMESITE = 'Lax'

@@ -19,7 +19,7 @@ export default function PartnerShopsPage() {
         try {
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            const shopsRes = await fetch(`${API_BASE_URL}/admin/shops/`, { headers });
+            const shopsRes = await fetch(`${API_BASE_URL}/partner/shops/`, { headers });
 
             if (shopsRes.ok) {
                 const data = await shopsRes.json();

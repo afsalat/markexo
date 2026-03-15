@@ -22,7 +22,8 @@ from .views import (
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
-    PartnerDashboardStatsView, AdminPartnerViewSet, PayoutRequestViewSet
+    PartnerDashboardStatsView, PartnerShopListView, PartnerProductListView,
+    AdminPartnerViewSet, PayoutRequestViewSet
 )
 
 # Public router
@@ -66,6 +67,11 @@ urlpatterns = [
     path('auth/register-partner/', RegisterPartnerView.as_view(), name='register-partner'),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Partner API
+    path('partner/stats/', PartnerDashboardStatsView.as_view(), name='partner-stats'),
+    path('partner/shops/', PartnerShopListView.as_view(), name='partner-shops'),
+    path('partner/products/', PartnerProductListView.as_view(), name='partner-products'),
 
     # Admin API
     path('admin/stats/', AdminDashboardStatsView.as_view(), name='admin-stats'),

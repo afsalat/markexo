@@ -6,6 +6,25 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 
 
+def generate_unique_slug(model_class, name, instance_id=None, max_length=200):
+    base_slug = slugify(name) or 'item'
+    base_slug = base_slug[:max_length].strip('-') or 'item'
+    slug = base_slug
+    counter = 2
+
+    while True:
+        queryset = model_class.objects.filter(slug=slug)
+        if instance_id is not None:
+            queryset = queryset.exclude(pk=instance_id)
+        if not queryset.exists():
+            return slug
+
+        suffix = f"-{counter}"
+        trimmed_base = base_slug[: max_length - len(suffix)].rstrip('-') or 'item'
+        slug = f"{trimmed_base}{suffix}"
+        counter += 1
+
+
 class Shop(models.Model):
     """Partner shop/vendor model."""
     name = models.CharField(max_length=200)
@@ -35,7 +54,7 @@ class Shop(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = generate_unique_slug(Shop, self.name, instance_id=self.pk, max_length=200)
         super().save(*args, **kwargs)
 
     def __str__(self):

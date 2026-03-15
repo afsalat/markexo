@@ -1,5 +1,5 @@
 import {
-    ShoppingCart, TrendingUp, DollarSign, AlertCircle, Eye, Wallet
+    ShoppingCart, TrendingUp, DollarSign, AlertCircle, Wallet
 } from 'lucide-react';
 import { DashboardStats } from '@/types/admin';
 import DashboardCharts from './DashboardCharts';
@@ -12,6 +12,14 @@ interface DashboardTabProps {
 export default function DashboardTab({ stats, setActiveTab }: DashboardTabProps) {
     const formatNumber = (num: number) => {
         return new Intl.NumberFormat('en-IN').format(num);
+    };
+
+    const formatCurrency = (num: number) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0
+        }).format(num);
     };
 
     const formatDate = (dateString: string) => {
@@ -36,66 +44,66 @@ export default function DashboardTab({ stats, setActiveTab }: DashboardTabProps)
     };
 
     return (
-        <div className="animate-fade-in">
-            <h1 className="font-display text-2xl font-bold text-white mb-6" data-aos="fade-right">Dashboard</h1>
+        <div className="animate-fade-in min-w-0 space-y-6">
+            <h1 className="mb-5 font-display text-2xl font-bold text-white sm:mb-6 sm:text-3xl" data-aos="fade-right">
+                Dashboard
+            </h1>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8" data-aos="fade-up">
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-                            <ShoppingCart className="text-blue-400" size={24} />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5" data-aos="fade-up">
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10 sm:h-12 sm:w-12">
+                            <ShoppingCart className="text-blue-400" size={22} />
                         </div>
-                        <span className="flex items-center gap-1 text-green-400 text-sm font-medium">
+                        <span className="flex items-center gap-1 text-xs font-medium text-green-400 sm:text-sm">
                             <TrendingUp size={16} /> Live
                         </span>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.total_orders}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.total_orders}</p>
                     <p className="text-sm text-silver-500">Total Orders</p>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center border border-green-500/20">
-                            <DollarSign className="text-green-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-green-500/20 bg-green-500/10 sm:h-12 sm:w-12">
+                            <DollarSign className="text-green-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">₹{formatNumber(stats.total_revenue)}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.total_revenue)}</p>
                     <p className="text-sm text-silver-500">Total Revenue</p>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
-                            <Wallet className="text-emerald-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 sm:h-12 sm:w-12">
+                            <Wallet className="text-emerald-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">₹{formatNumber(stats.total_profit)}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.total_profit)}</p>
                     <p className="text-sm text-silver-500">Total Profit</p>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
-                            <TrendingUp className="text-purple-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-purple-500/20 bg-purple-500/10 sm:h-12 sm:w-12">
+                            <TrendingUp className="text-purple-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.total_products}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.total_products}</p>
                     <p className="text-sm text-silver-500">Total Products</p>
                 </div>
 
-                <div className="bg-dark-800 rounded-2xl p-6 shadow-sm border border-dark-700">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
-                            <AlertCircle className="text-orange-400" size={24} />
+                <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 sm:h-12 sm:w-12">
+                            <AlertCircle className="text-orange-400" size={22} />
                         </div>
                     </div>
-                    <p className="text-2xl font-bold text-white">{stats.pending_orders}</p>
+                    <p className="break-words text-2xl font-bold text-white sm:text-3xl">{stats.pending_orders}</p>
                     <p className="text-sm text-silver-500">Pending Orders</p>
                 </div>
             </div>
 
-            {/* Dashboard Charts */}
             <div data-aos="fade-up" data-aos-delay="100">
                 <DashboardCharts
                     revenueHistory={stats.revenue_history}
@@ -103,39 +111,86 @@ export default function DashboardTab({ stats, setActiveTab }: DashboardTabProps)
                 />
             </div>
 
-            {/* Recent Orders */}
-            <div className="bg-dark-800 rounded-2xl shadow-sm overflow-hidden border border-dark-700" data-aos="fade-up" data-aos-delay="200">
-                <div className="p-6 border-b border-dark-700 flex justify-between items-center">
+            <div
+                className="overflow-hidden rounded-2xl border border-dark-700 bg-dark-800 shadow-sm"
+                data-aos="fade-up"
+                data-aos-delay="200"
+            >
+                <div className="flex flex-col gap-3 border-b border-dark-700 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                     <h2 className="font-display text-lg font-bold text-white">Recent Orders</h2>
-                    <button onClick={() => setActiveTab('orders')} className="text-accent-500 text-sm font-medium hover:text-accent-400 hover:underline">
+                    <button
+                        onClick={() => setActiveTab('orders')}
+                        className="w-full text-left text-sm font-medium text-accent-500 hover:text-accent-400 hover:underline sm:w-auto"
+                    >
                         View All
                     </button>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
+
+                <div className="space-y-3 p-4 md:hidden">
+                    {stats.recent_orders.length > 0 ? (
+                        stats.recent_orders.map((order) => (
+                            <div key={order.id} className="rounded-2xl border border-dark-700 bg-dark-700/40 p-4">
+                                <div className="mb-3 flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-white">{order.order_id}</p>
+                                        <p className="truncate text-xs text-silver-400">{order.customer?.name || 'Guest'}</p>
+                                    </div>
+                                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
+                                        {order.status}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <p className="text-silver-500">Amount</p>
+                                        <p className="font-semibold text-white">{formatCurrency(order.total_amount)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-silver-500">Date</p>
+                                        <p className="text-silver-300">{formatDate(order.created_at)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="rounded-2xl border border-dark-700 bg-dark-700/30 p-4 text-sm text-silver-500">
+                            No recent orders yet.
+                        </p>
+                    )}
+                </div>
+
+                <div className="hidden overflow-x-auto md:block">
+                    <table className="w-full min-w-[720px]">
                         <thead className="bg-dark-700/50">
                             <tr>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Order ID</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Customer</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Amount</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Status</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Order ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Customer</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Amount</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Date</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-dark-700">
-                            {stats.recent_orders.map((order) => (
-                                <tr key={order.id} className="hover:bg-dark-700 highlight-transition">
-                                    <td className="px-6 py-4 font-medium text-white">{order.order_id}</td>
-                                    <td className="px-6 py-4 text-silver-400">{order.customer.name}</td>
-                                    <td className="px-6 py-4 font-semibold text-white">₹{formatNumber(order.total_amount)}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize border ${getStatusColor(order.status)}`}>
-                                            {order.status}
-                                        </span>
+                            {stats.recent_orders.length > 0 ? (
+                                stats.recent_orders.map((order) => (
+                                    <tr key={order.id} className="highlight-transition hover:bg-dark-700">
+                                        <td className="px-6 py-4 font-medium text-white">{order.order_id}</td>
+                                        <td className="px-6 py-4 text-silver-400">{order.customer?.name || 'Guest'}</td>
+                                        <td className="px-6 py-4 font-semibold text-white">{formatCurrency(order.total_amount)}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-silver-500">{formatDate(order.created_at)}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-10 text-center text-silver-500">
+                                        No recent orders yet.
                                     </td>
-                                    <td className="px-6 py-4 text-silver-500">{formatDate(order.created_at)}</td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

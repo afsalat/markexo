@@ -64,7 +64,7 @@ export default function PartnerMyPayouts() {
                 }
 
                 // 2. Fetch Stats
-                const statsUrl = `${API_BASE_URL}/admin/partner-stats/`;
+                const statsUrl = `${API_BASE_URL}/partner/stats/`;
                 console.log("Fetching Stats:", statsUrl);
 
                 const statsRes = await fetch(statsUrl, {

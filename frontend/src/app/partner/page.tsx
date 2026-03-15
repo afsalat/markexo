@@ -18,7 +18,7 @@ export default function PartnerDashboardPage() {
         const fetchStats = async () => {
             if (!token) return;
             try {
-                const res = await fetch(`${API_BASE_URL}/admin/partner-stats/`, {
+                const res = await fetch(`${API_BASE_URL}/partner/stats/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) throw new Error('Failed to fetch dashboard data');
@@ -45,7 +45,7 @@ export default function PartnerDashboardPage() {
 
     if (error || !stats) {
         return (
-            <div className="bg-dark-800 rounded-3xl p-8 border border-dark-700 shadow-sm">
+            <div className="bg-dark-800 rounded-3xl p-5 sm:p-8 border border-dark-700 shadow-sm">
                 <div className="text-center max-w-md mx-auto">
                     <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,16 +55,16 @@ export default function PartnerDashboardPage() {
                     <h2 className="text-2xl font-bold text-white mb-3">Welcome Partner!</h2>
                     <p className="text-silver-400 mb-6">
                         {error === 'Failed to load dashboard.'
-                            ? "Your shop hasn't been set up yet. Please contact the administrator to assign a shop to your account."
-                            : error || 'No shop data found. Please contact support to set up your shop.'}
+                            ? "We couldn't load your partner dashboard right now."
+                            : error || 'No partner activity found yet.'}
                     </p>
                     <div className="bg-dark-700/50 rounded-xl p-4 text-left">
-                        <h3 className="text-sm font-semibold text-emerald-400 mb-2">Setup Instructions:</h3>
+                        <h3 className="text-sm font-semibold text-emerald-400 mb-2">What to check:</h3>
                         <ol className="text-sm text-silver-400 space-y-2">
-                            <li>1. Contact the administrator</li>
-                            <li>2. Provide your account email</li>
-                            <li>3. Admin will assign your shop</li>
-                            <li>4. Refresh this page to see your dashboard</li>
+                            <li>1. Confirm this partner account can access the portal</li>
+                            <li>2. Add or review products under this user</li>
+                            <li>3. Refresh the page after changes are saved</li>
+                            <li>4. Contact support if the dashboard still stays empty</li>
                         </ol>
                     </div>
                 </div>

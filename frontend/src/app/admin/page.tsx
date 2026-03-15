@@ -212,11 +212,11 @@ export default function AdminPage() {
     };
 
     return (
-        <div className="min-h-screen bg-dark-900 text-silver-100">
+        <div className="min-h-screen bg-dark-900 text-silver-100 overflow-x-hidden">
             {/* Mobile Header */}
             <AdminHeader sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-            <div className="flex">
+            <div className="flex min-w-0">
                 {/* Sidebar */}
                 <Sidebar
                     activeTab={activeTab}
@@ -227,7 +227,7 @@ export default function AdminPage() {
                 />
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 lg:ml-64">
+                <main className="flex-1 min-w-0 p-3 sm:p-5 lg:p-8 lg:ml-64">
                     {renderContent()}
                 </main>
             </div>

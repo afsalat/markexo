@@ -12,13 +12,13 @@ export default function PartnerDashboardLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-dark-900 text-silver-100 flex">
+        <div className="min-h-screen bg-dark-900 text-silver-100 flex overflow-x-hidden">
             <PartnerSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-            <div className="flex-1 flex flex-col lg:ml-64">
+            <div className="flex-1 min-w-0 flex flex-col lg:ml-64">
                 <AdminHeader sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-                <main className="flex-1 p-6 lg:p-8">
+                <main className="flex-1 min-w-0 p-3 sm:p-5 lg:p-8">
                     {children}
                 </main>
             </div>

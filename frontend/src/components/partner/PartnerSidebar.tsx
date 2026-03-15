@@ -26,13 +26,13 @@ export default function PartnerSidebar({ sidebarOpen, setSidebarOpen }: PartnerS
     };
 
     return (
-        <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-200 flex flex-col`}>
-            <div className="p-6 border-b border-gray-800 flex justify-center shrink-0">
+        <aside className={`fixed inset-y-0 left-0 z-50 w-[280px] max-w-[85vw] lg:w-64 bg-gray-900 text-white transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-200 flex flex-col shadow-2xl lg:shadow-none`}>
+            <div className="px-4 py-4 sm:px-6 border-b border-gray-800 flex justify-center shrink-0">
                 <Link href="/" className="flex items-center gap-3">
                     <img
                         src="/logo-white-text.png"
                         alt="VorionMart Logo"
-                        className="h-32 w-auto object-contain"
+                        className="h-10 sm:h-12 w-auto object-contain"
                     />
                 </Link>
             </div>
@@ -51,7 +51,7 @@ export default function PartnerSidebar({ sidebarOpen, setSidebarOpen }: PartnerS
                             onClick={() => setSidebarOpen(false)}
                         >
                             <item.icon size={20} />
-                            <span>{item.label}</span>
+                            <span className="min-w-0 truncate">{item.label}</span>
                         </Link>
                     );
                 })}

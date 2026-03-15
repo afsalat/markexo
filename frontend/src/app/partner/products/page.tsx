@@ -21,11 +21,10 @@ export default function PartnerProductsPage() {
         try {
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // We assume backend permissions limit these to the user's data
             const [productsRes, shopsRes, categoriesRes] = await Promise.all([
-                fetch(`${API_BASE_URL}/admin/products/`, { headers }),
-                fetch(`${API_BASE_URL}/admin/shops/`, { headers }),
-                fetch(`${API_BASE_URL}/admin/categories/`, { headers }),
+                fetch(`${API_BASE_URL}/partner/products/`, { headers }),
+                fetch(`${API_BASE_URL}/partner/shops/`, { headers }),
+                fetch(`${API_BASE_URL}/categories/`, { headers }),
             ]);
 
             if (productsRes.ok) {

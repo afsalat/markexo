@@ -9,15 +9,17 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
-import { fetchProduct, fetchReviews, createReview, Review } from '@/lib/api';
+import { fetchProduct, fetchProducts, fetchReviews, createReview, Product, Review } from '@/lib/api';
 
-
-const relatedProducts = [
-    { id: 2, name: 'Bluetooth Speaker', slug: 'bluetooth-speaker', price: 3499, sale_price: 2499, image: 'https://placehold.co/400x400/1a1a2e/00f5d4?text=Speaker', rating: 4.3 },
-    { id: 3, name: 'Smart Fitness Watch', slug: 'smart-fitness-watch', price: 8999, sale_price: 5999, image: 'https://placehold.co/400x400/252542/00f5d4?text=Watch', rating: 4.6 },
-    { id: 4, name: 'Wireless Earbuds', slug: 'wireless-earbuds-pro', price: 2999, sale_price: 1999, image: 'https://placehold.co/400x400/1a1a2e/7c3aed?text=Earbuds', rating: 4.4 },
-    { id: 5, name: 'Power Bank 20000mAh', slug: 'power-bank', price: 2499, sale_price: 1799, image: 'https://placehold.co/400x400/252542/7c3aed?text=Power+Bank', rating: 4.7 },
-];
+type RelatedProductCard = {
+    id: number;
+    name: string;
+    slug: string;
+    price: number;
+    sale_price: number;
+    image: string;
+    rating: number;
+};
 
 export default function ProductDetailPage() {
     const router = useRouter();
@@ -38,6 +40,77 @@ export default function ProductDetailPage() {
     const [reviewSubmitting, setReviewSubmitting] = useState(false);
     const [reviewError, setReviewError] = useState<string | null>(null);
     const [reviewSuccess, setReviewSuccess] = useState(false);
+    const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>([]);
+
+    const normalizeProducts = (response: any): Product[] => {
+        if (Array.isArray(response)) {
+            return response;
+        }
+
+        if (Array.isArray(response?.results)) {
+            return response.results;
+        }
+
+        return [];
+    };
+
+    const mapRelatedProduct = (product: Product): RelatedProductCard => {
+        const salePrice = Number(product.current_price ?? product.price ?? 0);
+        const originalPrice = Number(product.price ?? product.current_price ?? 0);
+
+        return {
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            price: originalPrice,
+            sale_price: salePrice,
+            image: product.image || 'https://placehold.co/400x400/1a1a2e/ffffff?text=Product',
+            rating: Number(product.rating ?? 0),
+        };
+    };
+
+    const loadRelatedProducts = async (product: any) => {
+        const nextRelatedProducts: RelatedProductCard[] = [];
+        const seen = new Set<string>([product.slug]);
+
+        const appendProducts = (items: Product[]) => {
+            for (const item of items) {
+                if (seen.has(item.slug)) {
+                    continue;
+                }
+
+                nextRelatedProducts.push(mapRelatedProduct(item));
+                seen.add(item.slug);
+
+                if (nextRelatedProducts.length >= 4) {
+                    break;
+                }
+            }
+        };
+
+        if (product.category?.slug) {
+            const categoryProducts = normalizeProducts(
+                await fetchProducts({ category: product.category.slug })
+            );
+            appendProducts(categoryProducts);
+        }
+
+        if (nextRelatedProducts.length < 4) {
+            const featuredProducts = normalizeProducts(
+                await fetchProducts({ featured: 'true' })
+            );
+            appendProducts(featuredProducts);
+        }
+
+        if (nextRelatedProducts.length < 4) {
+            const latestProducts = normalizeProducts(
+                await fetchProducts({ sort: 'newest' })
+            );
+            appendProducts(latestProducts);
+        }
+
+        setRelatedProducts(nextRelatedProducts.slice(0, 4));
+    };
 
     // Fetch product data based on slug
     useEffect(() => {
@@ -48,6 +121,14 @@ export default function ProductDetailPage() {
                 const product = await fetchProduct(slug);
                 setProductData(product);
                 setSelectedImage(0);
+                setRelatedProducts([]);
+
+                try {
+                    await loadRelatedProducts(product);
+                } catch (relatedErr) {
+                    console.error('Error fetching related products:', relatedErr);
+                    setRelatedProducts([]);
+                }
 
                 // Fetch reviews for this product
                 try {
@@ -61,6 +142,7 @@ export default function ProductDetailPage() {
             } catch (err: any) {
                 console.error('Error fetching product:', err);
                 setError(err.message || 'Failed to load product');
+                setRelatedProducts([]);
             } finally {
                 setLoading(false);
             }
@@ -174,6 +256,21 @@ export default function ProductDetailPage() {
         router.push('/cart');
     };
 
+    const getPurchaseSignal = () => {
+        const stock = Number(productData?.stock ?? 0);
+        const variants = [
+            `Only ${Math.max(stock, 1)} left in stock`,
+            'Offer closing soon',
+            'Selling fast right now',
+        ];
+
+        if (stock > 0 && stock <= 10) {
+            return variants[0];
+        }
+
+        return variants[(Number(productData?.id ?? 0) + reviews.length) % variants.length];
+    };
+
     return (
         <div className="min-h-screen bg-dark-900">
             {/* Breadcrumb */}
@@ -278,7 +375,7 @@ export default function ProductDetailPage() {
                                 <span className="text-dark-500">|</span>
                                 <span className="text-silver-400">{reviews.length} Reviews</span>
                                 <span className="text-dark-500">|</span>
-                                <span className="text-silver-400">{productData.sold_count} Sold</span>
+                                <span className="text-silver-400">{getPurchaseSignal()}</span>
                             </div>
                         </div>
 
@@ -648,6 +745,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Related Products */}
+                {relatedProducts.length > 0 && (
                 <div data-aos="fade-up" data-aos-delay="400">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="font-display text-2xl font-bold text-white">You May Also Like</h2>
@@ -684,6 +782,7 @@ export default function ProductDetailPage() {
                         ))}
                     </div>
                 </div>
+                )}
             </div>
 
             {/* Sticky Mobile CTA */}

@@ -35,7 +35,7 @@ export default function PartnerShopsTab({ shops, onRefresh }: PartnerShopsTabPro
                             {shops.length === 0 ? (
                                 <tr>
                                     <td colSpan={3} className="px-6 py-8 text-center text-silver-500">
-                                        No shops assigned. Please contact administrator.
+                                        No shops available.
                                     </td>
                                 </tr>
                             ) : (
