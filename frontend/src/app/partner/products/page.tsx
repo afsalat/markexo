@@ -64,6 +64,13 @@ export default function PartnerProductsPage() {
             shops={shops}
             categories={categories}
             onRefresh={fetchData}
+            apiBasePath={`${API_BASE_URL}/partner/products`}
+            shopsEndpoint={`${API_BASE_URL}/partner/shops/`}
+            categoriesEndpoint={`${API_BASE_URL}/categories/`}
+            canAddOverride={shops.length > 0}
+            canEditOverride={true}
+            canDeleteOverride={true}
+            title="My Products"
         />
     );
 }

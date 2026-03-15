@@ -11,13 +11,32 @@ interface ProductsTabProps {
     shops: Shop[];
     categories: Category[];
     onRefresh?: () => void;
+    apiBasePath?: string;
+    shopsEndpoint?: string;
+    categoriesEndpoint?: string;
+    canAddOverride?: boolean;
+    canEditOverride?: boolean;
+    canDeleteOverride?: boolean;
+    title?: string;
 }
 
-export default function ProductsTab({ products, shops, categories, onRefresh }: ProductsTabProps) {
+export default function ProductsTab({
+    products,
+    shops,
+    categories,
+    onRefresh,
+    apiBasePath = `${API_BASE_URL}/admin/products`,
+    shopsEndpoint = `${API_BASE_URL}/admin/shops/`,
+    categoriesEndpoint = `${API_BASE_URL}/admin/categories/`,
+    canAddOverride,
+    canEditOverride,
+    canDeleteOverride,
+    title = 'Products',
+}: ProductsTabProps) {
     const { token, hasPermission, user } = useAuth();
-    const canAdd = hasPermission('add_product');
-    const canEdit = hasPermission('change_product');
-    const canDelete = hasPermission('delete_product');
+    const canAdd = canAddOverride ?? hasPermission('add_product');
+    const canEdit = canEditOverride ?? hasPermission('change_product');
+    const canDelete = canDeleteOverride ?? hasPermission('delete_product');
 
     const [editingProductId, setEditingProductId] = useState<number | null>(null);
     const [showForm, setShowForm] = useState(false);
@@ -43,7 +62,7 @@ export default function ProductsTab({ products, shops, categories, onRefresh }: 
     const handleDelete = async (id: number) => {
         if (!confirm('Are you sure you want to delete this product?')) return;
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/products/${id}/`, {
+            const response = await fetch(`${apiBasePath}/${id}/`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -73,7 +92,7 @@ export default function ProductsTab({ products, shops, categories, onRefresh }: 
         if (!confirm(`Approve product "${product.name}"?`)) return;
 
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/products/${product.id}/`, {
+            const response = await fetch(`${apiBasePath}/${product.id}/`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -104,6 +123,9 @@ export default function ProductsTab({ products, shops, categories, onRefresh }: 
                 productId={editingProductId || undefined}
                 onBack={handleFormClose}
                 onSuccess={handleFormClose}
+                apiBasePath={apiBasePath}
+                shopsEndpoint={shopsEndpoint}
+                categoriesEndpoint={categoriesEndpoint}
             />
         );
     }
@@ -124,7 +146,7 @@ export default function ProductsTab({ products, shops, categories, onRefresh }: 
     return (
         <div className="animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-                <h1 className="font-display text-2xl font-bold text-white">Products</h1>
+                <h1 className="font-display text-2xl font-bold text-white">{title}</h1>
                 <div className="flex flex-wrap gap-3 w-full sm:w-auto">
                     <div className="flex bg-dark-800 p-1 rounded-lg border border-dark-700 w-full sm:w-auto overflow-x-auto custom-scrollbar whitespace-nowrap hidden-scrollbar">
                         {(['all', 'pending', 'approved'] as const).map((status) => (

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Product, Shop, Category } from '@/types/admin';
 import { ArrowLeft, Upload, CheckCircle, X, Plus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -11,10 +10,19 @@ interface ProductFormProps {
     productId?: number;
     onBack: () => void;
     onSuccess: () => void;
+    apiBasePath?: string;
+    shopsEndpoint?: string;
+    categoriesEndpoint?: string;
 }
 
-export default function ProductForm({ productId, onBack, onSuccess }: ProductFormProps) {
-    const router = useRouter();
+export default function ProductForm({
+    productId,
+    onBack,
+    onSuccess,
+    apiBasePath = `${API_BASE_URL}/admin/products`,
+    shopsEndpoint = `${API_BASE_URL}/admin/shops/`,
+    categoriesEndpoint = `${API_BASE_URL}/admin/categories/`,
+}: ProductFormProps) {
     const { token } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
@@ -41,6 +49,21 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
         specifications: [] as { key: string, value: string }[]
     });
 
+    const flattenCategories = (items: Category[]): Category[] => {
+        const flattened: Category[] = [];
+
+        const visit = (category: Category) => {
+            flattened.push(category);
+            const children = Array.isArray((category as Category & { children?: Category[] }).children)
+                ? (category as Category & { children?: Category[] }).children!
+                : [];
+            children.forEach(visit);
+        };
+
+        items.forEach(visit);
+        return flattened;
+    };
+
     // Load product data if editing
     useEffect(() => {
         const loadData = async () => {
@@ -50,8 +73,8 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
                 // Load shops and categories
                 const headers = { 'Authorization': `Bearer ${token}` };
                 const [shopsRes, categoriesRes] = await Promise.all([
-                    fetch(`${API_BASE_URL}/admin/shops/`, { headers }),
-                    fetch(`${API_BASE_URL}/admin/categories/`, { headers })
+                    fetch(shopsEndpoint, { headers }),
+                    fetch(categoriesEndpoint, { headers })
                 ]);
 
                 if (shopsRes.ok) {
@@ -75,9 +98,9 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
                     console.log('Categories loaded:', categoriesData);
                     // Handle both array and paginated response
                     if (Array.isArray(categoriesData)) {
-                        setCategories(categoriesData);
+                        setCategories(flattenCategories(categoriesData));
                     } else if (categoriesData.results) {
-                        setCategories(categoriesData.results);
+                        setCategories(flattenCategories(categoriesData.results));
                     } else {
                         console.error('Unexpected categories response format:', categoriesData);
                         setCategories([]);
@@ -89,7 +112,7 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
                 // Load product if editing
                 if (productId) {
                     console.log('Fetching product:', productId);
-                    const productRes = await fetch(`${API_BASE_URL}/admin/products/${productId}/`, {
+                    const productRes = await fetch(`${apiBasePath}/${productId}/`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
 
@@ -142,7 +165,7 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
         };
 
         loadData();
-    }, [productId, token]);
+    }, [apiBasePath, categoriesEndpoint, productId, shopsEndpoint, token]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -232,8 +255,8 @@ export default function ProductForm({ productId, onBack, onSuccess }: ProductFor
 
         try {
             const url = productId
-                ? `${API_BASE_URL}/admin/products/${productId}/`
-                : `${API_BASE_URL}/admin/products/`;
+                ? `${apiBasePath}/${productId}/`
+                : `${apiBasePath}/`;
 
             const method = productId ? 'PATCH' : 'POST';
 

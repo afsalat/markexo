@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
     LayoutDashboard, ShoppingCart, Package, Store, CreditCard,
-    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2
+    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -31,6 +31,7 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         { id: 'partner-requests', label: 'Partner Requests', icon: Users, permission: 'view_shop' },
         { id: 'user-management', label: 'User Management', icon: Shield, permission: 'view_user' },
         { id: 'supplier-api', label: 'Supplier API', icon: Zap, permission: 'view_sitesetting' },
+        { id: 'system-logs', label: 'System Logs', icon: TerminalSquare, permission: 'view_sitesetting' },
         { id: 'banners', label: 'Banners', icon: Image, permission: 'view_banner' },
         { id: 'settings', label: 'Settings', icon: Settings, permission: 'view_sitesetting' },
     ];

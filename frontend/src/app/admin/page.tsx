@@ -18,6 +18,7 @@ import SettingsTab from '@/components/admin/SettingsTab';
 import ReturnsTab from '@/components/admin/ReturnsTab';
 import PaymentsTab from '@/components/admin/PaymentsTab';
 import SupplierAPITab from '@/components/admin/SupplierAPITab';
+import SystemLogsTab from '@/components/admin/SystemLogsTab';
 import ProductAnalyticsTab from '@/components/admin/ProductAnalyticsTab';
 import PartnerRequestsTab from '@/components/admin/PartnerRequestsTab';
 import PartnersTab from '@/components/admin/PartnersTab';
@@ -28,7 +29,7 @@ import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 const API_BASE_URL = API_URL;
 
 // TODO: Consolidate 'partner-requests' into 'partners' eventually?
-type TabType = 'dashboard' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'categories' | 'shops' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'supplier-api' | 'partner-requests' | 'partners' | 'partner-payouts';
+type TabType = 'dashboard' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'categories' | 'shops' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'supplier-api' | 'system-logs' | 'partner-requests' | 'partners' | 'partner-payouts';
 
 export default function AdminPage() {
     const { token, user, hasPermission, loading: authLoading } = useAuth();
@@ -157,6 +158,7 @@ export default function AdminPage() {
             banners: 'view_banner',
             settings: 'view_sitesetting',
             'supplier-api': 'view_sitesetting',
+            'system-logs': 'view_sitesetting',
             partners: 'add_user', // Use add_user as proxy permission for now
             'partner-payouts': 'add_user'
         };
@@ -206,6 +208,8 @@ export default function AdminPage() {
                 return <SettingsTab settings={settings} />;
             case 'supplier-api':
                 return <SupplierAPITab />;
+            case 'system-logs':
+                return <SystemLogsTab />;
             default:
                 return null;
         }

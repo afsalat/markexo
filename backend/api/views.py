@@ -2,6 +2,8 @@
 API Views for VorionMart marketplace.
 """
 import logging
+from collections import deque
+from pathlib import Path
 
 from rest_framework import viewsets, generics, status, permissions, serializers
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -13,6 +15,7 @@ from django.db.models.functions import TruncDay
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.models import User, Group, Permission
+from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser, DjangoModelPermissions
 from decimal import Decimal
 
@@ -46,8 +49,24 @@ def is_partner_user(user):
     )
 
 
-def get_partner_catalog_shops():
-    return Shop.objects.all()
+def get_partner_catalog_shops(user):
+    if not user or not user.is_authenticated:
+        return Shop.objects.none()
+
+    assigned_shop = getattr(user, 'partner_profile', None)
+    assigned_shop_id = getattr(assigned_shop, 'assigned_shop_id', None)
+    product_shop_ids = get_partner_products(user).exclude(shop__isnull=True).values_list('shop_id', flat=True)
+
+    queryset = Shop.objects.filter(
+        Q(id__in=product_shop_ids) |
+        Q(owner=user) |
+        Q(email__iexact=user.email)
+    )
+
+    if assigned_shop_id:
+        queryset = queryset | Shop.objects.filter(id=assigned_shop_id)
+
+    return queryset.distinct()
 
 
 def get_partner_products(user):
@@ -61,13 +80,7 @@ def get_partner_payout_shops(user):
     if not user or not user.is_authenticated:
         return Shop.objects.none()
 
-    product_shop_ids = get_partner_products(user).exclude(shop__isnull=True).values_list('shop_id', flat=True)
-
-    return Shop.objects.filter(
-        Q(id__in=product_shop_ids) |
-        Q(owner=user) |
-        Q(email__iexact=user.email)
-    ).distinct()
+    return get_partner_catalog_shops(user)
 
 
 # ============== Public API Views ==============
@@ -633,6 +646,19 @@ class AdminDashboardPermission(permissions.BasePermission):
             )
         )
 
+
+class AdminSystemLogsPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user and
+            request.user.is_authenticated and
+            request.user.is_staff and
+            (
+                request.user.is_superuser or
+                request.user.has_perm('api.view_sitesetting')
+            )
+        )
+
 class AdminUserViewSet(viewsets.ModelViewSet):
     """Management of admin users."""
     queryset = User.objects.all().order_by('-date_joined')
@@ -1024,6 +1050,8 @@ class AdminEnquiryViewSet(viewsets.ModelViewSet):
 
 class AdminSiteSettingView(APIView):
     """Admin site settings."""
+    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+
     def get(self, request):
         setting, created = SiteSetting.objects.get_or_create(pk=1)
         serializer = SiteSettingSerializer(setting)
@@ -1036,6 +1064,51 @@ class AdminSiteSettingView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminSystemLogsView(APIView):
+    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+
+    def get(self, request):
+        limit = request.query_params.get('limit', '250')
+        level = request.query_params.get('level', 'ALL').upper()
+        search = request.query_params.get('search', '').strip().lower()
+
+        try:
+            limit = max(50, min(int(limit), 1000))
+        except (TypeError, ValueError):
+            limit = 250
+
+        log_path = Path(getattr(settings, 'SYSTEM_LOG_FILE', settings.BASE_DIR / 'logs' / 'system.log'))
+        if not log_path.exists():
+            return Response({
+                'path': str(log_path),
+                'exists': False,
+                'updated_at': None,
+                'lines': [],
+            })
+
+        with log_path.open('r', encoding='utf-8', errors='replace') as handle:
+            recent_lines = list(deque(handle, maxlen=4000))
+
+        if level != 'ALL':
+            recent_lines = [line for line in recent_lines if f' {level} ' in line]
+
+        if search:
+            recent_lines = [line for line in recent_lines if search in line.lower()]
+
+        lines = [line.rstrip('\n') for line in recent_lines[-limit:]]
+        updated_at = timezone.datetime.fromtimestamp(
+            log_path.stat().st_mtime,
+            tz=timezone.get_current_timezone()
+        )
+
+        return Response({
+            'path': str(log_path),
+            'exists': True,
+            'updated_at': updated_at.isoformat(),
+            'lines': lines,
+        })
 
 
 # ============== Supplier API Views ==============
@@ -1331,7 +1404,7 @@ class PartnerShopListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        shops = get_partner_catalog_shops().order_by('name')
+        shops = get_partner_catalog_shops(request.user).order_by('name')
         serializer = ShopSerializer(shops, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -1360,6 +1433,47 @@ class PartnerProductListView(APIView):
 
         serializer = ProductSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ProductSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        shop = serializer.validated_data.get('shop')
+        if shop and not get_partner_catalog_shops(request.user).filter(id=shop.id).exists():
+            raise serializers.ValidationError({"shop_id": "You can only add products to your own shop."})
+
+        approval_status = 'approved' if request.user.is_superuser else 'pending'
+        serializer.save(created_by=request.user, approval_status=approval_status)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PartnerProductDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        return get_object_or_404(get_partner_products(request.user), pk=pk)
+
+    def get(self, request, pk):
+        product = self.get_object(request, pk)
+        serializer = ProductSerializer(product, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        product = self.get_object(request, pk)
+        serializer = ProductSerializer(product, data=request.data, partial=True, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        shop = serializer.validated_data.get('shop')
+        if shop and not get_partner_catalog_shops(request.user).filter(id=shop.id).exists():
+            raise serializers.ValidationError({"shop_id": "You can only assign products to your own shop."})
+
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        product = self.get_object(request, pk)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class PayoutRequestViewSet(viewsets.ModelViewSet):
     """

@@ -18,11 +18,11 @@ from .views import (
     AdminProductViewSet, AdminOrderViewSet, AdminCustomerViewSet,
     AdminBannerViewSet, AdminSiteSettingView,
     AdminBannerViewSet, AdminSiteSettingView,
-    AdminEnquiryViewSet, AdminUserViewSet, AdminRoleViewSet, PermissionListView, AdminAnalyticsView,
+    AdminEnquiryViewSet, AdminUserViewSet, AdminRoleViewSet, PermissionListView, AdminAnalyticsView, AdminSystemLogsView,
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
-    PartnerDashboardStatsView, PartnerShopListView, PartnerProductListView,
+    PartnerDashboardStatsView, PartnerShopListView, PartnerProductListView, PartnerProductDetailView,
     AdminPartnerViewSet, PayoutRequestViewSet
 )
 
@@ -72,12 +72,14 @@ urlpatterns = [
     path('partner/stats/', PartnerDashboardStatsView.as_view(), name='partner-stats'),
     path('partner/shops/', PartnerShopListView.as_view(), name='partner-shops'),
     path('partner/products/', PartnerProductListView.as_view(), name='partner-products'),
+    path('partner/products/<int:pk>/', PartnerProductDetailView.as_view(), name='partner-product-detail'),
 
     # Admin API
     path('admin/stats/', AdminDashboardStatsView.as_view(), name='admin-stats'),
     path('admin/partner-stats/', PartnerDashboardStatsView.as_view(), name='admin-partner-stats'),
     path('admin/analytics/', AdminAnalyticsView.as_view(), name='admin-analytics'),
     path('admin/settings/', AdminSiteSettingView.as_view(), name='admin-settings'),
+    path('admin/system-logs/', AdminSystemLogsView.as_view(), name='admin-system-logs'),
     path('admin/permissions/', PermissionListView.as_view(), name='admin-permissions'),
     path('admin/forward-orders/', ForwardOrdersView.as_view(), name='forward-orders'),
     path('admin/pending-orders-for-forwarding/', PendingOrdersForForwardingView.as_view(), name='pending-orders-for-forwarding'),
