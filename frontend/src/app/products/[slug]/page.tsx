@@ -256,6 +256,35 @@ export default function ProductDetailPage() {
         router.push('/cart');
     };
 
+    const displaySalePrice = Number(
+        productData.current_price ?? productData.sale_price ?? productData.our_price ?? 0
+    );
+    const displayMrp = Number(productData.mrp ?? productData.price ?? displaySalePrice);
+    const hasMrpDiscount = displayMrp > displaySalePrice;
+    const savedAmount = hasMrpDiscount ? displayMrp - displaySalePrice : 0;
+    const descriptionLines = String(productData.description || '')
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+    const descriptionLead = descriptionLines[0] || '';
+    const descriptionDetails = descriptionLines
+        .slice(1)
+        .map((line) => {
+            const separatorIndex = line.indexOf(':');
+            if (separatorIndex <= 0) {
+                return null;
+            }
+
+            return {
+                label: line.slice(0, separatorIndex).trim(),
+                value: line.slice(separatorIndex + 1).trim(),
+            };
+        })
+        .filter(Boolean) as { label: string; value: string }[];
+    const descriptionNotes = descriptionLines
+        .slice(1)
+        .filter((line) => !line.includes(':'));
+
     const getPurchaseSignal = () => {
         const stock = Number(productData?.stock ?? 0);
         const variants = [
@@ -382,12 +411,12 @@ export default function ProductDetailPage() {
                         {/* Price */}
                         <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6">
                             <div className="flex items-baseline gap-3 mb-2">
-                                <span className="text-4xl font-bold text-white">₹{productData.current_price.toLocaleString()}</span>
-                                {productData.sale_price && (
+                                <span className="text-4xl font-bold text-white">₹{displaySalePrice.toLocaleString()}</span>
+                                {hasMrpDiscount && (
                                     <>
-                                        <span className="text-2xl text-silver-500 line-through">₹{productData.price.toLocaleString()}</span>
+                                        <span className="text-2xl text-silver-500 line-through">₹{displayMrp.toLocaleString()}</span>
                                         <span className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">
-                                            Save ₹{(productData.price - productData.current_price).toLocaleString()}
+                                            Save ₹{savedAmount.toLocaleString()}
                                         </span>
                                     </>
                                 )}
@@ -562,7 +591,46 @@ export default function ProductDetailPage() {
                     <div className="p-8">
                         {activeTab === 'description' && (
                             <div className="space-y-6 animate-fade-in">
-                                <p className="text-silver-300 text-lg leading-relaxed">{productData.description}</p>
+                                {descriptionLead && (
+                                    <div className="rounded-2xl border border-dark-600 bg-dark-700/60 p-5">
+                                        <p className="text-silver-200 text-lg leading-relaxed">{descriptionLead}</p>
+                                    </div>
+                                )}
+
+                                {descriptionDetails.length > 0 && (
+                                    <div>
+                                        <h3 className="mb-4 text-xl font-bold text-white">Product Details</h3>
+                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                            {descriptionDetails.map((detail) => (
+                                                <div
+                                                    key={`${detail.label}-${detail.value}`}
+                                                    className="rounded-xl border border-dark-600 bg-dark-700 px-4 py-3"
+                                                >
+                                                    <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent-500/80">
+                                                        {detail.label}
+                                                    </p>
+                                                    <p className="text-base text-silver-200">{detail.value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {descriptionNotes.length > 0 && (
+                                    <div className="rounded-2xl border border-dark-600 bg-dark-700/50 p-5">
+                                        <div className="space-y-2">
+                                            {descriptionNotes.map((line) => (
+                                                <p key={line} className="text-silver-300 leading-relaxed">
+                                                    {line}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!descriptionLead && descriptionDetails.length === 0 && descriptionNotes.length === 0 && (
+                                    <p className="text-silver-400">No description available for this product.</p>
+                                )}
                                 {productData.features && productData.features.length > 0 && (
                                     <div>
                                         <h3 className="font-bold text-xl text-white mb-4">Key Features</h3>
@@ -806,3 +874,4 @@ export default function ProductDetailPage() {
         </div>
     );
 }
+

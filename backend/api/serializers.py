@@ -289,6 +289,8 @@ class PublicProductSerializer(serializers.ModelSerializer):
     category = CategoryListSerializer(read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
+    mrp = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    our_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
     image = serializers.SerializerMethodField()
@@ -296,7 +298,7 @@ class PublicProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'slug', 'description', 'price', 'sale_price',
+            'id', 'name', 'slug', 'description', 'mrp', 'our_price', 'price', 'sale_price',
             'current_price', 'discount_percent', 'stock', 'sku',
             'category', 'category_name', 'image', 'images',
             'meesho_url', 'specifications',

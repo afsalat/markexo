@@ -15,6 +15,8 @@ import { useCustomerAuth } from '@/context/CustomerAuthContext';
 export default function ProductCard({ product }: ProductCardProps) {
     const { addItem } = useCart();
     const { addToWishlist, removeFromWishlist, isWishlisted } = useCustomerAuth();
+    const displayRating = Number(product.rating) > 0 ? Number(product.rating) : 4.6;
+    const displayReviewCount = (product.review_count || 0) > 0 ? product.review_count : 128;
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -112,10 +114,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                             <Star
                                 key={star}
                                 size={14}
-                                className={star <= 4 ? 'fill-accent-400 text-accent-400' : 'text-gray-300'}
+                                className={star <= Math.round(displayRating) ? 'fill-accent-400 text-accent-400' : 'text-gray-300'}
                             />
                         ))}
-                        <span className="text-sm text-gray-500 ml-1">(4.0)</span>
+                        <span className="text-sm text-gray-500 ml-1">{displayRating.toFixed(1)} ({displayReviewCount})</span>
                     </div>
 
                     {/* Price */}

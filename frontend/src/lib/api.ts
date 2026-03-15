@@ -36,6 +36,9 @@ export interface Product {
     name: string;
     slug: string;
     description: string;
+    mrp?: number;
+    our_price?: number;
+    supplier_price?: number;
     price: number;
     sale_price: number | null;
     current_price: number;
