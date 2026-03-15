@@ -9,7 +9,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 DEBUG = False
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
-ALLOWED_HOSTS = ['vorionmart.com', 'www.vorionmart.com']
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    'vorionmart.com',
+    'www.vorionmart.com',
+    'api.vorionmart.com',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
