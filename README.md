@@ -33,12 +33,13 @@ npm run dev
 
 ### Backend
 
-Backend production values are defined directly in [settings.py](/c:/Users/USER/Desktop/markexo/backend/markexo/settings.py). Replace the placeholder values there before deploying:
+Backend production values are defined directly in [settings.py](/c:/Users/USER/Desktop/markexo/backend/markexo/settings.py).
 
-- `SECRET_KEY`
-- MySQL database name, user, and password
-- SMTP host credentials
-- Allowed hosts and origins if your production domain changes
+This project is configured to use SQLite by default:
+
+- Database file: `backend/db.sqlite3`
+- Hosts and origins are set in `settings.py`
+- SMTP settings are set in `settings.py`
 
 ### Frontend
 

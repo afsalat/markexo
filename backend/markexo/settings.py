@@ -7,8 +7,6 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Production configuration lives here directly. Replace placeholder values
-# below before deploying.
 DEBUG = False
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
 ALLOWED_HOSTS = ['vorionmart.com', 'www.vorionmart.com']
@@ -60,16 +58,8 @@ WSGI_APPLICATION = 'markexo.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'markexo',
-        'USER': 'markexo_user',
-        'PASSWORD': 'replace-with-your-db-password',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'CONN_MAX_AGE': 60,
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -96,14 +86,8 @@ SERVE_MEDIA_FILES = False
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    'https://vorionmart.com',
-    'https://www.vorionmart.com',
-]
-CSRF_TRUSTED_ORIGINS = [
-    'https://vorionmart.com',
-    'https://www.vorionmart.com',
-]
+CORS_ALLOWED_ORIGINS = ['https://vorionmart.com', 'https://www.vorionmart.com']
+CSRF_TRUSTED_ORIGINS = ['https://vorionmart.com', 'https://www.vorionmart.com']
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -145,7 +129,7 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_HOST = 'smtp.example.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = 'replace-with-your-email-password'
+EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
