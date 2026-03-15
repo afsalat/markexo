@@ -43,16 +43,13 @@ This project is configured to use SQLite by default:
 
 ### Frontend
 
-Use [frontend/.env.production.example](/c:/Users/USER/Desktop/markexo/frontend/.env.production.example) as the template for your production env file.
+Frontend production URLs are defined directly in [siteConfig.ts](/c:/Users/USER/Desktop/markexo/frontend/src/config/siteConfig.ts) and [next.config.js](/c:/Users/USER/Desktop/markexo/frontend/next.config.js).
 
-Required settings:
+This project is configured to use:
 
-- `NEXT_PUBLIC_APP_URL`
-- `NEXT_PUBLIC_API_URL`
-
-Optional:
-
-- `NEXT_PUBLIC_MEDIA_URL`
+- App URL: `https://vorionmart.com`
+- API URL: `https://vorionmart.com/api`
+- Media URL: `https://vorionmart.com/media`
 
 ## Production Deploy Steps
 

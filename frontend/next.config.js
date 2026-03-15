@@ -1,7 +1,6 @@
-const defaultAppUrl = 'https://vorionmart.com';
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || defaultAppUrl;
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || `${appUrl.replace(/\/$/, '')}/api`;
-const mediaUrl = process.env.NEXT_PUBLIC_MEDIA_URL || `${apiUrl.replace(/\/api\/?$/, '')}/media`;
+const appUrl = 'https://vorionmart.com';
+const apiUrl = `${appUrl}/api`;
+const mediaUrl = `${appUrl}/media`;
 
 function getHostname(value) {
     try {
