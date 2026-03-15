@@ -27,10 +27,17 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
         return `${value}`;
     };
 
-    const formatDate = (dateStr: string) => {
+    const formatDate = (dateStr: string | number | null | undefined) => {
         if (!dateStr) return '';
-        const date = new Date(dateStr);
+        const date = new Date(String(dateStr));
         return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    };
+
+    const formatTooltipLabel = (label: unknown) => {
+        if (typeof label === 'string' || typeof label === 'number') {
+            return formatDate(label);
+        }
+        return '';
     };
 
     return (
@@ -62,7 +69,7 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
                                     formatCurrency(Number(value)),
                                     name === 'revenue' ? 'Revenue' : 'Profit'
                                 ]}
-                                labelFormatter={formatDate}
+                                labelFormatter={formatTooltipLabel}
                                 contentStyle={{
                                     backgroundColor: '#1f2937',
                                     borderRadius: '12px',
