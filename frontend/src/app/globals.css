@@ -729,6 +729,100 @@ html.light footer {
   animation: shimmer 2s infinite;
 }
 
+.price-reveal__mrp,
+.price-reveal__sale,
+.price-reveal__badge {
+  will-change: transform, opacity;
+}
+
+.price-reveal__mrp {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: price-fade-up 0.38s ease-out 0.08s forwards;
+}
+
+.price-reveal__mrp-value {
+  position: relative;
+  display: inline-block;
+}
+
+.price-reveal__mrp-value::after {
+  content: '';
+  position: absolute;
+  left: -0.08em;
+  right: -0.08em;
+  top: 54%;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0.95;
+  animation: price-strike-draw 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.48s forwards;
+}
+
+.price-reveal__sale {
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  animation: price-sale-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
+}
+
+.price-reveal__badge {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: price-fade-up 0.35s ease-out 1.02s forwards;
+}
+
+@keyframes price-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes price-strike-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes price-sale-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .price-reveal__mrp,
+  .price-reveal__sale,
+  .price-reveal__badge {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .price-reveal__mrp-value::after {
+    transform: scaleX(1);
+    animation: none;
+  }
+}
+
 /* ============================================
    Section Styles
    ============================================ */

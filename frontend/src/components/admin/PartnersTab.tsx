@@ -12,11 +12,10 @@ interface Partner {
     first_name: string;
     last_name: string;
     is_active: boolean;
-    shop_id: number | null;
-    shop_city: string;
-    shop_phone: string;
+    city: string;
+    phone: string;
     commission_rate: string;
-    approval_status: 'pending' | 'approved' | 'rejected';
+    notes?: string;
 }
 
 export default function PartnersTab() {
@@ -170,11 +169,11 @@ export default function PartnersTab() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-silver-400 flex items-center gap-2">
-                                                <Phone size={14} />
-                                                {partner.shop_phone || 'N/A'}
-                                            </div>
-                                        </td>
+                                                <div className="text-sm text-silver-400 flex items-center gap-2">
+                                                    <Phone size={14} />
+                                                {partner.phone || 'N/A'}
+                                                </div>
+                                            </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
                                                 {partner.is_active ? (
@@ -186,22 +185,9 @@ export default function PartnersTab() {
                                                         <XCircle size={10} /> User Inactive
                                                     </span>
                                                 )}
-
-                                                {partner.approval_status === 'approved' && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-500 border border-blue-500/20 w-fit">
-                                                        Shop Approved
-                                                    </span>
-                                                )}
-                                                {partner.approval_status === 'pending' && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20 w-fit">
-                                                        Shop Pending
-                                                    </span>
-                                                )}
-                                                {partner.approval_status === 'rejected' && (
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20 w-fit">
-                                                        Shop Rejected
-                                                    </span>
-                                                )}
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-dark-700 text-silver-300 border border-dark-600 w-fit">
+                                                    {partner.city || 'No city'}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">

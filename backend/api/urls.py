@@ -10,7 +10,7 @@ from rest_framework_simplejwt.views import (
 
 from .views import (
     # Public views
-    ShopViewSet, CategoryViewSet, ProductViewSet, ReviewViewSet,
+    CategoryViewSet, ProductViewSet, ReviewViewSet,
     BannerListView, SiteSettingView, CreateOrderView, OrderDetailView, CancelOrderView, ReturnOrderView, CreateEnquiryView,
     CartAPIView, RegisterUserView, RegisterPartnerView, CustomTokenObtainPairView, CustomerOrdersView,
     # Admin views
@@ -22,13 +22,12 @@ from .views import (
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
-    PartnerDashboardStatsView, PartnerShopListView, PartnerProductListView, PartnerProductDetailView,
+    PartnerDashboardStatsView, PartnerShopListView, PartnerCategoryListView, PartnerProductListView, PartnerProductDetailView,
     AdminPartnerViewSet, PayoutRequestViewSet
 )
 
 # Public router
 router = DefaultRouter()
-router.register(r'shops', ShopViewSet, basename='shop')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'reviews', ReviewViewSet, basename='review')
@@ -71,6 +70,7 @@ urlpatterns = [
     # Partner API
     path('partner/stats/', PartnerDashboardStatsView.as_view(), name='partner-stats'),
     path('partner/shops/', PartnerShopListView.as_view(), name='partner-shops'),
+    path('partner/categories/', PartnerCategoryListView.as_view(), name='partner-categories'),
     path('partner/products/', PartnerProductListView.as_view(), name='partner-products'),
     path('partner/products/<int:pk>/', PartnerProductDetailView.as_view(), name='partner-product-detail'),
 

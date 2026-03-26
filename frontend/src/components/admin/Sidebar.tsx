@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
-    LayoutDashboard, ShoppingCart, Package, Store, CreditCard,
-    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare
+    LayoutDashboard, ShoppingCart, Package, CreditCard,
+    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -22,15 +22,13 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         { id: 'returns', label: 'Returns', icon: RotateCcw, permission: 'view_order' },
         { id: 'payments', label: 'Payments', icon: CreditCard, permission: 'view_order' },
         { id: 'products', label: 'Products', icon: Package, permission: 'view_product' },
-        { id: 'categories', label: 'Categories', icon: Grid, permission: 'view_category' },
         { id: 'shops', label: 'Shops', icon: Store, permission: 'view_shop' },
+        { id: 'categories', label: 'Categories', icon: Grid, permission: 'view_category' },
         { id: 'customers', label: 'Customers', icon: Users, permission: 'view_customer' },
         { id: 'enquiries', label: 'Enquiries', icon: MessageSquare, permission: 'view_enquiry' },
         { id: 'partners', label: 'Partners', icon: Users, permission: 'add_user' },
-        { id: 'partner-payouts', label: 'Partner Payouts', icon: CreditCard, permission: 'add_user' },
-        { id: 'partner-requests', label: 'Partner Requests', icon: Users, permission: 'view_shop' },
         { id: 'user-management', label: 'User Management', icon: Shield, permission: 'view_user' },
-        { id: 'supplier-api', label: 'Supplier API', icon: Zap, permission: 'view_sitesetting' },
+        { id: 'suppliers', label: 'Suppliers', icon: Zap, permission: 'view_sitesetting' },
         { id: 'system-logs', label: 'System Logs', icon: TerminalSquare, permission: 'view_sitesetting' },
         { id: 'banners', label: 'Banners', icon: Image, permission: 'view_banner' },
         { id: 'settings', label: 'Settings', icon: Settings, permission: 'view_sitesetting' },

@@ -65,9 +65,6 @@ export default function CartPage() {
                                                 {item.product.name}
                                             </h3>
                                         </Link>
-                                        {item.product.shop && (
-                                            <p className="text-sm text-silver-500 mt-1">by {item.product.shop.name}</p>
-                                        )}
 
                                         {/* Price - Mobile */}
                                         <p className="text-lg font-bold text-white mt-2 lg:hidden">

@@ -3,7 +3,6 @@ export interface DashboardStats {
     total_revenue: number;
     total_profit: number;
     total_products: number;
-    total_shops: number;
     total_customers: number;
     pending_orders: number;
     recent_orders: Order[];
@@ -71,6 +70,9 @@ export interface Product {
 
     stock: number;
     sku: string;
+    shop?: { id: number; name: string; slug?: string; city?: string } | null;
+    shop_name?: string;
+    shop_id?: number;
     is_featured: boolean;
     is_active: boolean;
     approval_status?: 'pending' | 'approved' | 'rejected';
@@ -78,11 +80,8 @@ export interface Product {
     images?: { id: number; image: string; is_primary: boolean }[];
     category_name?: string;
     status?: string;
-    shop?: { id: number; name: string };
     category?: { id: number; name: string };
-    shop_id?: number;
     category_id?: number;
-    shop_name?: string;
     created_at: string;
     created_by_name?: string;
     created_by_email?: string;
@@ -95,13 +94,32 @@ export interface Product {
 export interface Shop {
     id: number;
     name: string;
-    email: string;
-    phone: string;
+    slug: string;
+    description?: string;
+    address: string;
     city: string;
-    is_active: boolean;
+    phone: string;
+    email: string;
+    shop_type?: 'b2b_ecommerce' | 'local_shop' | 'single_product_wholesaler' | 'multi_product_seller' | 'retailer' | 'other';
+    shop_type_display?: string;
+    source_platform?: string;
+    website_url?: string;
+    contact_person?: string;
+    whatsapp_number?: string;
+    notes?: string;
+    sourcing_partner?: number | null;
+    sourcing_partner_id?: number | null;
+    sourcing_partner_ids?: number[];
+    sourcing_partner_name?: string;
+    sourcing_partner_email?: string;
+    sourcing_partners?: { id: number; user_id: number; name: string; email: string }[];
+    image?: string | null;
+    is_active?: boolean;
     approval_status?: 'pending' | 'approved' | 'rejected';
-    created_at: string;
-    product_count: number;
+    product_count?: number;
+    pending_payment?: number;
+    pending_order_count?: number;
+    created_at?: string;
 }
 
 export interface Category {

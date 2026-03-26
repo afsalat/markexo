@@ -1,11 +1,27 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+import json
 import os
 import sys
+from pathlib import Path
+
+
+APP_CONFIG_PATH = Path(__file__).resolve().parent.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
+
+
+def apply_default_runserver_address():
+    if len(sys.argv) != 2 or sys.argv[1] != 'runserver':
+        return
+
+    with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
+        app_config = json.load(config_file)
+
+    sys.argv.append(f"{app_config['host']}:{app_config['backendPort']}")
 
 
 def main():
     """Run administrative tasks."""
+    apply_default_runserver_address()
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'markexo.settings')
     try:
         from django.core.management import execute_from_command_line

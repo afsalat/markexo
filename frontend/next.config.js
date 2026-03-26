@@ -1,8 +1,13 @@
+const appConfig = require('./src/config/appConfig.json');
+
 const normalizeUrl = (value) => value.replace(/\/+$/, '');
 
-const appUrl = normalizeUrl(process.env.NEXT_PUBLIC_APP_URL || 'https://vorionmart.com');
-const apiUrl = normalizeUrl(process.env.NEXT_PUBLIC_API_BASE_URL || `${appUrl}/api`);
-const mediaUrl = normalizeUrl(process.env.NEXT_PUBLIC_MEDIA_URL || `${appUrl}/media`);
+const buildOrigin = (port) =>
+    normalizeUrl(`${appConfig.protocol}://${appConfig.host}:${port}`);
+
+const appUrl = buildOrigin(appConfig.frontendPort);
+const apiUrl = `${buildOrigin(appConfig.backendPort)}/api`;
+const mediaUrl = `${buildOrigin(appConfig.backendPort)}/media`;
 
 function getHostname(value) {
     try {

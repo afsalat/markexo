@@ -20,12 +20,11 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
         first_name: '',
         last_name: '',
         is_active: true,
-        shop_description: '',
-        shop_address: '',
-        shop_city: '',
-        shop_phone: '',
+        address: '',
+        city: '',
+        phone: '',
         commission_rate: '50.00',
-        approval_status: 'approved'
+        notes: ''
     });
 
     useEffect(() => {
@@ -36,12 +35,11 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                 first_name: partner.first_name || '',
                 last_name: partner.last_name || '',
                 is_active: partner.is_active,
-                shop_description: partner.shop_description || '',
-                shop_address: partner.shop_address || '',
-                shop_city: partner.shop_city || '',
-                shop_phone: partner.shop_phone || '',
+                address: partner.address || '',
+                city: partner.city || '',
+                phone: partner.phone || '',
                 commission_rate: partner.commission_rate || '50.00',
-                approval_status: partner.approval_status || 'approved'
+                notes: partner.notes || ''
             });
         }
     }, [partner]);
@@ -198,17 +196,15 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                         </div>
                     </div>
 
-                    {/* Shop Details Section */}
+                    {/* Partner Details Section */}
                     <div className="space-y-6">
-                        <h3 className="text-lg font-semibold text-accent-500 border-b border-dark-700 pb-2">Shop Details</h3>
-
-                        {/* Removed Shop Name Field */}
+                        <h3 className="text-lg font-semibold text-accent-500 border-b border-dark-700 pb-2">Partner Details</h3>
 
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-1">Description</label>
+                            <label className="block text-sm font-medium text-silver-300 mb-1">Address</label>
                             <textarea
-                                name="shop_description"
-                                value={formData.shop_description}
+                                name="address"
+                                value={formData.address}
                                 onChange={handleChange}
                                 rows={2}
                                 className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-accent-500 outline-none resize-none"
@@ -220,9 +216,9 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                                 <label className="block text-sm font-medium text-silver-300 mb-1">City</label>
                                 <input
                                     type="text"
-                                    name="shop_city"
+                                    name="city"
                                     required
-                                    value={formData.shop_city}
+                                    value={formData.city}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-accent-500 outline-none"
                                 />
@@ -231,9 +227,9 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                                 <label className="block text-sm font-medium text-silver-300 mb-1">Phone</label>
                                 <input
                                     type="text"
-                                    name="shop_phone"
+                                    name="phone"
                                     required
-                                    value={formData.shop_phone}
+                                    value={formData.phone}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-accent-500 outline-none"
                                 />
@@ -254,17 +250,15 @@ export default function PartnerForm({ partner, onBack, onSuccess }: PartnerFormP
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-silver-300 mb-1">Approval Status</label>
-                                <select
-                                    name="approval_status"
-                                    value={formData.approval_status}
+                                <label className="block text-sm font-medium text-silver-300 mb-1">Notes</label>
+                                <textarea
+                                    name="notes"
+                                    rows={3}
+                                    value={formData.notes}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-accent-500 outline-none"
+                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-lg text-white focus:ring-2 focus:ring-accent-500 outline-none resize-none"
                                 >
-                                    <option value="pending">Pending</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="rejected">Rejected</option>
-                                </select>
+                                </textarea>
                             </div>
                         </div>
                     </div>

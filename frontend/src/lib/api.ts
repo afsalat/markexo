@@ -6,20 +6,6 @@ import { API_BASE_URL } from '@/config/apiConfig';
 
 const API_URL = API_BASE_URL;
 
-export interface Shop {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    address: string;
-    city: string;
-    phone: string;
-    email: string;
-    image: string | null;
-    is_active: boolean;
-    product_count: number;
-}
-
 export interface Category {
     id: number;
     name: string;
@@ -45,7 +31,6 @@ export interface Product {
     discount_percent: number;
     stock: number;
     sku: string;
-    shop: { id: number; name: string; slug: string; image: string | null };
     category: { id: number; name: string; slug: string } | null;
     image: string | null;
     images: { id: number; image: string; is_primary: boolean }[];
@@ -104,7 +89,6 @@ export interface Order {
         product_name: string;
         quantity: number;
         price: number;
-        shop_name: string;
     }[];
     created_at: string;
 }
@@ -129,12 +113,6 @@ export async function fetchCategories(params?: Record<string, string>) {
     const url = queryString ? `${API_URL}/categories/?${queryString}` : `${API_URL}/categories/`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch categories');
-    return res.json();
-}
-
-export async function fetchShops() {
-    const res = await fetch(`${API_URL}/shops/`);
-    if (!res.ok) throw new Error('Failed to fetch shops');
     return res.json();
 }
 
@@ -274,28 +252,6 @@ export async function updateOrderStatus(id: number, status: string) {
     });
     if (!res.ok) throw new Error('Failed to update order status');
     return res.json();
-}
-
-export async function fetchAdminShops() {
-    const res = await fetch(`${API_URL}/admin/shops/`);
-    if (!res.ok) throw new Error('Failed to fetch shops');
-    return res.json();
-}
-
-export async function createShop(data: FormData) {
-    const res = await fetch(`${API_URL}/admin/shops/`, {
-        method: 'POST',
-        body: data,
-    });
-    if (!res.ok) throw new Error('Failed to create shop');
-    return res.json();
-}
-
-export async function deleteShop(id: number) {
-    const res = await fetch(`${API_URL}/admin/shops/${id}/`, {
-        method: 'DELETE',
-    });
-    if (!res.ok) throw new Error('Failed to delete shop');
 }
 
 // Cart API functions

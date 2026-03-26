@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Product, Shop, Category } from '@/types/admin';
+import { Product, Category } from '@/types/admin';
 import ProductsTab from '@/components/admin/ProductsTab';
 import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 
@@ -11,7 +11,6 @@ const API_BASE_URL = API_URL;
 export default function PartnerProductsPage() {
     const { token } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
-    const [shops, setShops] = useState<Shop[]>([]); // Likely will contain only their shop
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -21,19 +20,14 @@ export default function PartnerProductsPage() {
         try {
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            const [productsRes, shopsRes, categoriesRes] = await Promise.all([
+            const [productsRes, categoriesRes] = await Promise.all([
                 fetch(`${API_BASE_URL}/partner/products/`, { headers }),
-                fetch(`${API_BASE_URL}/partner/shops/`, { headers }),
                 fetch(`${API_BASE_URL}/categories/`, { headers }),
             ]);
 
             if (productsRes.ok) {
                 const data = await productsRes.json();
                 setProducts(data.results || data);
-            }
-            if (shopsRes.ok) {
-                const data = await shopsRes.json();
-                setShops(data.results || data);
             }
             if (categoriesRes.ok) {
                 const data = await categoriesRes.json();
@@ -61,13 +55,14 @@ export default function PartnerProductsPage() {
     return (
         <ProductsTab
             products={products}
-            shops={shops}
             categories={categories}
             onRefresh={fetchData}
             apiBasePath={`${API_BASE_URL}/partner/products`}
             shopsEndpoint={`${API_BASE_URL}/partner/shops/`}
             categoriesEndpoint={`${API_BASE_URL}/categories/`}
-            canAddOverride={shops.length > 0}
+            shopsCreateEndpoint={`${API_BASE_URL}/partner/shops/`}
+            categoriesCreateEndpoint={`${API_BASE_URL}/partner/categories/`}
+            canAddOverride={true}
             canEditOverride={true}
             canDeleteOverride={true}
             title="My Products"
