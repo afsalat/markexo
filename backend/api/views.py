@@ -1401,8 +1401,20 @@ class PartnerCategoryListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        categories = Category.objects.filter(is_active=True, parent=None).order_by('name')
-        serializer = CategorySerializer(categories, many=True, context={'request': request})
+        flat = request.query_params.get('flat') == 'true'
+        search = request.query_params.get('search')
+        queryset = Category.objects.filter(is_active=True).order_by('name')
+        
+        if not flat and not search:
+            queryset = queryset.filter(parent=None)
+            
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+            
+        serializer = CategorySerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request):

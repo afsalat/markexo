@@ -32,7 +32,7 @@ export default function CategoriesPage() {
             try {
                 setLoading(true);
                 const [categoriesResponse, bannersResponse] = await Promise.all([
-                    fetchCategories(),
+                    fetchCategories({ flat: 'true' }),
                     fetchBanners()
                 ]);
 
