@@ -2,27 +2,48 @@
 Django settings for VorionMart project.
 """
 from datetime import timedelta
+import json
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 SYSTEM_LOG_FILE = LOG_DIR / 'system.log'
+APP_CONFIG_PATH = BASE_DIR.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
 
-def env_list(name, default):
-    value = os.environ.get(name)
-    if value:
-        return [item.strip() for item in value.split(',') if item.strip()]
-    return default
+def load_app_config():
+    with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
+        return json.load(config_file)
+
+def build_origin(protocol, host, port):
+    return f"{protocol}://{host}:{port}".rstrip('/')
+
+def build_host_aliases(host):
+    if host in {'127.0.0.1', 'localhost'}:
+        return ['127.0.0.1', 'localhost']
+    return [host]
 
 
-APP_URL = os.environ.get('APP_URL', 'https://vorionmart.com').rstrip('/')
+APP_CONFIG = load_app_config()
+APP_PROTOCOL = APP_CONFIG['protocol']
+APP_HOST = APP_CONFIG['host']
+FRONTEND_PORT = int(APP_CONFIG['frontendPort'])
+BACKEND_PORT = int(APP_CONFIG['backendPort'])
+HOST_ALIASES = build_host_aliases(APP_HOST)
+FRONTEND_ORIGINS = [build_origin(APP_PROTOCOL, host, FRONTEND_PORT) for host in HOST_ALIASES]
+BACKEND_ORIGIN = build_origin(APP_PROTOCOL, APP_HOST, BACKEND_PORT)
+APP_URL = FRONTEND_ORIGINS[0]
 
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
-ALLOWED_HOSTS = env_list('ALLOWED_HOSTS', ['vorionmart.com', 'www.vorionmart.com'])
+ALLOWED_HOSTS = sorted({
+    *HOST_ALIASES,
+    urlparse(APP_URL).hostname,
+    urlparse(BACKEND_ORIGIN).hostname,
+})
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -99,8 +120,8 @@ SERVE_MEDIA_FILES = False
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = env_list('CORS_ALLOWED_ORIGINS', [APP_URL, 'https://www.vorionmart.com'])
-CSRF_TRUSTED_ORIGINS = env_list('CSRF_TRUSTED_ORIGINS', [APP_URL, 'https://www.vorionmart.com'])
+CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS
+CSRF_TRUSTED_ORIGINS = FRONTEND_ORIGINS
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

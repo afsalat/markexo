@@ -10,6 +10,8 @@ Marketplace application with a Django API (`backend/`) and a Next.js storefront/
 
 ## Development
 
+Shared host and port settings are hardcoded in [appConfig.json](/c:/Users/USER/Desktop/markexo/frontend/src/config/appConfig.json). Update that file if you want to change the frontend or backend port. The frontend scripts and Django `runserver` now read from that file automatically.
+
 ### Backend
 
 ```bash
@@ -33,23 +35,23 @@ npm run dev
 
 ### Backend
 
-Backend production values are defined directly in [settings.py](/c:/Users/USER/Desktop/markexo/backend/markexo/settings.py).
+Backend runtime host and port values are read from [appConfig.json](/c:/Users/USER/Desktop/markexo/frontend/src/config/appConfig.json), with the rest of the backend settings defined in [settings.py](/c:/Users/USER/Desktop/markexo/backend/markexo/settings.py).
 
 This project is configured to use SQLite by default:
 
 - Database file: `backend/db.sqlite3`
-- Hosts and origins are set in `settings.py`
+- Hosts and origins are derived from `frontend/src/config/appConfig.json`
 - SMTP settings are set in `settings.py`
 
 ### Frontend
 
-Frontend production URLs are defined directly in [siteConfig.ts](/c:/Users/USER/Desktop/markexo/frontend/src/config/siteConfig.ts) and [next.config.js](/c:/Users/USER/Desktop/markexo/frontend/next.config.js).
+Frontend URLs are derived from [appConfig.json](/c:/Users/USER/Desktop/markexo/frontend/src/config/appConfig.json) through [siteConfig.ts](/c:/Users/USER/Desktop/markexo/frontend/src/config/siteConfig.ts) and [next.config.js](/c:/Users/USER/Desktop/markexo/frontend/next.config.js).
 
 This project is configured to use:
 
-- App URL: `https://vorionmart.com`
-- API URL: `https://vorionmart.com/api`
-- Media URL: `https://vorionmart.com/media`
+- App URL: `http://127.0.0.1:3000`
+- API URL: `http://127.0.0.1:8000/api`
+- Media URL: `http://127.0.0.1:8000/media`
 
 ## Production Deploy Steps
 

@@ -1,9 +1,22 @@
-import requests
 import json
 import random
+from pathlib import Path
+
+import requests
+
+
+APP_CONFIG_PATH = Path(__file__).resolve().parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
+
+
+def build_api_url():
+    with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
+        app_config = json.load(config_file)
+
+    return f"{app_config['protocol']}://{app_config['host']}:{app_config['backendPort']}/api"
+
 
 def test_registration():
-    url = "http://127.0.0.1:8000/api/auth/register-partner/"
+    url = f"{build_api_url()}/auth/register-partner/"
     
     # Generate a random email to avoid "email already registered" error
     email = f"test_partner_{random.randint(1000, 9999)}@gmail.com"

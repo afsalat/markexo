@@ -19,12 +19,11 @@ from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser, DjangoModelPermissions
 from decimal import Decimal
 
-from django.core.mail import send_mail
 from django.core.cache import cache
 from .models import (
     Shop, Category, Product, ProductImage, Review, Customer,
     Order, OrderItem, Banner, SiteSetting, Enquiry,
-    Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest
+    Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner
 )
 from .serializers import (
     ShopSerializer, ShopListSerializer,
@@ -123,33 +122,43 @@ class ShopViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
     permission_classes = [AllowAny]
 
-    def get_serializer_class(self):
-        if self.action == 'list':
-            return ShopListSerializer
-        return ShopSerializer
+
+# ============== Public API Views ==============
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Public API for categories."""
-    queryset = Category.objects.filter(is_active=True, parent=None)
+    queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
     lookup_field = 'slug'
     permission_classes = [AllowAny]
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        
+        # If 'flat' param is provided, don't filter by parent=None
+        # Also, if searching, don't filter by parent=None to find subcategories
+        flat = self.request.query_params.get('flat') == 'true'
         search = self.request.query_params.get('search')
+        
+        if not flat and not search:
+            queryset = queryset.filter(parent=None)
+            
         if search:
             queryset = queryset.filter(
                 Q(name__icontains=search) |
                 Q(description__icontains=search)
             )
+        
         return queryset
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """Public API for products."""
-    queryset = Product.objects.filter(is_active=True, shop__is_active=True, approval_status='approved')
+    queryset = Product.objects.filter(is_active=True, approval_status='approved')
     serializer_class = ProductSerializer
     lookup_field = 'slug'
     permission_classes = [AllowAny]
@@ -166,11 +175,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         category = self.request.query_params.get('category')
         if category:
             queryset = queryset.filter(category__slug=category)
-
-        # Filter by shop
-        shop = self.request.query_params.get('shop')
-        if shop:
-            queryset = queryset.filter(shop__slug=shop)
 
         # Filter by featured
         featured = self.request.query_params.get('featured')
@@ -307,9 +311,6 @@ class CreateOrderView(APIView):
         total_amount = 0
         order_items = []
         
-        # Group items by shop for email notifications (Internal Logic Only)
-        shop_items = {}
-
         for item in data['items']:
             product = get_object_or_404(Product, id=item['product_id'])
             quantity = item.get('quantity', 1)
@@ -330,14 +331,6 @@ class CreateOrderView(APIView):
                 'price': price,
             }
             order_items.append(order_item_data)
-            
-            # Add to shop items dict
-            if product.shop_id not in shop_items:
-                shop_items[product.shop_id] = {
-                    'shop': product.shop,
-                    'items': []
-                }
-            shop_items[product.shop_id]['items'].append(order_item_data)
 
         order = Order.objects.create(
             customer=customer,
@@ -358,29 +351,6 @@ class CreateOrderView(APIView):
         # 6. Update Customer Metrics
         customer.order_count += 1
         customer.save()
-            
-        # Send emails to shops (Backend Process - Hidden from User)
-        for shop_id, shop_data in shop_items.items():
-            shop = shop_data['shop']
-            if shop.email:
-                email_subject = f"New Order Received - #{order.order_id}"
-                email_body = f"Hello {shop.name},\n\nYou have received a new order!\n\nOrder ID: {order.order_id}\n\nItems:\n"
-                
-                for item in shop_data['items']:
-                    email_body += f"- {item['product_name']} x {item['quantity']} (Total: {item['price'] * item['quantity']})\n"
-                    
-                email_body += f"\nPlease login to your dashboard to process this order.\n\nRegards,\nVorionMart Team"
-                
-                try:
-                    send_mail(
-                        email_subject,
-                        email_body,
-                        'noreply@VorionMart.com',
-                        [shop.email],
-                        fail_silently=True,
-                    )
-                except Exception:
-                    pass # Silently fail email to avoid disrupting order flow
 
         return Response(
             OrderSerializer(order, context={'request': request}).data,
@@ -629,7 +599,7 @@ class AdminModelPermissions(DjangoModelPermissions):
 class AdminDashboardPermission(permissions.BasePermission):
     """
     Custom permission for dashboard stats.
-    Requires view_shop or view_order as a proxy for dashboard access.
+    Requires at least one admin-facing read permission.
     """
     def has_permission(self, request, view):
         return (
@@ -637,7 +607,6 @@ class AdminDashboardPermission(permissions.BasePermission):
             request.user.is_authenticated and 
             request.user.is_staff and
             (
-                request.user.has_perm('api.view_shop') or 
                 request.user.has_perm('api.view_order') or
                 request.user.has_perm('api.view_product') or
                 request.user.has_perm('api.view_category') or
@@ -754,7 +723,6 @@ class AdminDashboardStatsView(APIView):
             'total_revenue': total_revenue,
             'total_profit': total_profit,
             'total_products': Product.objects.count(),
-            'total_shops': Shop.objects.count(),
             'total_customers': Customer.objects.count(),
             'pending_orders': orders.filter(status='pending').count(),
             'recent_orders': OrderSerializer(orders[:10], many=True, context={'request': request}).data,
@@ -766,24 +734,21 @@ class AdminDashboardStatsView(APIView):
 
 
 class AdminPartnerViewSet(viewsets.ModelViewSet):
-    """Admin CRUD for Partners (User + Shop)."""
-    # Query users who owners of shops (Partners)
-    # We filter specifically for users in 'Partner' group or having a shop
+    """Admin CRUD for partner users."""
     queryset = User.objects.filter(groups__name='Partner').distinct()
     serializer_class = AdminPartnerSerializer
     permission_classes = [IsAuthenticated, IsAdminUser, AdminModelPermissions]
     
     def get_queryset(self):
-        # Also include any user who owns a shop, even if not in group
-        # Exclude superusers (admins) from the partner list
-        qs = User.objects.filter(Q(groups__name='Partner') | Q(shops__isnull=False)).exclude(is_superuser=True).distinct().order_by('-date_joined')
+        qs = User.objects.filter(groups__name='Partner').exclude(is_superuser=True).distinct().order_by('-date_joined')
         
         search = self.request.query_params.get('search')
         if search:
             qs = qs.filter(
                 Q(email__icontains=search) | 
                 Q(first_name__icontains=search) |
-                Q(shops__name__icontains=search)
+                Q(last_name__icontains=search) |
+                Q(partner_profile__city__icontains=search)
             )
         return qs
 
@@ -798,7 +763,7 @@ class AdminShopViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminUser, AdminModelPermissions]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related('sourcing_partner__user', 'owner').prefetch_related('sourcing_partners__user')
         
         # RLS removed: User requests to see all shops
         # if not self.request.user.is_superuser:
@@ -807,6 +772,25 @@ class AdminShopViewSet(viewsets.ModelViewSet):
         status = self.request.query_params.get('approval_status')
         if status:
             queryset = queryset.filter(approval_status=status)
+
+        shop_type = self.request.query_params.get('shop_type')
+        if shop_type:
+            queryset = queryset.filter(shop_type=shop_type)
+
+        sourcing_partner = self.request.query_params.get('sourcing_partner')
+        if sourcing_partner:
+            queryset = queryset.filter(sourcing_partner_id=sourcing_partner)
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(city__icontains=search) |
+                Q(email__icontains=search) |
+                Q(phone__icontains=search) |
+                Q(contact_person__icontains=search) |
+                Q(source_platform__icontains=search)
+            )
             
         return queryset
 
@@ -858,11 +842,6 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         # RLS: Non-superusers can ONLY see products they created
         if not self.request.user.is_superuser:
             queryset = queryset.filter(created_by=self.request.user)
-
-        # Filter by shop
-        shop = self.request.query_params.get('shop')
-        if shop:
-            queryset = queryset.filter(shop_id=shop)
 
         # Filter by category
         category = self.request.query_params.get('category')
@@ -920,11 +899,6 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(payment_status__in=payment_status.split(','))
             else:
                 queryset = queryset.filter(payment_status=payment_status)
-
-        # Filter by shop
-        shop = self.request.query_params.get('shop')
-        if shop:
-            queryset = queryset.filter(items__shop_id=shop).distinct()
 
         # Search
         search = self.request.query_params.get('search')
@@ -1280,16 +1254,24 @@ class AdminAnalyticsView(APIView):
     def get_top_partners(self):
         from django.db.models import Sum
         
-        # Aggregate total payouts per shop (partner)
         top_partners_qs = PayoutRequest.objects.filter(
             status='paid'
-        ).values('shop__name', 'shop__owner__email').annotate(
+        ).values(
+            'shop__owner__first_name',
+            'shop__owner__last_name',
+            'shop__owner__email',
+            'shop__owner__username',
+        ).annotate(
             total_payout=Sum('amount')
         ).order_by('-total_payout')[:10]
         
         return [
             {
-                'name': item['shop__name'],
+                'name': (
+                    f"{item['shop__owner__first_name']} {item['shop__owner__last_name']}".strip()
+                    or item['shop__owner__username']
+                    or 'Unknown'
+                ),
                 'email': item['shop__owner__email'],
                 'total_payout': float(item['total_payout'] or 0)
             }
@@ -1299,7 +1281,6 @@ class AdminAnalyticsView(APIView):
     def get_partner_payouts(self):
         from django.db.models import Sum
         
-        # Payouts per partner (Shop Owner) - Top 10
         payouts_qs = PayoutRequest.objects.filter(
             status='paid'
         ).values(
@@ -1328,8 +1309,7 @@ class AdminAnalyticsView(APIView):
         six_months_ago = timezone.now().date() - timedelta(days=180)
         
         revenue_qs = OrderItem.objects.filter(
-            order__created_at__gte=six_months_ago,
-            shop__isnull=False
+            order__created_at__gte=six_months_ago
         ).annotate(
             month=TruncMonth('order__created_at')
         ).values('month').annotate(
@@ -1348,13 +1328,11 @@ class PartnerDashboardStatsView(APIView):
 
     def get(self, request):
         products = get_partner_products(request.user)
-        payout_shops = get_partner_payout_shops(request.user)
 
         items = OrderItem.objects.filter(
             product__created_by=request.user
         ).distinct()
 
-        # Calculate Total Sales (Revenue for the shop)
         total_sales = items.aggregate(
             sales=Sum(F('price') * F('quantity'), output_field=DecimalField())
         )['sales'] or 0
@@ -1379,13 +1357,8 @@ class PartnerDashboardStatsView(APIView):
         recent_orders = Order.objects.filter(id__in=recent_order_ids).order_by('-created_at')
 
         total_products = products.count()
-        requested_amount = PayoutRequest.objects.filter(shop__in=payout_shops).exclude(
-            status='rejected'
-        ).aggregate(p=Sum('amount'))['p'] or Decimal('0.00')
-        total_withdrawn = PayoutRequest.objects.filter(
-            shop__in=payout_shops,
-            status='paid'
-        ).aggregate(p=Sum('amount'))['p'] or Decimal('0.00')
+        requested_amount = Decimal('0.00')
+        total_withdrawn = Decimal('0.00')
 
         return Response({
             'total_sales': total_sales,
@@ -1408,16 +1381,45 @@ class PartnerShopListView(APIView):
         serializer = ShopSerializer(shops, many=True, context={'request': request})
         return Response(serializer.data)
 
+    def post(self, request):
+        serializer = ShopSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        approval_status = 'approved' if request.user.is_superuser else 'pending'
+        shop = serializer.save(
+            owner=request.user,
+            approval_status=approval_status,
+            is_active=approval_status == 'approved',
+        )
+        return Response(
+            ShopSerializer(shop, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class PartnerCategoryListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        categories = Category.objects.filter(is_active=True, parent=None).order_by('name')
+        serializer = CategorySerializer(categories, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CategorySerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        category = serializer.save(is_active=True)
+        return Response(
+            CategorySerializer(category, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
 
 class PartnerProductListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         queryset = get_partner_products(request.user).order_by('-created_at')
-
-        shop = request.query_params.get('shop')
-        if shop:
-            queryset = queryset.filter(shop_id=shop)
 
         category = request.query_params.get('category')
         if category:
@@ -1437,10 +1439,6 @@ class PartnerProductListView(APIView):
     def post(self, request):
         serializer = ProductSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
-
-        shop = serializer.validated_data.get('shop')
-        if shop and not get_partner_catalog_shops(request.user).filter(id=shop.id).exists():
-            raise serializers.ValidationError({"shop_id": "You can only add products to your own shop."})
 
         approval_status = 'approved' if request.user.is_superuser else 'pending'
         serializer.save(created_by=request.user, approval_status=approval_status)
@@ -1462,10 +1460,6 @@ class PartnerProductDetailView(APIView):
         product = self.get_object(request, pk)
         serializer = ProductSerializer(product, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
-
-        shop = serializer.validated_data.get('shop')
-        if shop and not get_partner_catalog_shops(request.user).filter(id=shop.id).exists():
-            raise serializers.ValidationError({"shop_id": "You can only assign products to your own shop."})
 
         serializer.save()
         return Response(serializer.data)

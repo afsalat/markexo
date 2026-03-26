@@ -26,7 +26,16 @@ def generate_unique_slug(model_class, name, instance_id=None, max_length=200):
 
 
 class Shop(models.Model):
-    """Partner shop/vendor model."""
+    """Source shop / vendor registry used for product sourcing and payment tracking."""
+    SHOP_TYPE_CHOICES = [
+        ('b2b_ecommerce', 'Online B2B E-commerce Store'),
+        ('local_shop', 'Local Shop'),
+        ('single_product_wholesaler', 'Single Product Wholesaler'),
+        ('multi_product_seller', 'Multiple Product Seller'),
+        ('retailer', 'Retailer'),
+        ('other', 'Other'),
+    ]
+
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     description = models.TextField(blank=True)
@@ -34,13 +43,33 @@ class Shop(models.Model):
     city = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
     email = models.EmailField(unique=True)
+    shop_type = models.CharField(max_length=30, choices=SHOP_TYPE_CHOICES, default='other')
+    source_platform = models.CharField(max_length=100, blank=True, help_text="e.g. IndiaMART, Meesho, Shopify, local market")
+    website_url = models.URLField(blank=True)
+    contact_person = models.CharField(max_length=100, blank=True)
+    whatsapp_number = models.CharField(max_length=20, blank=True)
+    notes = models.TextField(blank=True)
     image = models.ImageField(upload_to='shops/', blank=True, null=True)
     image = models.ImageField(upload_to='shops/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     
-    # Partner features
+    # Legacy partner ownership fields retained for backward compatibility.
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='shops')
     commission_rate = models.DecimalField(max_digits=5, decimal_places=2, default=50.00, help_text="Percentage of profit shared with the partner (0-100)")
+    sourcing_partner = models.ForeignKey(
+        'Partner',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sourced_shops',
+        help_text="Partner who sourced or onboarded this shop",
+    )
+    sourcing_partners = models.ManyToManyField(
+        'Partner',
+        blank=True,
+        related_name='attributed_shops',
+        help_text="All partners involved in sourcing this shop",
+    )
     
     APPROVAL_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -129,7 +158,7 @@ class Category(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = generate_unique_slug(Category, self.name, instance_id=self.pk, max_length=200)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -158,7 +187,7 @@ class Product(models.Model):
     
     stock = models.PositiveIntegerField(default=0)
     sku = models.CharField(max_length=100, blank=True)
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='products')
+    shop = models.ForeignKey(Shop, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_products')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
     image = models.ImageField(upload_to='products/', blank=True, null=True)
@@ -475,10 +504,32 @@ class CartItem(models.Model):
 
 
 class Supplier(models.Model):
-    """Dropshipping supplier configuration for API integration."""
+    """Supplier directory entry with optional API integration details."""
+    SUPPLIER_TYPE_CHOICES = [
+        ('local_shop', 'Local Shop'),
+        ('ecommerce', 'E-commerce Website'),
+        ('social', 'Online Social Supplier'),
+        ('marketplace', 'Marketplace Seller'),
+        ('wholesale', 'Wholesale Supplier'),
+        ('manufacturer', 'Manufacturer'),
+        ('other', 'Other'),
+    ]
+
     name = models.CharField(max_length=100)
-    api_endpoint = models.URLField()
-    api_key = models.CharField(max_length=255)
+    supplier_type = models.CharField(max_length=20, choices=SUPPLIER_TYPE_CHOICES, default='other')
+    source_platform = models.CharField(max_length=100, blank=True, help_text="e.g. Meesho, IndiaMART, Instagram, Shopify")
+    website_url = models.URLField(blank=True)
+    store_url = models.URLField(blank=True, help_text="Direct store, catalog, or profile URL")
+    contact_person = models.CharField(max_length=100, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+    whatsapp_number = models.CharField(max_length=20, blank=True)
+    instagram_handle = models.CharField(max_length=100, blank=True)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    api_endpoint = models.URLField(blank=True)
+    api_key = models.CharField(max_length=255, blank=True)
     api_secret = models.CharField(max_length=255, blank=True)
     webhook_url = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)

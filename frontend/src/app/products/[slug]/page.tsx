@@ -41,6 +41,7 @@ export default function ProductDetailPage() {
     const [reviewError, setReviewError] = useState<string | null>(null);
     const [reviewSuccess, setReviewSuccess] = useState(false);
     const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>([]);
+    const [shareMessage, setShareMessage] = useState<string | null>(null);
 
     const normalizeProducts = (response: any): Product[] => {
         if (Array.isArray(response)) {
@@ -256,6 +257,67 @@ export default function ProductDetailPage() {
         router.push('/cart');
     };
 
+    const handleShare = async () => {
+        if (!productData || typeof window === 'undefined') {
+            return;
+        }
+
+        const shareUrl = window.location.href;
+        const shareData = {
+            title: productData.name,
+            text: `Check out ${productData.name} on VorionMart`,
+            url: shareUrl,
+        };
+
+        const showShareMessage = (message: string) => {
+            setShareMessage(message);
+            window.setTimeout(() => setShareMessage(null), 2500);
+        };
+
+        try {
+            if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                await navigator.share(shareData);
+                showShareMessage('Product link shared.');
+                return;
+            }
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') {
+                return;
+            }
+        }
+
+        try {
+            if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(shareUrl);
+                showShareMessage('Product link copied.');
+                return;
+            }
+        } catch (error) {
+            console.error('Clipboard share failed:', error);
+        }
+
+        try {
+            const textArea = document.createElement('textarea');
+            textArea.value = shareUrl;
+            textArea.setAttribute('readonly', '');
+            textArea.style.position = 'absolute';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            const copied = document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            if (copied) {
+                showShareMessage('Product link copied.');
+                return;
+            }
+        } catch (error) {
+            console.error('Legacy clipboard share failed:', error);
+        }
+
+        showShareMessage('Unable to share right now.');
+    };
+
     const displaySalePrice = Number(
         productData.current_price ?? productData.sale_price ?? productData.our_price ?? 0
     );
@@ -410,15 +472,19 @@ export default function ProductDetailPage() {
 
                         {/* Price */}
                         <div className="bg-dark-800 border border-dark-600 rounded-2xl p-6">
-                            <div className="flex items-baseline gap-3 mb-2">
-                                <span className="text-4xl font-bold text-white">₹{displaySalePrice.toLocaleString()}</span>
-                                {hasMrpDiscount && (
+                            <div className="price-reveal flex flex-wrap items-baseline gap-3 mb-2">
+                                {hasMrpDiscount ? (
                                     <>
-                                        <span className="text-2xl text-silver-500 line-through">₹{displayMrp.toLocaleString()}</span>
-                                        <span className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">
+                                        <span className="price-reveal__mrp text-2xl text-silver-500">
+                                            <span className="price-reveal__mrp-value">₹{displayMrp.toLocaleString()}</span>
+                                        </span>
+                                        <span className="price-reveal__sale text-4xl font-bold text-white">₹{displaySalePrice.toLocaleString()}</span>
+                                        <span className="price-reveal__badge px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">
                                             Save ₹{savedAmount.toLocaleString()}
                                         </span>
                                     </>
+                                ) : (
+                                    <span className="text-4xl font-bold text-white">₹{displaySalePrice.toLocaleString()}</span>
                                 )}
                             </div>
                             <p className="text-sm text-silver-500">Inclusive of all taxes</p>
@@ -500,10 +566,19 @@ export default function ProductDetailPage() {
                                         </>
                                     )}
                                 </button>
-                                <button className="w-14 h-14 border-2 border-dark-600 rounded-xl flex items-center justify-center hover:bg-dark-700 transition-colors text-silver-300">
+                                <button
+                                    onClick={handleShare}
+                                    type="button"
+                                    className="w-14 h-14 border-2 border-dark-600 rounded-xl flex items-center justify-center hover:bg-dark-700 transition-colors text-silver-300"
+                                    aria-label="Share product"
+                                >
                                     <Share2 size={20} />
                                 </button>
                             </div>
+
+                            {shareMessage && (
+                                <p className="text-sm text-accent-400">{shareMessage}</p>
+                            )}
 
                             <button
                                 onClick={handleBuyNow}
@@ -559,16 +634,16 @@ export default function ProductDetailPage() {
                 <div className="bg-dark-800 border border-dark-700 rounded-3xl overflow-hidden mb-12" data-aos="fade-up" data-aos-delay="300">
                     {/* Tab Headers */}
                     <div className="border-b border-dark-700">
-                        <div className="flex">
+                        <div className="flex overflow-x-auto custom-scrollbar whitespace-nowrap hidden-scrollbar">
                             <button
                                 onClick={() => setActiveTab('description')}
-                                className={`flex-1 py-4 px-6 font-semibold transition-colors ${activeTab === 'description' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
+                                className={`min-w-[132px] flex-1 px-4 py-3 text-sm font-semibold transition-colors sm:px-6 sm:py-4 sm:text-base ${activeTab === 'description' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
                             >
                                 Description
                             </button>
                             <button
                                 onClick={() => setActiveTab('specifications')}
-                                className={`flex-1 py-4 px-6 font-semibold transition-colors ${activeTab === 'specifications' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
+                                className={`min-w-[148px] flex-1 px-4 py-3 text-sm font-semibold transition-colors sm:px-6 sm:py-4 sm:text-base ${activeTab === 'specifications' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
                             >
                                 Specifications
                             </button>
@@ -580,7 +655,7 @@ export default function ProductDetailPage() {
                                         setActiveTab('reviews');
                                     }
                                 }}
-                                className={`flex-1 py-4 px-6 font-semibold transition-colors ${activeTab === 'reviews' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
+                                className={`min-w-[124px] flex-1 px-4 py-3 text-sm font-semibold transition-colors sm:px-6 sm:py-4 sm:text-base ${activeTab === 'reviews' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
                             >
                                 Reviews ({reviews.length})
                             </button>
@@ -588,18 +663,18 @@ export default function ProductDetailPage() {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="p-8">
+                    <div className="p-4 sm:p-6 lg:p-8">
                         {activeTab === 'description' && (
-                            <div className="space-y-6 animate-fade-in">
+                            <div className="space-y-5 animate-fade-in sm:space-y-6">
                                 {descriptionLead && (
-                                    <div className="rounded-2xl border border-dark-600 bg-dark-700/60 p-5">
-                                        <p className="text-silver-200 text-lg leading-relaxed">{descriptionLead}</p>
+                                    <div className="rounded-2xl border border-dark-600 bg-dark-700/60 p-4 sm:p-5">
+                                        <p className="text-base leading-relaxed text-silver-200 sm:text-lg">{descriptionLead}</p>
                                     </div>
                                 )}
 
                                 {descriptionDetails.length > 0 && (
                                     <div>
-                                        <h3 className="mb-4 text-xl font-bold text-white">Product Details</h3>
+                                        <h3 className="mb-4 text-lg font-bold text-white sm:text-xl">Product Details</h3>
                                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                             {descriptionDetails.map((detail) => (
                                                 <div
@@ -609,7 +684,7 @@ export default function ProductDetailPage() {
                                                     <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent-500/80">
                                                         {detail.label}
                                                     </p>
-                                                    <p className="text-base text-silver-200">{detail.value}</p>
+                                                    <p className="break-words text-sm text-silver-200 sm:text-base">{detail.value}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -617,7 +692,7 @@ export default function ProductDetailPage() {
                                 )}
 
                                 {descriptionNotes.length > 0 && (
-                                    <div className="rounded-2xl border border-dark-600 bg-dark-700/50 p-5">
+                                    <div className="rounded-2xl border border-dark-600 bg-dark-700/50 p-4 sm:p-5">
                                         <div className="space-y-2">
                                             {descriptionNotes.map((line) => (
                                                 <p key={line} className="text-silver-300 leading-relaxed">
@@ -654,9 +729,9 @@ export default function ProductDetailPage() {
                                 {Object.keys(productData.specifications || {}).length > 0 ? (
                                     <div className="bg-dark-700 rounded-xl overflow-hidden divide-y divide-dark-600">
                                         {Object.entries(productData.specifications || {}).map(([key, value]) => (
-                                            <div key={key} className="flex items-center px-5 py-3.5">
-                                                <span className="font-semibold text-white w-1/3">{key}</span>
-                                                <span className="text-silver-300 flex-1">{String(value)}</span>
+                                            <div key={key} className="flex flex-col gap-1 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+                                                <span className="text-sm font-semibold text-white sm:w-1/3 sm:text-base">{key}</span>
+                                                <span className="break-words text-sm text-silver-300 sm:flex-1 sm:text-base">{String(value)}</span>
                                             </div>
                                         ))}
                                     </div>

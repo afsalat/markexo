@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { registerPartner } from '@/lib/api';
-import { Mail, Lock, User, ArrowRight, ArrowLeft, MapPin, Phone, FileText } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, ArrowLeft, Phone } from 'lucide-react';
 
 export default function PartnerRegisterPage() {
     const { login } = useAuth();
@@ -17,9 +17,8 @@ export default function PartnerRegisterPage() {
         email: '',
         password: '',
         password_confirm: '',
-        // Shop fields
-        shop_city: '',
-        shop_phone: ''
+        city: '',
+        phone: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -48,8 +47,8 @@ export default function PartnerRegisterPage() {
                 email: formData.email,
                 password: formData.password,
                 password_confirm: formData.password_confirm,
-                shop_city: formData.shop_city,
-                shop_phone: formData.shop_phone
+                city: formData.city,
+                phone: formData.phone
             });
 
             // Auto login after registration
@@ -72,12 +71,12 @@ export default function PartnerRegisterPage() {
                 <div className="relative z-10 text-white max-w-lg mx-auto">
                     <h1 className="font-display text-5xl font-bold mb-6">Become a Partner</h1>
                     <p className="text-xl text-silver-300 mb-8">
-                        Join as a Partner: Research trending products, curate your shop, and promote listings.
+                        Join as a Partner: research products, manage listings, and grow sales from one dashboard.
                     </p>
                     <div className="space-y-4">
                         {[
                             'Research and find trending products',
-                            'Create and manage your own shop',
+                            'Create and manage your own catalog',
                             'Promote products to your audience',
                             'Earn 30% profit on every sale'
                         ].map((feature, i) => (
@@ -208,8 +207,8 @@ export default function PartnerRegisterPage() {
                                         required
                                         className="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
                                         placeholder="City"
-                                        value={formData.shop_city}
-                                        onChange={(e) => setFormData({ ...formData, shop_city: e.target.value })}
+                                        value={formData.city}
+                                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                                     />
                                 </div>
 
@@ -222,8 +221,8 @@ export default function PartnerRegisterPage() {
                                             required
                                             className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
                                             placeholder="+91 9876543210"
-                                            value={formData.shop_phone}
-                                            onChange={(e) => setFormData({ ...formData, shop_phone: e.target.value })}
+                                            value={formData.phone}
+                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                         />
                                     </div>
                                 </div>

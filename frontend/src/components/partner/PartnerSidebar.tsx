@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import {
-    LayoutDashboard, ShoppingBag, Package, Settings, LogOut, Store, CreditCard
+    LayoutDashboard, ShoppingBag, Package, Settings, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -15,9 +15,7 @@ export default function PartnerSidebar({ sidebarOpen, setSidebarOpen }: PartnerS
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/partner' },
         { id: 'products', label: 'My Products', icon: Package, href: '/partner/products' },
-        { id: 'shops', label: 'My Shops', icon: Store, href: '/partner/shops' },
         { id: 'orders', label: 'My Orders', icon: ShoppingBag, href: '/partner/orders' },
-        { id: 'payouts', label: 'My Payouts', icon: CreditCard, href: '/partner/payouts' },
         { id: 'settings', label: 'Settings', icon: Settings, href: '/partner/settings' },
     ];
 

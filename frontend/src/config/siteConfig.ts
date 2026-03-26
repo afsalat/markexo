@@ -1,11 +1,12 @@
+import appConfig from './appConfig.json';
+
 const normalizeUrl = (value: string) => value.replace(/\/+$/, '');
 
-export const APP_URL = normalizeUrl(
-    process.env.NEXT_PUBLIC_APP_URL || 'https://vorionmart.com'
-);
+const buildOrigin = (port: number) =>
+    normalizeUrl(`${appConfig.protocol}://${appConfig.host}:${port}`);
 
-export const API_BASE_URL = normalizeUrl(
-    process.env.NEXT_PUBLIC_API_BASE_URL || `${APP_URL}/api`
-);
-
+export const APP_URL = buildOrigin(appConfig.frontendPort);
+export const API_ORIGIN = buildOrigin(appConfig.backendPort);
+export const API_BASE_URL = `${API_ORIGIN}/api`;
+export const MEDIA_URL = `${API_ORIGIN}/media`;
 export const BASE_URL = APP_URL;

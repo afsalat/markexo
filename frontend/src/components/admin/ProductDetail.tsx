@@ -205,15 +205,6 @@ export default function ProductDetail({ product, onBack, onEdit, onDelete }: Pro
                             <div className="space-y-6">
                                 <div className="flex items-start gap-3">
                                     <div className="p-2 bg-dark-700 rounded-xl text-silver-400">
-                                        <ShoppingBag size={20} />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-silver-500 font-bold uppercase">Vendor/Shop</div>
-                                        <div className="text-white font-bold">{product.shop_name}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-dark-700 rounded-xl text-silver-400">
                                         <Tag size={20} />
                                     </div>
                                     <div>

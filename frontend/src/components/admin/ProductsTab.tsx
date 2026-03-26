@@ -1,5 +1,5 @@
 import { Search, Plus, Edit, Trash2, Info, CheckCircle } from 'lucide-react';
-import { Product, Shop, Category } from '@/types/admin';
+import { Product, Category } from '@/types/admin';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
@@ -8,12 +8,13 @@ import ProductForm from './ProductForm';
 
 interface ProductsTabProps {
     products: Product[];
-    shops: Shop[];
     categories: Category[];
     onRefresh?: () => void;
     apiBasePath?: string;
     shopsEndpoint?: string;
     categoriesEndpoint?: string;
+    shopsCreateEndpoint?: string;
+    categoriesCreateEndpoint?: string;
     canAddOverride?: boolean;
     canEditOverride?: boolean;
     canDeleteOverride?: boolean;
@@ -22,12 +23,13 @@ interface ProductsTabProps {
 
 export default function ProductsTab({
     products,
-    shops,
     categories,
     onRefresh,
     apiBasePath = `${API_BASE_URL}/admin/products`,
     shopsEndpoint = `${API_BASE_URL}/admin/shops/`,
     categoriesEndpoint = `${API_BASE_URL}/admin/categories/`,
+    shopsCreateEndpoint = `${API_BASE_URL}/admin/shops/`,
+    categoriesCreateEndpoint = `${API_BASE_URL}/admin/categories/`,
     canAddOverride,
     canEditOverride,
     canDeleteOverride,
@@ -126,6 +128,8 @@ export default function ProductsTab({
                 apiBasePath={apiBasePath}
                 shopsEndpoint={shopsEndpoint}
                 categoriesEndpoint={categoriesEndpoint}
+                shopsCreateEndpoint={shopsCreateEndpoint}
+                categoriesCreateEndpoint={categoriesCreateEndpoint}
             />
         );
     }
@@ -180,7 +184,7 @@ export default function ProductsTab({
                         <thead className="bg-dark-700/50">
                             <tr>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Product</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Shop</th>
+                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Category</th>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Our Price</th>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Profit</th>
                                 <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Stock</th>
@@ -223,7 +227,7 @@ export default function ProductsTab({
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-silver-400">{product.shop_name}</td>
+                                        <td className="px-6 py-4 text-sm text-silver-400">{product.category_name || 'Uncategorized'}</td>
                                         <td className="px-6 py-4 font-semibold text-white">₹{formatNumber(product.current_price)}</td>
                                         <td className="px-6 py-4 text-sm font-medium">
                                             {product.profit_margin ? (

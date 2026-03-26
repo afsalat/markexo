@@ -5,7 +5,8 @@ import {
     Zap, Plus, Edit2, Trash2, CheckCircle, XCircle,
     RefreshCw, Send, Settings, Link2, Key,
     Globe, ToggleLeft, ToggleRight, Clock,
-    ArrowRight, Activity, TrendingUp, Wifi, X, Package
+    ArrowRight, Activity, TrendingUp, Wifi, X, Package,
+    Mail, Phone, MapPin, UserRound, MessageCircle, ExternalLink
 } from 'lucide-react';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { useAuth } from '@/context/AuthContext';
@@ -13,8 +14,22 @@ import { useAuth } from '@/context/AuthContext';
 interface Supplier {
     id: number;
     name: string;
+    supplier_type: string;
+    supplier_type_display: string;
+    source_platform: string;
+    website_url: string;
+    store_url: string;
+    contact_person: string;
+    contact_email: string;
+    contact_phone: string;
+    whatsapp_number: string;
+    instagram_handle: string;
+    address: string;
+    city: string;
+    notes: string;
     api_endpoint: string;
     masked_api_key: string;
+    has_api_access: boolean;
     webhook_url: string;
     is_active: boolean;
     auto_send: boolean;
@@ -58,6 +73,18 @@ export default function SupplierAPITab() {
 
     const [formData, setFormData] = useState({
         name: '',
+        supplier_type: 'other',
+        source_platform: '',
+        website_url: '',
+        store_url: '',
+        contact_person: '',
+        contact_email: '',
+        contact_phone: '',
+        whatsapp_number: '',
+        instagram_handle: '',
+        address: '',
+        city: '',
+        notes: '',
         api_endpoint: '',
         api_key: '',
         api_secret: '',
@@ -69,6 +96,16 @@ export default function SupplierAPITab() {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
     };
+
+    const supplierTypeOptions = [
+        { value: 'local_shop', label: 'Local Shop' },
+        { value: 'ecommerce', label: 'E-commerce Website' },
+        { value: 'social', label: 'Online Social Supplier' },
+        { value: 'marketplace', label: 'Marketplace Seller' },
+        { value: 'wholesale', label: 'Wholesale Supplier' },
+        { value: 'manufacturer', label: 'Manufacturer' },
+        { value: 'other', label: 'Other' },
+    ];
 
     // Fetch suppliers from API
     const fetchSuppliers = async () => {
@@ -122,6 +159,18 @@ export default function SupplierAPITab() {
         setEditingSupplier(null);
         setFormData({
             name: '',
+            supplier_type: 'other',
+            source_platform: '',
+            website_url: '',
+            store_url: '',
+            contact_person: '',
+            contact_email: '',
+            contact_phone: '',
+            whatsapp_number: '',
+            instagram_handle: '',
+            address: '',
+            city: '',
+            notes: '',
             api_endpoint: '',
             api_key: '',
             api_secret: '',
@@ -135,6 +184,18 @@ export default function SupplierAPITab() {
         setEditingSupplier(supplier);
         setFormData({
             name: supplier.name,
+            supplier_type: supplier.supplier_type,
+            source_platform: supplier.source_platform || '',
+            website_url: supplier.website_url || '',
+            store_url: supplier.store_url || '',
+            contact_person: supplier.contact_person || '',
+            contact_email: supplier.contact_email || '',
+            contact_phone: supplier.contact_phone || '',
+            whatsapp_number: supplier.whatsapp_number || '',
+            instagram_handle: supplier.instagram_handle || '',
+            address: supplier.address || '',
+            city: supplier.city || '',
+            notes: supplier.notes || '',
             api_endpoint: supplier.api_endpoint,
             api_key: '',
             api_secret: '',
@@ -146,33 +207,61 @@ export default function SupplierAPITab() {
 
     const handleSave = async () => {
         try {
+            const hasApiAccessInForm = Boolean(
+                formData.api_endpoint && (formData.api_key || editingSupplier?.has_api_access)
+            );
+
             const payload: any = {
                 name: formData.name,
+                supplier_type: formData.supplier_type,
+                source_platform: formData.source_platform,
+                website_url: formData.website_url,
+                store_url: formData.store_url,
+                contact_person: formData.contact_person,
+                contact_email: formData.contact_email,
+                contact_phone: formData.contact_phone,
+                whatsapp_number: formData.whatsapp_number,
+                instagram_handle: formData.instagram_handle,
+                address: formData.address,
+                city: formData.city,
+                notes: formData.notes,
                 api_endpoint: formData.api_endpoint,
                 webhook_url: formData.webhook_url,
-                auto_send: formData.auto_send
+                auto_send: hasApiAccessInForm ? formData.auto_send : false
             };
             if (formData.api_key) payload.api_key = formData.api_key;
             if (formData.api_secret) payload.api_secret = formData.api_secret;
 
+            let response: Response;
             if (editingSupplier) {
-                await fetch(`${API_BASE_URL}/admin/suppliers/${editingSupplier.id}/`, {
+                response = await fetch(`${API_BASE_URL}/admin/suppliers/${editingSupplier.id}/`, {
                     method: 'PATCH',
                     headers,
                     body: JSON.stringify(payload)
                 });
             } else {
-                payload.api_key = formData.api_key || 'placeholder-key';
-                await fetch(`${API_BASE_URL}/admin/suppliers/`, {
+                response = await fetch(`${API_BASE_URL}/admin/suppliers/`, {
                     method: 'POST',
                     headers,
                     body: JSON.stringify(payload)
                 });
             }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                const firstError = Object.values(errorData as Record<string, unknown>)[0];
+                const message =
+                    (errorData as { detail?: string }).detail ||
+                    (Array.isArray(firstError) ? firstError[0] : firstError) ||
+                    'Unable to save supplier';
+                throw new Error(String(message));
+            }
+
             setIsModalOpen(false);
             fetchSuppliers();
         } catch (error) {
             console.error('Error saving supplier:', error);
+            alert(error instanceof Error ? error.message : 'Error saving supplier');
         }
     };
 
@@ -286,12 +375,43 @@ export default function SupplierAPITab() {
         }
     };
 
+    const formatLinkLabel = (url: string) => {
+        try {
+            const parsed = new URL(url);
+            return parsed.hostname.replace(/^www\./, '');
+        } catch {
+            return url;
+        }
+    };
+
+    const getSupplierTypeStyles = (supplierType: string) => {
+        switch (supplierType) {
+            case 'local_shop':
+                return 'bg-amber-500/10 text-amber-300 border-amber-500/30';
+            case 'ecommerce':
+                return 'bg-sky-500/10 text-sky-300 border-sky-500/30';
+            case 'social':
+                return 'bg-pink-500/10 text-pink-300 border-pink-500/30';
+            case 'marketplace':
+                return 'bg-violet-500/10 text-violet-300 border-violet-500/30';
+            case 'wholesale':
+                return 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30';
+            case 'manufacturer':
+                return 'bg-orange-500/10 text-orange-300 border-orange-500/30';
+            default:
+                return 'bg-slate-500/10 text-slate-300 border-slate-500/30';
+        }
+    };
+
+    const formSupportsAutomation = Boolean(
+        formData.api_endpoint && (formData.api_key || editingSupplier?.has_api_access)
+    );
+
     // Stats
     const totalOrders = suppliers.reduce((acc, s) => acc + (s.orders_sent || 0), 0);
     const activeSuppliers = suppliers.filter(s => s.is_active).length;
-    const avgSuccessRate = suppliers.length > 0
-        ? Math.round(suppliers.reduce((acc, s) => acc + (s.success_rate || 0), 0) / suppliers.length)
-        : 0;
+    const apiReadySuppliers = suppliers.filter(s => s.has_api_access).length;
+    const socialSuppliers = suppliers.filter(s => s.supplier_type === 'social').length;
 
     if (loading) {
         return (
@@ -310,10 +430,10 @@ export default function SupplierAPITab() {
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center">
                             <Zap size={20} className="text-dark-900" />
                         </div>
-                        Supplier API Integration
+                        Suppliers
                     </h1>
                     <p className="text-silver-500 text-sm mt-1 ml-[52px]">
-                        Configure and manage dropshipping supplier integrations
+                        Manage local shops, e-commerce sites, social sellers, and API-connected suppliers in one place
                     </p>
                 </div>
                 <button
@@ -325,7 +445,7 @@ export default function SupplierAPITab() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 <div className="bg-gradient-to-br from-dark-800 to-dark-800/50 border border-dark-700 rounded-2xl p-5 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-accent-500/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                     <div className="flex items-center gap-4">
@@ -342,7 +462,19 @@ export default function SupplierAPITab() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                            <Send size={24} className="text-blue-400" />
+                            <Wifi size={24} className="text-blue-400" />
+                        </div>
+                        <div>
+                            <p className="text-silver-500 text-sm">API Ready</p>
+                            <p className="text-2xl font-bold text-white">{apiReadySuppliers}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-br from-dark-800 to-dark-800/50 border border-dark-700 rounded-2xl p-5 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
+                            <Send size={24} className="text-green-400" />
                         </div>
                         <div>
                             <p className="text-silver-500 text-sm">Orders Forwarded</p>
@@ -351,14 +483,14 @@ export default function SupplierAPITab() {
                     </div>
                 </div>
                 <div className="bg-gradient-to-br from-dark-800 to-dark-800/50 border border-dark-700 rounded-2xl p-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center">
-                            <TrendingUp size={24} className="text-green-400" />
+                        <div className="w-12 h-12 rounded-xl bg-pink-500/10 flex items-center justify-center">
+                            <TrendingUp size={24} className="text-pink-400" />
                         </div>
                         <div>
-                            <p className="text-silver-500 text-sm">Success Rate</p>
-                            <p className="text-2xl font-bold text-white">{avgSuccessRate}%</p>
+                            <p className="text-silver-500 text-sm">Social Suppliers</p>
+                            <p className="text-2xl font-bold text-white">{socialSuppliers}</p>
                         </div>
                     </div>
                 </div>

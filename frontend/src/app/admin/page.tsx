@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PartnerDashboardStats, DashboardStats, Order, Product, Shop, Customer, Banner, SiteSetting, Category } from '@/types/admin';
+import { PartnerDashboardStats, DashboardStats, Order, Product, Customer, Banner, SiteSetting, Category } from '@/types/admin';
 import Sidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/AdminHeader';
 import DashboardTab from '@/components/admin/DashboardTab';
@@ -9,7 +9,6 @@ import PartnerDashboardTab from '@/components/admin/PartnerDashboardTab';
 import OrdersTab from '@/components/admin/OrdersTab';
 import ProductsTab from '@/components/admin/ProductsTab';
 import CategoriesTab from '@/components/admin/CategoriesTab';
-import ShopsTab from '@/components/admin/ShopsTab';
 import CustomersTab from '@/components/admin/CustomersTab';
 import EnquiriesTab from '@/components/admin/EnquiriesTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
@@ -20,16 +19,14 @@ import PaymentsTab from '@/components/admin/PaymentsTab';
 import SupplierAPITab from '@/components/admin/SupplierAPITab';
 import SystemLogsTab from '@/components/admin/SystemLogsTab';
 import ProductAnalyticsTab from '@/components/admin/ProductAnalyticsTab';
-import PartnerRequestsTab from '@/components/admin/PartnerRequestsTab';
 import PartnersTab from '@/components/admin/PartnersTab';
-import PartnerPayoutsTab from '@/components/admin/PartnerPayoutsTab';
+import ShopsTab from '@/components/admin/ShopsTab';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 
 const API_BASE_URL = API_URL;
 
-// TODO: Consolidate 'partner-requests' into 'partners' eventually?
-type TabType = 'dashboard' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'categories' | 'shops' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'supplier-api' | 'system-logs' | 'partner-requests' | 'partners' | 'partner-payouts';
+type TabType = 'dashboard' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners';
 
 export default function AdminPage() {
     const { token, user, hasPermission, loading: authLoading } = useAuth();
@@ -41,7 +38,6 @@ export default function AdminPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [partnerStats, setPartnerStats] = useState<PartnerDashboardStats | null>(null);
     const [products, setProducts] = useState<Product[]>([]);
-    const [shops, setShops] = useState<Shop[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [banners, setBanners] = useState<Banner[]>([]);
@@ -73,7 +69,6 @@ export default function AdminPage() {
                 productsUrl += `?created_by=${user.id}`;
             }
             addReq('view_product', productsUrl, 'products');
-            addReq('view_shop', `${API_BASE_URL}/admin/shops/`, 'shops');
             addReq('view_category', `${API_BASE_URL}/admin/categories/`, 'categories');
             addReq('view_customer', `${API_BASE_URL}/admin/customers/`, 'customers');
             addReq('view_banner', `${API_BASE_URL}/admin/banners/`, 'banners');
@@ -89,7 +84,6 @@ export default function AdminPage() {
                     if (label === 'stats') setStats(data);
                     if (label === 'partnerStats') setPartnerStats(data);
                     if (label === 'products') setProducts(data.results || data);
-                    if (label === 'shops') setShops(data.results || data);
                     if (label === 'categories') setCategories(data.results || data);
                     if (label === 'customers') setCustomers(data.results || data);
                     if (label === 'banners') setBanners(data.results || data);
@@ -149,18 +143,16 @@ export default function AdminPage() {
             returns: 'view_order',
             payments: 'view_order',
             products: 'view_product',
-            categories: 'view_category',
             shops: 'view_shop',
-            'partner-requests': 'view_shop',
+            categories: 'view_category',
             customers: 'view_customer',
             enquiries: 'view_enquiry',
             'user-management': 'view_user',
             banners: 'view_banner',
             settings: 'view_sitesetting',
-            'supplier-api': 'view_sitesetting',
+            suppliers: 'view_sitesetting',
             'system-logs': 'view_sitesetting',
             partners: 'add_user', // Use add_user as proxy permission for now
-            'partner-payouts': 'add_user'
         };
 
         const reqPerm = checkMap[activeTab];
@@ -185,17 +177,13 @@ export default function AdminPage() {
             case 'payments':
                 return <PaymentsTab />;
             case 'products':
-                return <ProductsTab products={products} shops={shops} categories={categories} onRefresh={fetchData} />;
+                return <ProductsTab products={products} categories={categories} onRefresh={fetchData} />;
+            case 'shops':
+                return <ShopsTab />;
             case 'categories':
                 return <CategoriesTab categories={categories} onRefresh={fetchData} />;
-            case 'shops':
-                return <ShopsTab shops={shops} onRefresh={fetchData} />;
             case 'partners':
                 return <PartnersTab />;
-            case 'partner-payouts':
-                return <PartnerPayoutsTab />;
-            case 'partner-requests':
-                return <PartnerRequestsTab />;
             case 'customers':
                 return <CustomersTab customers={customers} />;
             case 'enquiries':
@@ -206,7 +194,7 @@ export default function AdminPage() {
                 return <BannersTab banners={banners} />;
             case 'settings':
                 return <SettingsTab settings={settings} />;
-            case 'supplier-api':
+            case 'suppliers':
                 return <SupplierAPITab />;
             case 'system-logs':
                 return <SystemLogsTab />;

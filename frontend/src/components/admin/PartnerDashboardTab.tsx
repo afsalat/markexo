@@ -63,7 +63,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
                         </div>
                     </div>
                     <p className="break-words text-2xl font-bold text-white sm:text-3xl">{formatCurrency(stats.total_sales)}</p>
-                    <p className="text-sm text-silver-500">Shop Sales</p>
+                    <p className="text-sm text-silver-500">Catalog Sales</p>
                 </div>
 
                 <div className="min-w-0 rounded-2xl border border-dark-700 bg-dark-800 p-4 shadow-sm sm:p-6">
@@ -163,7 +163,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
                         ))
                     ) : (
                         <p className="rounded-2xl border border-dark-700 bg-dark-700/30 p-4 text-sm text-silver-500">
-                            No orders found yet. Share your shop link to start selling.
+                            No orders found yet. Add products and start selling.
                         </p>
                     )}
                 </div>
@@ -202,7 +202,7 @@ export default function PartnerDashboardTab({ stats }: PartnerDashboardTabProps)
                             ) : (
                                 <tr>
                                     <td colSpan={5} className="p-8 text-center text-silver-500">
-                                        No orders found yet. Share your shop link to start selling.
+                                        No orders found yet. Add products and start selling.
                                     </td>
                                 </tr>
                             )}

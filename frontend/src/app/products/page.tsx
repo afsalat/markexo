@@ -39,56 +39,35 @@ function ProductsPageContent() {
     );
 
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-    // Initialize sortBy with URL param if present, default to 'newest'
     const [sortBy, setSortBy] = useState(sortParam || 'newest');
-    // Track if we're filtering for featured/trending products
     const [showFeaturedOnly, setShowFeaturedOnly] = useState(featuredParam === 'true');
     const [categorySearchArg, setCategorySearchArg] = useState('');
 
-    // Fetch products and categories from API
     useEffect(() => {
         const loadData = async () => {
             try {
                 setLoading(true);
-                console.log('🔄 Starting to fetch products and categories...');
-
                 const [productsResponse, categoriesData] = await Promise.all([
                     fetchProducts(),
-                    fetchCategories()
+                    fetchCategories({ flat: 'true' })
                 ]);
-
-                console.log('📦 Raw Products Response:', productsResponse);
-                console.log('📂 Raw Categories Response:', categoriesData);
-
-                // Handle paginated response - extract results array
                 const productsData = Array.isArray(productsResponse) ? productsResponse : (productsResponse.results || []);
-                console.log('✅ Processed Products Data:', productsData);
-                console.log('📊 Total Products Count:', productsData.length);
-
                 setProducts(productsData);
-
-                // Handle paginated categories response
                 const categoriesList = Array.isArray(categoriesData) ? categoriesData : (categoriesData.results || []);
                 const categoryNames = categoriesList.map((c: any) => c.name);
-                console.log('✅ Processed Categories:', categoryNames);
-
                 setCategories(categoryNames as string[]);
-
-                // Set initial category filter if param exists
                 if (categoryParam) {
                     const matchedCategory = categoriesList.find((c: any) => c.slug === categoryParam);
                     if (matchedCategory) {
-                        console.log('🎯 Matched Category from URL:', matchedCategory.name);
                         setSelectedCategories([matchedCategory.name]);
                     }
                 }
             } catch (error) {
-                console.error('❌ Error loading products:', error);
+                console.error('Error loading products:', error);
             } finally {
                 setLoading(false);
             }
         };
-
         loadData();
     }, []);
 
@@ -104,7 +83,6 @@ function ProductsPageContent() {
             const query = searchQuery.toLowerCase();
             const matchesSearch =
                 product.name.toLowerCase().includes(query) ||
-                product.shop?.name.toLowerCase().includes(query) ||
                 product.category?.name.toLowerCase().includes(query);
 
             if (!matchesSearch) return false;

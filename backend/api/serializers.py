@@ -2,9 +2,12 @@
 Serializers for VorionMart API.
 """
 import logging
+from decimal import Decimal
 
 from django.contrib.auth.models import User, Group, Permission
 from django.db import IntegrityError, transaction
+from django.db.models import DecimalField, F, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
@@ -43,6 +46,41 @@ def email_exists(email, exclude_user=None):
         exclude_id = exclude_user.pk if hasattr(exclude_user, 'pk') else exclude_user
         queryset = queryset.exclude(pk=exclude_id)
     return queryset.exists()
+
+
+def get_or_create_customer_for_user(user):
+    """Resolve a storefront customer profile for an authenticated user."""
+    customer = Customer.objects.filter(user=user).first()
+    if customer:
+        return customer
+
+    normalized_email = normalize_email_value(getattr(user, 'email', ''))
+    if normalized_email:
+        customer = Customer.objects.filter(email__iexact=normalized_email).order_by('id').first()
+        if customer:
+            if customer.user_id is None:
+                customer.user = user
+            if not customer.name:
+                customer.name = f"{user.first_name} {user.last_name}".strip() or user.username
+            if not customer.email:
+                customer.email = normalized_email
+            customer.save(update_fields=['user', 'name', 'email'])
+            return customer
+
+    return Customer.objects.create(
+        user=user,
+        email=normalized_email,
+        name=f"{user.first_name} {user.last_name}".strip() or user.username,
+        phone='',
+        city='',
+        pincode='',
+    )
+
+
+def get_shop_order_items_queryset(shop):
+    return OrderItem.objects.filter(
+        Q(shop=shop) | Q(shop__isnull=True, product__shop=shop)
+    ).distinct()
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -167,14 +205,31 @@ class PartnerSerializer(serializers.ModelSerializer):
 class ShopSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    shop_type_display = serializers.CharField(source='get_shop_type_display', read_only=True)
+    sourcing_partners = serializers.SerializerMethodField()
+    sourcing_partner_name = serializers.SerializerMethodField()
+    sourcing_partner_email = serializers.SerializerMethodField()
+    sourcing_partner_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    sourcing_partner_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        write_only=True,
+        required=False,
+    )
+    pending_payment = serializers.SerializerMethodField()
+    pending_order_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
         fields = [
             'id', 'name', 'slug', 'description', 'address', 'city',
-            'phone', 'email', 'image', 'is_active', 'approval_status',
-            'product_count', 'created_at'
+            'phone', 'email', 'shop_type', 'shop_type_display', 'source_platform',
+            'website_url', 'contact_person', 'whatsapp_number', 'notes',
+            'image', 'is_active', 'approval_status',
+            'product_count', 'sourcing_partner', 'sourcing_partner_id', 'sourcing_partners', 'sourcing_partner_ids',
+            'sourcing_partner_name', 'sourcing_partner_email',
+            'pending_payment', 'pending_order_count', 'created_at'
         ]
+        read_only_fields = ['slug', 'image', 'product_count', 'pending_payment', 'pending_order_count']
 
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
@@ -183,18 +238,150 @@ class ShopSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return get_image_url(request, obj.image)
 
+    def _get_sourcing_partners(self, obj):
+        partners = list(obj.sourcing_partners.select_related('user').all())
+        if partners:
+            return partners
+        if obj.sourcing_partner_id:
+            return [obj.sourcing_partner]
+        return []
+
+    def _resolve_partner_instances(self, partner_ids):
+        resolved = []
+        for raw_id in partner_ids:
+            partner = Partner.objects.filter(pk=raw_id).select_related('user').first()
+            if partner is None:
+                partner = Partner.objects.filter(user_id=raw_id).select_related('user').first()
+            if partner is None:
+                raise serializers.ValidationError({
+                    'sourcing_partner_ids': [f'Invalid partner id "{raw_id}".']
+                })
+            if partner.id not in [item.id for item in resolved]:
+                resolved.append(partner)
+        return resolved
+
+    def _apply_partner_assignments(self, shop, validated_data):
+        partner_ids = validated_data.get('sourcing_partner_ids')
+        legacy_partner_id = validated_data.get('sourcing_partner_id')
+
+        if partner_ids is None and legacy_partner_id is None:
+            return
+
+        effective_ids = partner_ids if partner_ids is not None else []
+        if legacy_partner_id:
+            effective_ids = [legacy_partner_id, *effective_ids]
+
+        partners = self._resolve_partner_instances(effective_ids) if effective_ids else []
+        shop.sourcing_partner = partners[0] if partners else None
+        shop.save(update_fields=['sourcing_partner'])
+        shop.sourcing_partners.set(partners)
+
+    def create(self, validated_data):
+        partner_payload = {
+            'sourcing_partner_ids': validated_data.pop('sourcing_partner_ids', None),
+            'sourcing_partner_id': validated_data.pop('sourcing_partner_id', None),
+        }
+        shop = super().create(validated_data)
+        self._apply_partner_assignments(shop, partner_payload)
+        return shop
+
+    def update(self, instance, validated_data):
+        partner_payload = {
+            'sourcing_partner_ids': validated_data.pop('sourcing_partner_ids', None),
+            'sourcing_partner_id': validated_data.pop('sourcing_partner_id', None),
+        }
+        instance = super().update(instance, validated_data)
+        self._apply_partner_assignments(instance, partner_payload)
+        return instance
+
+    def get_sourcing_partners(self, obj):
+        partners = self._get_sourcing_partners(obj)
+        return [
+            {
+                'id': partner.id,
+                'user_id': partner.user_id,
+                'name': f"{partner.user.first_name} {partner.user.last_name}".strip() or partner.user.email,
+                'email': partner.user.email,
+            }
+            for partner in partners
+        ]
+
+    def get_sourcing_partner_name(self, obj):
+        partners = self._get_sourcing_partners(obj)
+        return ', '.join(
+            f"{partner.user.first_name} {partner.user.last_name}".strip() or partner.user.email
+            for partner in partners
+        )
+
+    def get_sourcing_partner_email(self, obj):
+        partners = self._get_sourcing_partners(obj)
+        return ', '.join(partner.user.email for partner in partners)
+
+    def get_pending_payment(self, obj):
+        pending_statuses = ['pending', 'pending_cod']
+        blocked_order_statuses = ['cancelled', 'rto', 'returned', 'refunded']
+        aggregate = get_shop_order_items_queryset(obj).filter(
+            order__payment_status__in=pending_statuses
+        ).exclude(
+            order__status__in=blocked_order_statuses
+        ).aggregate(
+            total=Coalesce(
+                Sum(
+                    Coalesce(F('product__supplier_price'), Value(Decimal('0.00'))) * F('quantity'),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                ),
+                Value(Decimal('0.00')),
+            )
+        )
+        return aggregate['total']
+
+    def get_pending_order_count(self, obj):
+        pending_statuses = ['pending', 'pending_cod']
+        blocked_order_statuses = ['cancelled', 'rto', 'returned', 'refunded']
+        return get_shop_order_items_queryset(obj).filter(
+            order__payment_status__in=pending_statuses
+        ).exclude(
+            order__status__in=blocked_order_statuses
+        ).values('order_id').distinct().count()
+
 
 class ShopListSerializer(serializers.ModelSerializer):
     """Simplified shop serializer for listings."""
     image = serializers.SerializerMethodField()
+    shop_type_display = serializers.CharField(source='get_shop_type_display', read_only=True)
+    sourcing_partner_name = serializers.SerializerMethodField()
+    sourcing_partners = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
-        fields = ['id', 'name', 'slug', 'image', 'city']
+        fields = ['id', 'name', 'slug', 'image', 'city', 'shop_type', 'shop_type_display', 'sourcing_partner_name', 'sourcing_partners']
 
     def get_image(self, obj):
         request = self.context.get('request')
         return get_image_url(request, obj.image)
+
+    def get_sourcing_partner_name(self, obj):
+        partners = list(obj.sourcing_partners.select_related('user').all())
+        if not partners and obj.sourcing_partner_id:
+            partners = [obj.sourcing_partner]
+        return ', '.join(
+            f"{partner.user.first_name} {partner.user.last_name}".strip() or partner.user.email
+            for partner in partners
+        )
+
+    def get_sourcing_partners(self, obj):
+        partners = list(obj.sourcing_partners.select_related('user').all())
+        if not partners and obj.sourcing_partner_id:
+            partners = [obj.sourcing_partner]
+        return [
+            {
+                'id': partner.id,
+                'user_id': partner.user_id,
+                'name': f"{partner.user.first_name} {partner.user.last_name}".strip() or partner.user.email,
+                'email': partner.user.email,
+            }
+            for partner in partners
+        ]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -272,15 +459,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         # Set customer from request context
         request = self.context.get('request')
         if request and hasattr(request, 'user') and request.user.is_authenticated:
-            try:
-                customer = Customer.objects.get(user=request.user)
-                validated_data['customer'] = customer
-                
-                # Check for existing review
-                if Review.objects.filter(customer=customer, product=validated_data['product']).exists():
-                    raise serializers.ValidationError({"detail": "You have already reviewed this product."})
-            except Customer.DoesNotExist:
-                raise serializers.ValidationError("Customer profile not found.")
+            customer = get_or_create_customer_for_user(request.user)
+            validated_data['customer'] = customer
+
+            # Check for existing review
+            if Review.objects.filter(customer=customer, product=validated_data['product']).exists():
+                raise serializers.ValidationError({"detail": "You have already reviewed this product."})
         return super().create(validated_data)
 
 
@@ -312,10 +496,10 @@ class PublicProductSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     shop = ShopListSerializer(read_only=True)
-    shop_id = serializers.PrimaryKeyRelatedField(
-        queryset=Shop.objects.all(), source='shop', write_only=True
-    )
     shop_name = serializers.CharField(source='shop.name', read_only=True)
+    shop_id = serializers.PrimaryKeyRelatedField(
+        queryset=Shop.objects.all(), source='shop', write_only=True, allow_null=True, required=False
+    )
     category = CategoryListSerializer(read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
@@ -345,7 +529,8 @@ class ProductSerializer(serializers.ModelSerializer):
             'price', 'sale_price',  # Legacy fields
             'current_price', 'discount_percent', 'profit_margin', 'profit_percent',
             'stock', 'sku',
-            'shop', 'shop_name', 'shop_id', 'category', 'category_name', 'category_id', 'image', 'images', 'uploaded_images',
+            'shop', 'shop_name', 'shop_id',
+            'category', 'category_name', 'category_id', 'image', 'images', 'uploaded_images',
             'meesho_url', 'specifications', 'is_featured', 'is_active', 'approval_status', 'views', 'sold_count', 'rating', 'review_count', 
             'created_at', 'created_by_name', 'created_by_email'
         ]
@@ -421,6 +606,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductListSerializer(serializers.ModelSerializer):
     """Simplified product serializer for listings."""
     shop = ShopListSerializer(read_only=True)
+    shop_name = serializers.CharField(source='shop.name', read_only=True)
     category = CategoryListSerializer(read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_details = CategoryListSerializer(source='category', read_only=True)
@@ -431,7 +617,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'slug', 'price', 'sale_price', 'current_price',
-            'discount_percent', 'image', 'shop', 'category', 'category_name', 'category_details',
+            'discount_percent', 'image', 'shop', 'shop_name', 'category', 'category_name', 'category_details',
             'is_featured', 'stock', 'approval_status', 'views', 'sold_count', 'rating', 'review_count'
         ]
 
@@ -456,8 +642,8 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'product', 'shop', 'product_name', 'quantity',
-            'price', 'total', 'product_image', 'shop_name', 'sku',
+            'id', 'product', 'shop', 'shop_name', 'product_name', 'quantity',
+            'price', 'total', 'product_image', 'sku',
             'mrp', 'original_price'
         ]
 
@@ -563,7 +749,6 @@ class DashboardStatsSerializer(serializers.Serializer):
     total_orders = serializers.IntegerField()
     total_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
     total_products = serializers.IntegerField()
-    total_shops = serializers.IntegerField()
     total_customers = serializers.IntegerField()
     pending_orders = serializers.IntegerField()
     recent_orders = OrderSerializer(many=True)
@@ -654,13 +839,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             }
         }
         
-        # Try to get customer profile name if not staff
-        if not user.is_staff:
-            try:
-                customer = Customer.objects.get(user=user)
-                data['user']['name'] = customer.name
-            except Customer.DoesNotExist:
-                pass
+        customer = get_or_create_customer_for_user(user)
+        if customer.name:
+            data['user']['name'] = customer.name
                 
         return data
 
@@ -701,16 +882,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 
 class PartnerRegistrationSerializer(serializers.Serializer):
-    """Serializer for partner/shop owner registration."""
+    """Serializer for partner registration."""
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    shop_description = serializers.CharField(required=False, allow_blank=True)
-    shop_address = serializers.CharField(required=False, allow_blank=True)
-    shop_city = serializers.CharField(max_length=100)
-    shop_phone = serializers.CharField(max_length=20)
+    city = serializers.CharField(max_length=100)
+    phone = serializers.CharField(max_length=20)
+    address = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, data):
         data['email'] = normalize_email_value(data.get('email'))
@@ -718,10 +898,8 @@ class PartnerRegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password_confirm": "Passwords do not match."})
         if email_exists(data['email']):
             raise serializers.ValidationError({"email": "Email already registered."})
-        if Shop.objects.filter(email__iexact=data['email']).exists():
-            raise serializers.ValidationError({"email": "A shop with this email already exists."})
-        if Shop.objects.filter(phone=data['shop_phone']).exists():
-            raise serializers.ValidationError({"shop_phone": "A shop with this phone number already exists."})
+        if Partner.objects.filter(phone=data['phone']).exists():
+            raise serializers.ValidationError({"phone": "A partner with this phone number already exists."})
         return data
 
     @transaction.atomic
@@ -741,112 +919,64 @@ class PartnerRegistrationSerializer(serializers.Serializer):
         except Group.DoesNotExist:
             pass
 
-        shop_name = validated_data.get('shop_name')
-        if not shop_name:
-            shop_name = f"{validated_data.get('first_name', '')}'s Shop".strip()
-            if not shop_name or shop_name == "'s Shop":
-                shop_name = f"Shop-{user.email}"
-
         try:
-            shop = Shop.objects.create(
-                name=shop_name,
-                description=validated_data.get('shop_description', ''),
-                owner=user,
-                email=validated_data['email'],
-                phone=validated_data['shop_phone'],
-                address=validated_data.get('shop_address', ''),
-                city=validated_data['shop_city'],
-                commission_rate=50.00,
+            Partner.objects.create(
+                user=user,
+                phone=validated_data['phone'],
+                address=validated_data.get('address', ''),
+                city=validated_data['city'],
+                designation='Partner',
                 is_active=True,
-                approval_status='pending'
             )
-        except IntegrityError as exc:
-            message = str(exc).lower()
-            if 'api_shop.email' in message:
-                raise serializers.ValidationError({"email": "A shop with this email already exists."})
-            if 'api_shop.phone' in message:
-                raise serializers.ValidationError({"shop_phone": "A shop with this phone number already exists."})
-            if 'api_shop.slug' in message:
-                raise serializers.ValidationError({"shop_name": "A similar shop name already exists. Please try a different shop name."})
-            if 'auth_user.username' in message or 'auth_user.email' in message:
-                raise serializers.ValidationError({"email": "Email already registered."})
+        except IntegrityError:
             raise serializers.ValidationError({"detail": "Unable to create partner account right now. Please try again."})
 
-        return {'user': user, 'shop': shop}
+        return {'user': user}
 
 
 class AdminPartnerSerializer(serializers.Serializer):
-    """Serializer for admin to manage partners (User + Shop)."""
+    """Serializer for admin to manage partner users."""
     id = serializers.IntegerField(source='user.id', read_only=True)
-    # User Fields
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, required=False, min_length=8)
     is_active = serializers.BooleanField(default=True)
-    
-    # Shop Fields (write_only=True ensures we don't try to read them from User instance automatically)
-    shop_id = serializers.IntegerField(read_only=True)
-    shop_name = serializers.CharField(max_length=200, write_only=True, required=False, allow_blank=True)
-    shop_description = serializers.CharField(required=False, allow_blank=True, write_only=True)
-    shop_address = serializers.CharField(required=False, allow_blank=True, write_only=True)
-    shop_city = serializers.CharField(max_length=100, write_only=True)
-    shop_phone = serializers.CharField(max_length=20, write_only=True)
+    phone = serializers.CharField(max_length=20)
+    address = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.CharField(max_length=100)
     commission_rate = serializers.DecimalField(max_digits=5, decimal_places=2, default=50.00, write_only=True)
-    approval_status = serializers.ChoiceField(choices=Shop.APPROVAL_STATUS_CHOICES, default='approved', write_only=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
 
     def to_representation(self, instance):
-        """
-        Custom representation to blend User and Shop data.
-        """
-        # Base User Data
+        partner_profile = getattr(instance, 'partner_profile', None)
         data = {
             'id': instance.id,
+            'partner_profile_id': partner_profile.id if partner_profile else None,
             'email': instance.email,
             'first_name': instance.first_name,
             'last_name': instance.last_name,
             'is_active': instance.is_active,
+            'phone': partner_profile.phone if partner_profile else '',
+            'address': partner_profile.address if partner_profile else '',
+            'city': partner_profile.city if partner_profile else '',
+            'commission_rate': str(partner_profile.commission_rate if partner_profile else '50.00'),
+            'notes': partner_profile.notes if partner_profile else '',
         }
-
-        # Find shop
-        shop = Shop.objects.filter(owner=instance).first()
-        if shop:
-            data['shop_id'] = shop.id
-            data['shop_name'] = shop.name
-            data['shop_description'] = shop.description
-            data['shop_address'] = shop.address
-            data['shop_city'] = shop.city
-            data['shop_phone'] = shop.phone
-            data['commission_rate'] = str(shop.commission_rate)
-            data['approval_status'] = shop.approval_status
-        else:
-             # If no shop
-            data['shop_id'] = None
-            data['shop_name'] = ""
-            data['shop_description'] = ""
-            data['shop_address'] = ""
-            data['shop_city'] = ""
-            data['shop_phone'] = ""
-            data['commission_rate'] = "50.00"
-            data['approval_status'] = 'pending'
-            
         return data
 
     def create(self, validated_data):
         from django.contrib.auth.models import Group
-        
-        # Extract User Data
+
         email = normalize_email_value(validated_data.get('email'))
         password = validated_data.get('password')
         first_name = validated_data.get('first_name')
         last_name = validated_data.get('last_name', '')
         is_active = validated_data.get('is_active', True)
 
-        # Check existing
         if email_exists(email):
             raise serializers.ValidationError({"email": "Email already registered."})
 
-        # Create User
         user = User.objects.create_user(
             username=email,
             email=email,
@@ -864,34 +994,17 @@ class AdminPartnerSerializer(serializers.Serializer):
         except Group.DoesNotExist:
             pass
 
-        # Extract Shop Data
-        shop_name = validated_data.get('shop_name')
-        if not shop_name:
-            shop_name = f"{first_name}'s Shop".strip()
-            if not shop_name or shop_name == "'s Shop":
-                shop_name = f"Shop-{email}"
-
-        shop_desc = validated_data.get('shop_description', '')
-        shop_addr = validated_data.get('shop_address', '')
-        shop_city = validated_data.get('shop_city')
-        shop_phone = validated_data.get('shop_phone')
-        commission = validated_data.get('commission_rate', 50.00)
-        status = validated_data.get('approval_status', 'approved')
-
-        # Create Shop
-        Shop.objects.create(
-            owner=user,
-            name=shop_name,
-            description=shop_desc,
-            address=shop_addr,
-            city=shop_city,
-            phone=shop_phone,
-            email=email, # Shop email matches user email
-            commission_rate=commission,
-            approval_status=status,
-            is_active=(status == 'approved')
+        Partner.objects.create(
+            user=user,
+            phone=validated_data.get('phone'),
+            address=validated_data.get('address', ''),
+            city=validated_data.get('city', ''),
+            designation='Partner',
+            commission_rate=validated_data.get('commission_rate', 50.00),
+            notes=validated_data.get('notes', ''),
+            is_active=is_active,
         )
-        
+
         return user
 
     def update(self, instance, validated_data):
@@ -910,26 +1023,24 @@ class AdminPartnerSerializer(serializers.Serializer):
             instance.set_password(validated_data['password'])
             
         instance.save()
-        
-        # Update Shop
-        shop = Shop.objects.filter(owner=instance).first()
-        if shop:
-            shop.name = validated_data.get('shop_name', shop.name)
-            shop.description = validated_data.get('shop_description', shop.description)
-            shop.address = validated_data.get('shop_address', shop.address)
-            shop.city = validated_data.get('shop_city', shop.city)
-            shop.phone = validated_data.get('shop_phone', shop.phone)
-            shop.email = instance.email
-            shop.commission_rate = validated_data.get('commission_rate', shop.commission_rate)
-            shop.approval_status = validated_data.get('approval_status', shop.approval_status)
-            
-            if shop.approval_status == 'approved':
-                shop.is_active = True
-            elif shop.approval_status == 'rejected':
-                shop.is_active = False
-                
-            shop.save()
-            
+
+        partner_profile, _ = Partner.objects.get_or_create(
+            user=instance,
+            defaults={
+                'phone': validated_data.get('phone', ''),
+                'city': validated_data.get('city', ''),
+                'address': validated_data.get('address', ''),
+                'designation': 'Partner',
+            },
+        )
+        partner_profile.phone = validated_data.get('phone', partner_profile.phone)
+        partner_profile.address = validated_data.get('address', partner_profile.address)
+        partner_profile.city = validated_data.get('city', partner_profile.city)
+        partner_profile.commission_rate = validated_data.get('commission_rate', partner_profile.commission_rate)
+        partner_profile.notes = validated_data.get('notes', partner_profile.notes)
+        partner_profile.is_active = instance.is_active
+        partner_profile.save()
+
         return instance
 
 
@@ -937,24 +1048,33 @@ class AdminPartnerSerializer(serializers.Serializer):
 class SupplierSerializer(serializers.ModelSerializer):
     """Serializer for Supplier configuration."""
     masked_api_key = serializers.SerializerMethodField()
+    supplier_type_display = serializers.CharField(source='get_supplier_type_display', read_only=True)
+    has_api_access = serializers.SerializerMethodField()
     
     class Meta:
         model = Supplier
         fields = [
-            'id', 'name', 'api_endpoint', 'api_key', 'masked_api_key', 
+            'id', 'name', 'supplier_type', 'supplier_type_display',
+            'source_platform', 'website_url', 'store_url',
+            'contact_person', 'contact_email', 'contact_phone', 'whatsapp_number',
+            'instagram_handle', 'address', 'city', 'notes',
+            'api_endpoint', 'api_key', 'masked_api_key', 'has_api_access',
             'api_secret', 'webhook_url', 'is_active', 'auto_send',
             'orders_sent', 'success_rate', 'last_sync', 
             'created_at', 'updated_at'
         ]
         extra_kwargs = {
-            'api_key': {'write_only': True},
-            'api_secret': {'write_only': True},
+            'api_key': {'write_only': True, 'required': False, 'allow_blank': True},
+            'api_secret': {'write_only': True, 'required': False, 'allow_blank': True},
         }
     
     def get_masked_api_key(self, obj):
         if obj.api_key:
             return '••••••••••••'
         return ''
+
+    def get_has_api_access(self, obj):
+        return bool(obj.api_endpoint and obj.api_key)
 
 
 class OrderForwardLogSerializer(serializers.ModelSerializer):
