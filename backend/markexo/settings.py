@@ -19,7 +19,11 @@ def load_app_config():
         return json.load(config_file)
 
 def build_origin(protocol, host, port):
-    return f"{protocol}://{host}:{port}".rstrip('/')
+    origin = f"{protocol}://{host}"
+    if (protocol == 'http' and port != 80) or (protocol == 'https' and port != 443):
+        return f"{origin}:{port}".rstrip('/')
+    return origin.rstrip('/')
+
 
 def build_host_aliases(host):
     if host in {'127.0.0.1', 'localhost'}:

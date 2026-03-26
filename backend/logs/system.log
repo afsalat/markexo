@@ -2213,3 +2213,11 @@ django.db.utils.OperationalError: no such column: api_shop.shop_type
 [2026-03-26 23:02:25,525] INFO django.server: "GET /api/admin/partners/ HTTP/1.1" 200 433
 [2026-03-26 23:02:25,548] INFO django.server: "GET /api/admin/partners/ HTTP/1.1" 200 433
 [2026-03-26 23:02:25,828] INFO django.server: "GET /api/admin/shops/? HTTP/1.1" 200 693
+[2026-03-26 23:12:54,180] INFO django.server: "GET /api/orders/my-orders/?email=afsalat9%40gmail.com HTTP/1.1" 200 2
+[2026-03-26 23:12:54,868] INFO django.server: "GET /api/products/? HTTP/1.1" 200 14958
+[2026-03-26 23:12:54,905] INFO django.server: "GET /api/categories/ HTTP/1.1" 200 12646
+[2026-03-26 23:12:54,920] INFO django.server: "GET /api/categories/ HTTP/1.1" 200 12646
+[2026-03-26 23:16:40,966] INFO django.utils.autoreload: C:\Users\USER\Desktop\markexo\backend\markexo\settings.py changed, reloading.
+[2026-03-26 23:16:41,980] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2026-03-26 23:17:33,804] INFO django.utils.autoreload: C:\Users\USER\Desktop\markexo\backend\api\views.py changed, reloading.
+[2026-03-26 23:17:35,887] INFO django.utils.autoreload: Watching for file changes with StatReloader
