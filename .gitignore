@@ -27,3 +27,6 @@ yarn-error.log*
 params.json
 LICENSE.txt
 # next.js development
+
+# Logs
+backend/logs/
