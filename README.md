@@ -49,9 +49,9 @@ Frontend URLs are derived from [appConfig.json](/c:/Users/USER/Desktop/markexo/f
 
 This project is configured to use:
 
-- App URL: `http://127.0.0.1:3000`
-- API URL: `http://127.0.0.1:8000/api`
-- Media URL: `http://127.0.0.1:8000/media`
+- App URL: `https://vorionmart.com`
+- API URL: `https://vorionmart.com/api`
+- Media URL: `https://vorionmart.com/media`
 
 ## Production Deploy Steps
 
@@ -62,7 +62,7 @@ cd backend
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py collectstatic --noinput
-gunicorn markexo.wsgi:application --bind 0.0.0.0:8000
+gunicorn markexo.wsgi:application --bind 0.0.0.0:443
 ```
 
 Notes:

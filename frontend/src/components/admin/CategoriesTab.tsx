@@ -27,7 +27,8 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
         name: '',
         description: '',
         parent: '' as string | number,
-        image: null as File | null
+        image: null as File | null,
+        is_active: true,
     });
 
     const handleEdit = (category: Category) => {
@@ -36,7 +37,8 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
             name: category.name,
             description: (category as any).description || '',
             parent: category.parent || '',
-            image: null
+            image: null,
+            is_active: category.is_active ?? true,
         });
         setIsModalOpen(true);
     };
@@ -48,7 +50,8 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
             name: '',
             description: '',
             parent: '',
-            image: null
+            image: null,
+            is_active: true,
         });
     };
 
@@ -85,6 +88,8 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
         if (formData.image) {
             data.append('image', formData.image);
         }
+
+        data.append('is_active', String(formData.is_active));
 
         try {
             const url = editingCategory
@@ -162,7 +167,8 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
             name: '',
             description: '',
             parent: parentId,
-            image: null
+            image: null,
+            is_active: true,
         });
         setIsModalOpen(true);
     };
@@ -240,7 +246,7 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
                         <button
                             onClick={() => {
                                 setEditingCategory(null);
-                                setFormData({ name: '', description: '', parent: '', image: null });
+                                setFormData({ name: '', description: '', parent: '', image: null, is_active: true });
                                 setIsModalOpen(true);
                             }}
                             className="bg-accent-600 text-dark-900 px-5 py-2 rounded-xl hover:bg-accent-500 flex items-center gap-2 font-bold transition-all shadow-lg shadow-accent-500/20"
@@ -301,7 +307,12 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
                                         </div>
 
                                         <div>
-                                            <h3 className="font-bold text-white text-lg">{parent.name}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-white text-lg">{parent.name}</h3>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full border ${parent.is_active ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'}`}>
+                                                    {parent.is_active ? 'Visible' : 'Hidden'}
+                                                </span>
+                                            </div>
                                             <div className="flex items-center gap-3 mt-1">
                                                 <span className="text-[10px] text-silver-500 font-mono italic">/{parent.slug}</span>
                                                 <span className="text-[10px] bg-dark-900 text-silver-400 px-2 py-0.5 rounded-full border border-dark-700">
@@ -358,7 +369,12 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-silver-100 text-sm">{child.name}</h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <h4 className="font-semibold text-silver-100 text-sm">{child.name}</h4>
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${child.is_active ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border-amber-500/20'}`}>
+                                                                {child.is_active ? 'Visible' : 'Hidden'}
+                                                            </span>
+                                                        </div>
                                                         <p className="text-[10px] text-silver-600 font-mono italic">/{child.slug}</p>
                                                     </div>
                                                 </div>
@@ -445,6 +461,19 @@ export default function CategoriesTab({ categories, onRefresh }: CategoriesTabPr
                                     ))}
                                 </select>
                             </div>
+
+                            <label className="flex items-center justify-between gap-4 rounded-lg border border-dark-700 bg-dark-700/40 px-4 py-3">
+                                <div>
+                                    <p className="text-sm font-medium text-silver-200">Visible on storefront</p>
+                                    <p className="text-xs text-silver-500">Only active categories are returned by the public API.</p>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.is_active}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
+                                    className="h-4 w-4 rounded border-dark-500 bg-dark-800 text-accent-500 focus:ring-accent-500"
+                                />
+                            </label>
 
                             <div>
                                 <label className="block text-sm font-medium text-silver-300 mb-1">Image</label>
