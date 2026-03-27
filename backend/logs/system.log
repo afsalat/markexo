@@ -1,3 +1,14 @@
+<<<<<<< HEAD
+[2026-03-15 16:38:02,720] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-15 16:38:02,849] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-15 16:38:45,551] ERROR django.request: Internal Server Error: /api/partner/products/
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/sqlite3/base.py", line 328, in execute
+    return super().execute(query, params)
+sqlite3.IntegrityError: UNIQUE constraint failed: api_product.slug
+=======
 [2026-03-16 09:37:19,660] INFO django.utils.autoreload: Watching for file changes with StatReloader
 [2026-03-16 21:26:22,884] INFO django.utils.autoreload: Watching for file changes with StatReloader
 [2026-03-16 21:34:05,034] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '127.0.0.1:8000'. You may need to add '127.0.0.1' to ALLOWED_HOSTS.
@@ -1578,10 +1589,75 @@ Traceback (most recent call last):
     return super().execute(query, params)
            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
 sqlite3.OperationalError: no such column: api_shop.shop_type
+>>>>>>> e583e15087ddd8a43d3efb83e134ae8df3df432d
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
+<<<<<<< HEAD
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/home/django/markexo/backend/api/views.py", line 1446, in post
+    serializer.save(created_by=request.user, approval_status=approval_status)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/serializers.py", line 210, in save
+    self.instance = self.create(validated_data)
+  File "/home/django/markexo/backend/api/serializers.py", line 385, in create
+    product = Product.objects.create(**validated_data)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/query.py", line 660, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/django/markexo/backend/api/models.py", line 192, in save
+    super().save(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 814, in save
+    self.save_base(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 877, in save_base
+    updated = self._save_table(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 1020, in _save_table
+    results = self._do_insert(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 1061, in _do_insert
+    return manager._insert(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/query.py", line 1810, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/sql/compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/sqlite3/base.py", line 328, in execute
+    return super().execute(query, params)
+django.db.utils.IntegrityError: UNIQUE constraint failed: api_product.slug
+[2026-03-15 16:38:50,985] ERROR django.request: Internal Server Error: /api/partner/products/
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/sqlite3/base.py", line 328, in execute
+    return super().execute(query, params)
+sqlite3.IntegrityError: UNIQUE constraint failed: api_product.slug
+=======
   File "C:\Users\USER\Desktop\markexo\backend\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
     response = get_response(request)
   File "C:\Users\USER\Desktop\markexo\backend\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
@@ -1681,10 +1757,1269 @@ Traceback (most recent call last):
     return super().execute(query, params)
            ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
 sqlite3.OperationalError: no such column: api_shop.shop_type
+>>>>>>> e583e15087ddd8a43d3efb83e134ae8df3df432d
 
 The above exception was the direct cause of the following exception:
 
 Traceback (most recent call last):
+<<<<<<< HEAD
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/views/decorators/csrf.py", line 56, in wrapper_view
+    return view_func(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/views/generic/base.py", line 105, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/home/django/markexo/backend/api/views.py", line 1446, in post
+    serializer.save(created_by=request.user, approval_status=approval_status)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/rest_framework/serializers.py", line 210, in save
+    self.instance = self.create(validated_data)
+  File "/home/django/markexo/backend/api/serializers.py", line 385, in create
+    product = Product.objects.create(**validated_data)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/query.py", line 660, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/django/markexo/backend/api/models.py", line 192, in save
+    super().save(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 814, in save
+    self.save_base(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 877, in save_base
+    updated = self._save_table(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 1020, in _save_table
+    results = self._do_insert(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/base.py", line 1061, in _do_insert
+    return manager._insert(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/query.py", line 1810, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/models/sql/compiler.py", line 1822, in execute_sql
+    cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 67, in execute
+    return self._execute_with_wrappers(
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 80, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/utils.py", line 89, in _execute
+    return self.cursor.execute(sql, params)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/db/backends/sqlite3/base.py", line 328, in execute
+    return super().execute(query, params)
+django.db.utils.IntegrityError: UNIQUE constraint failed: api_product.slug
+[2026-03-16 04:54:58,717] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 05:16:25,509] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 05:31:54,161] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 06:44:24,967] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 06:44:25,488] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 07:07:50,183] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 10:54:51,215] WARNING django.request: Unauthorized: /api/admin/users/me/
+[2026-03-16 10:55:13,370] WARNING django.request: Unauthorized: /api/admin/users/me/
+[2026-03-16 10:55:49,249] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:55:49,339] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:55:52,681] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:55:52,759] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:56:13,139] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:56:13,291] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:04,037] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 10:57:07,315] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:07,400] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:20,690] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:20,770] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:23,631] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:23,741] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:26,195] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:26,270] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:27,327] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:27,405] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:28,883] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:29,031] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:36,449] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 10:57:36,539] WARNING django.request: Forbidden: /api/admin/orders/
+[2026-03-16 17:07:20,311] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-16 18:30:34,116] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 02:53:38,350] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 02:54:05,796] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 05:53:35,085] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 09:48:27,007] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 15:46:10,695] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:18,584] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:20,599] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:20,944] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:29,127] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:29,229] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:34,202] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:41,971] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:42,074] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:46,283] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:46,384] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:50,567] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:46:58,992] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:47:00,879] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 15:47:14,364] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-17 22:40:19,366] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:04,416] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:04,811] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:05,203] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:05,596] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:05,989] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:06,379] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:06,770] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 22:56:07,162] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 23:02:37,306] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 23:02:37,702] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-17 23:02:38,096] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 03:19:10,684] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 03:19:39,510] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 03:20:11,690] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 04:10:33,497] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 16:53:53,737] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 19:08:26,984] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 19:08:27,154] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 19:08:27,320] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 21:05:10,839] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'ip-72-62-194-237.phnxaz.spcsdns.net'. You may need to add 'ip-72-62-194-237.phnxaz.spcsdns.net' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'ip-72-62-194-237.phnxaz.spcsdns.net'. You may need to add 'ip-72-62-194-237.phnxaz.spcsdns.net' to ALLOWED_HOSTS.
+[2026-03-18 21:05:11,229] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'ip-72-62-194-237.phnxaz.spcsdns.net'. You may need to add 'ip-72-62-194-237.phnxaz.spcsdns.net' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'ip-72-62-194-237.phnxaz.spcsdns.net'. You may need to add 'ip-72-62-194-237.phnxaz.spcsdns.net' to ALLOWED_HOSTS.
+[2026-03-18 21:05:49,965] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-18 21:46:13,083] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-19 04:17:22,420] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-19 04:18:17,761] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-19 10:19:24,877] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-19 20:41:05,104] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-20 05:56:38,147] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-20 13:55:12,291] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-20 13:55:36,342] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-20 18:16:04,328] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 03:23:38,135] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 14:16:51,849] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 14:17:33,965] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 15:37:01,495] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 15:37:01,554] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+[2026-03-21 15:37:12,945] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 15:37:12,947] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 15:37:17,691] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 15:37:18,401] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '0.0.0.0:8000'. You may need to add '0.0.0.0' to ALLOWED_HOSTS.
+[2026-03-21 15:37:19,004] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-21 22:39:50,719] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-22 09:07:16,977] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-22 14:28:02,548] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-22 14:28:02,924] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-22 21:31:20,866] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-22 23:12:51,727] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-22 23:13:17,710] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-23 04:21:11,527] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-23 04:21:12,013] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-23 21:02:52,255] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 04:44:05,155] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 05:00:27,619] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 05:01:10,479] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 13:11:04,160] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 13:11:04,513] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 13:11:04,852] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 13:11:05,187] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 13:11:05,517] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 14:18:15,609] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 17:39:37,662] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-24 19:02:52,032] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-24 19:02:52,573] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: 'srv1251243.hstgr.cloud'. You may need to add 'srv1251243.hstgr.cloud' to ALLOWED_HOSTS.
+[2026-03-24 21:42:37,623] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-24 21:42:46,548] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-24 21:43:14,231] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-24 21:43:21,157] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-24 22:39:20,254] WARNING django.request: Bad Request: /api/admin/products/
+[2026-03-24 22:54:26,368] WARNING django.request: Bad Request: /api/admin/products/
+[2026-03-24 22:55:51,851] WARNING django.request: Bad Request: /api/admin/products/
+[2026-03-24 22:56:44,682] WARNING django.request: Bad Request: /api/admin/products/
+[2026-03-25 00:58:15,280] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 00:58:15,658] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 05:57:18,395] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 05:57:46,832] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 08:32:19,772] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 08:32:42,656] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 08:33:04,742] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 20:23:16,525] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 21:24:47,285] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 21:36:46,600] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-25 22:04:12,900] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-26 09:23:03,486] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-26 09:24:41,201] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-26 11:45:20,922] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-26 11:45:23,505] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-26 11:45:57,196] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-26 11:45:58,585] WARNING django.request: Bad Request: /api/auth/login/
+[2026-03-26 20:25:51,546] ERROR django.security.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+Traceback (most recent call last):
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/utils/deprecation.py", line 133, in __call__
+    response = self.process_request(request)
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/middleware/common.py", line 48, in process_request
+    host = request.get_host()
+  File "/home/django/markexo/backend/venv/lib64/python3.9/site-packages/django/http/request.py", line 150, in get_host
+    raise DisallowedHost(msg)
+django.core.exceptions.DisallowedHost: Invalid HTTP_HOST header: '72.62.194.237:8000'. You may need to add '72.62.194.237' to ALLOWED_HOSTS.
+[2026-03-26 21:41:14,944] WARNING django.request: Bad Request: /api/auth/login/
+=======
   File "C:\Users\USER\Desktop\markexo\backend\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
     response = get_response(request)
   File "C:\Users\USER\Desktop\markexo\backend\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
@@ -2213,6 +3548,9 @@ django.db.utils.OperationalError: no such column: api_shop.shop_type
 [2026-03-26 23:02:25,525] INFO django.server: "GET /api/admin/partners/ HTTP/1.1" 200 433
 [2026-03-26 23:02:25,548] INFO django.server: "GET /api/admin/partners/ HTTP/1.1" 200 433
 [2026-03-26 23:02:25,828] INFO django.server: "GET /api/admin/shops/? HTTP/1.1" 200 693
+<<<<<<< HEAD
+>>>>>>> e583e15087ddd8a43d3efb83e134ae8df3df432d
+=======
 [2026-03-26 23:12:54,180] INFO django.server: "GET /api/orders/my-orders/?email=afsalat9%40gmail.com HTTP/1.1" 200 2
 [2026-03-26 23:12:54,868] INFO django.server: "GET /api/products/? HTTP/1.1" 200 14958
 [2026-03-26 23:12:54,905] INFO django.server: "GET /api/categories/ HTTP/1.1" 200 12646
@@ -2221,5 +3559,4 @@ django.db.utils.OperationalError: no such column: api_shop.shop_type
 [2026-03-26 23:16:41,980] INFO django.utils.autoreload: Watching for file changes with StatReloader
 [2026-03-26 23:17:33,804] INFO django.utils.autoreload: C:\Users\USER\Desktop\markexo\backend\api\views.py changed, reloading.
 [2026-03-26 23:17:35,887] INFO django.utils.autoreload: Watching for file changes with StatReloader
-[2026-03-27 20:10:01,867] INFO django.utils.autoreload: Watching for file changes with StatReloader
-[2026-03-27 20:19:33,539] INFO django.utils.autoreload: Watching for file changes with StatReloader
+>>>>>>> 09ec200a5b6bc4408959b68b1606b5d48f03ffd8
