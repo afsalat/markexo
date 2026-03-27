@@ -5,8 +5,39 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Filter, Grid, List, ChevronDown, X, ShoppingCart, Star, Heart, SlidersHorizontal, Search } from 'lucide-react';
 import { useCart } from '@/lib/cart';
-import { fetchProducts, fetchCategories } from '@/lib/api';
+import { fetchProducts, fetchCategories, type Category } from '@/lib/api';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
+
+type FilterCategory = Category & { depth: number };
+
+function flattenCategories(categories: Category[], depth = 0): FilterCategory[] {
+    return categories.flatMap((category) => ([
+        { ...category, depth },
+        ...flattenCategories(category.children || [], depth + 1),
+    ]));
+}
+
+function findCategoryBySlug(categories: Category[], slug: string): Category | null {
+    for (const category of categories) {
+        if (category.slug === slug) {
+            return category;
+        }
+
+        const matchedChild = findCategoryBySlug(category.children || [], slug);
+        if (matchedChild) {
+            return matchedChild;
+        }
+    }
+
+    return null;
+}
+
+function collectCategorySlugs(category: Category): string[] {
+    return [
+        category.slug,
+        ...(category.children || []).flatMap(collectCategorySlugs),
+    ];
+}
 
 export default function ProductsPage() {
     return (
@@ -30,18 +61,29 @@ function ProductsPageContent() {
 
     // Product and category states
     const [products, setProducts] = useState<any[]>([]);
-    const [categories, setCategories] = useState<string[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Initialize selectedCategories with URL param if present
     const [selectedCategories, setSelectedCategories] = useState<string[]>(
-        categoryParam ? [categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)] : []
+        categoryParam ? [categoryParam] : []
     );
 
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
     const [sortBy, setSortBy] = useState(sortParam || 'newest');
     const [showFeaturedOnly, setShowFeaturedOnly] = useState(featuredParam === 'true');
     const [categorySearchArg, setCategorySearchArg] = useState('');
+    const flatCategories = flattenCategories(categories);
+    const categoryLookup = new Map(flatCategories.map((category) => [category.slug, category]));
+    const expandedCategorySlugs = new Set(
+        selectedCategories.flatMap((slug) => {
+            const category = findCategoryBySlug(categories, slug);
+            return category ? collectCategorySlugs(category) : [slug];
+        })
+    );
+    const visibleCategories = flatCategories.filter((category) =>
+        category.name.toLowerCase().includes(categorySearchArg.toLowerCase())
+    );
 
     useEffect(() => {
         const loadData = async () => {
@@ -49,17 +91,16 @@ function ProductsPageContent() {
                 setLoading(true);
                 const [productsResponse, categoriesData] = await Promise.all([
                     fetchProducts(),
-                    fetchCategories({ flat: 'true' })
+                    fetchCategories()
                 ]);
                 const productsData = Array.isArray(productsResponse) ? productsResponse : (productsResponse.results || []);
                 setProducts(productsData);
                 const categoriesList = Array.isArray(categoriesData) ? categoriesData : (categoriesData.results || []);
-                const categoryNames = categoriesList.map((c: any) => c.name);
-                setCategories(categoryNames as string[]);
+                setCategories(categoriesList as Category[]);
                 if (categoryParam) {
-                    const matchedCategory = categoriesList.find((c: any) => c.slug === categoryParam);
+                    const matchedCategory = findCategoryBySlug(categoriesList as Category[], categoryParam);
                     if (matchedCategory) {
-                        setSelectedCategories([matchedCategory.name]);
+                        setSelectedCategories([matchedCategory.slug]);
                     }
                 }
             } catch (error) {
@@ -69,7 +110,7 @@ function ProductsPageContent() {
             }
         };
         loadData();
-    }, []);
+    }, [categoryParam]);
 
     const toggleCategory = (category: string) => {
         setSelectedCategories((prev) =>
@@ -91,7 +132,10 @@ function ProductsPageContent() {
         // Featured/Trending filter
         if (showFeaturedOnly && !product.is_featured) return false;
 
-        if (selectedCategories.length && !selectedCategories.includes(product.category?.name)) return false;
+        if (selectedCategories.length) {
+            const productCategorySlug = product.category?.slug;
+            if (!productCategorySlug || !expandedCategorySlugs.has(productCategorySlug)) return false;
+        }
         if (product.current_price < priceRange[0] || product.current_price > priceRange[1]) return false;
 
         return true; // Product passed all filters
@@ -171,13 +215,17 @@ function ProductsPageContent() {
                                 </div>
 
                                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                    {categories.filter(c => c.toLowerCase().includes(categorySearchArg.toLowerCase())).map((category) => (
-                                        <label key={category} className="flex items-start gap-3 cursor-pointer group select-none">
+                                    {visibleCategories.map((category) => (
+                                        <label
+                                            key={category.slug}
+                                            className="flex items-start gap-3 cursor-pointer group select-none"
+                                            style={{ paddingLeft: `${category.depth * 14}px` }}
+                                        >
                                             <div className="relative flex items-center mt-1">
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedCategories.includes(category)}
-                                                    onChange={() => toggleCategory(category)}
+                                                    checked={selectedCategories.includes(category.slug)}
+                                                    onChange={() => toggleCategory(category.slug)}
                                                     className="peer appearance-none w-5 h-5 rounded-md border border-dark-600 bg-dark-900 checked:bg-accent-500 checked:border-accent-500 transition-colors cursor-pointer"
                                                 />
                                                 <svg
@@ -189,8 +237,8 @@ function ProductsPageContent() {
                                                     <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
                                             </div>
-                                            <span className="text-sm text-silver-300 group-hover:text-white transition-colors leading-relaxed">
-                                                {category}
+                                            <span className={`text-sm transition-colors leading-relaxed ${category.depth === 0 ? 'font-semibold text-silver-200 group-hover:text-white' : 'text-silver-300 group-hover:text-white'}`}>
+                                                {category.depth > 0 ? `${'-- '.repeat(category.depth)}${category.name}` : category.name}
                                             </span>
                                         </label>
                                     ))}
@@ -292,10 +340,10 @@ function ProductsPageContent() {
                         {/* Active Filters */}
                         {selectedCategories.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-4">
-                                {selectedCategories.map((cat) => (
-                                    <span key={cat} className="inline-flex items-center gap-1 px-3 py-1 bg-accent-500/10 text-accent-500 rounded-full text-sm border border-accent-500/20">
-                                        {cat}
-                                        <button onClick={() => toggleCategory(cat)} className="hover:text-white transition-colors"><X size={14} /></button>
+                                {selectedCategories.map((slug) => (
+                                    <span key={slug} className="inline-flex items-center gap-1 px-3 py-1 bg-accent-500/10 text-accent-500 rounded-full text-sm border border-accent-500/20">
+                                        {categoryLookup.get(slug)?.name || slug}
+                                        <button onClick={() => toggleCategory(slug)} className="hover:text-white transition-colors"><X size={14} /></button>
                                     </span>
                                 ))}
                             </div>
