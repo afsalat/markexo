@@ -7,6 +7,12 @@ from pathlib import Path
 
 
 APP_CONFIG_PATH = Path(__file__).resolve().parent.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
+LOCAL_RUNSERVER_HOST = '127.0.0.1'
+LOCAL_RUNSERVER_PORT = 8000
+
+
+def is_local_bind_host(host):
+    return host in {'127.0.0.1', 'localhost', '0.0.0.0', '::1', '::'}
 
 
 def apply_default_runserver_address():
@@ -16,7 +22,14 @@ def apply_default_runserver_address():
     with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
         app_config = json.load(config_file)
 
-    sys.argv.append(f"{app_config['host']}:{app_config['backendPort']}")
+    host = app_config.get('host', LOCAL_RUNSERVER_HOST)
+    port = int(app_config.get('backendPort', LOCAL_RUNSERVER_PORT))
+
+    if not is_local_bind_host(host):
+        host = LOCAL_RUNSERVER_HOST
+        port = LOCAL_RUNSERVER_PORT
+
+    sys.argv.append(f'{host}:{port}')
 
 
 def main():

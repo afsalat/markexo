@@ -13,6 +13,8 @@ LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 SYSTEM_LOG_FILE = LOG_DIR / 'system.log'
 APP_CONFIG_PATH = BASE_DIR.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
+LOCAL_HOST_ALIASES = ['127.0.0.1', 'localhost']
+LOCAL_DEV_FRONTEND_PORTS = [3000]
 
 def load_app_config():
     with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
@@ -26,9 +28,21 @@ def build_origin(protocol, host, port):
 
 
 def build_host_aliases(host):
-    if host in {'127.0.0.1', 'localhost'}:
-        return ['127.0.0.1', 'localhost']
+    if host in set(LOCAL_HOST_ALIASES):
+        return LOCAL_HOST_ALIASES
     return [host]
+
+
+def build_local_dev_origins(frontend_port):
+    origins = set()
+    local_ports = {frontend_port, *LOCAL_DEV_FRONTEND_PORTS}
+
+    for protocol in ('http', 'https'):
+        for host in LOCAL_HOST_ALIASES:
+            for port in local_ports:
+                origins.add(build_origin(protocol, host, port))
+
+    return sorted(origins)
 
 
 APP_CONFIG = load_app_config()
@@ -38,6 +52,7 @@ FRONTEND_PORT = int(APP_CONFIG['frontendPort'])
 BACKEND_PORT = int(APP_CONFIG['backendPort'])
 HOST_ALIASES = build_host_aliases(APP_HOST)
 FRONTEND_ORIGINS = [build_origin(APP_PROTOCOL, host, FRONTEND_PORT) for host in HOST_ALIASES]
+LOCAL_DEV_ORIGINS = build_local_dev_origins(FRONTEND_PORT)
 BACKEND_ORIGIN = build_origin(APP_PROTOCOL, APP_HOST, BACKEND_PORT)
 APP_URL = FRONTEND_ORIGINS[0]
 
@@ -45,6 +60,7 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
 ALLOWED_HOSTS = sorted({
     *HOST_ALIASES,
+    *LOCAL_HOST_ALIASES,
     urlparse(APP_URL).hostname,
     urlparse(BACKEND_ORIGIN).hostname,
 })
@@ -124,8 +140,8 @@ SERVE_MEDIA_FILES = False
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = FRONTEND_ORIGINS
-CSRF_TRUSTED_ORIGINS = FRONTEND_ORIGINS
+CORS_ALLOWED_ORIGINS = sorted({*FRONTEND_ORIGINS, *LOCAL_DEV_ORIGINS})
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

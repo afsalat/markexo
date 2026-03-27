@@ -2221,3 +2221,5 @@ django.db.utils.OperationalError: no such column: api_shop.shop_type
 [2026-03-26 23:16:41,980] INFO django.utils.autoreload: Watching for file changes with StatReloader
 [2026-03-26 23:17:33,804] INFO django.utils.autoreload: C:\Users\USER\Desktop\markexo\backend\api\views.py changed, reloading.
 [2026-03-26 23:17:35,887] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2026-03-27 20:10:01,867] INFO django.utils.autoreload: Watching for file changes with StatReloader
+[2026-03-27 20:19:33,539] INFO django.utils.autoreload: Watching for file changes with StatReloader
