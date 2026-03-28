@@ -324,7 +324,19 @@ export async function loginUser(credentials: any) {
     });
     if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Login failed');
+        const rawMessage =
+            errorData.detail ||
+            errorData.message ||
+            errorData.non_field_errors?.[0] ||
+            (Array.isArray(errorData) ? errorData[0] : null) ||
+            'Login failed';
+
+        const errorMessage =
+            rawMessage === 'No account found with this email.' || rawMessage === 'Invalid password.'
+                ? 'Invalid email or password.'
+                : rawMessage;
+
+        throw new Error(errorMessage);
     }
     return res.json();
 }

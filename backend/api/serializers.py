@@ -842,6 +842,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         customer = get_or_create_customer_for_user(user)
         if customer.name:
             data['user']['name'] = customer.name
+        data['user']['phone'] = customer.phone or ''
                 
         return data
 
@@ -850,17 +851,21 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
+    phone = serializers.CharField(max_length=20)
     
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'password', 'password_confirm')
+        fields = ('email', 'first_name', 'last_name', 'phone', 'password', 'password_confirm')
         
     def validate(self, data):
         data['email'] = normalize_email_value(data.get('email'))
+        data['phone'] = (data.get('phone') or '').strip()
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError("Passwords do not match.")
         if email_exists(data['email']):
             raise serializers.ValidationError("Email already registered.")
+        if not data['phone']:
+            raise serializers.ValidationError({"phone": "Phone number is required."})
         return data
 
     def create(self, validated_data):
@@ -876,7 +881,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
         Customer.objects.create(
             user=user,
             email=validated_data['email'],
-            name=f"{validated_data.get('first_name', '')} {validated_data.get('last_name', '')}".strip()
+            name=f"{validated_data.get('first_name', '')} {validated_data.get('last_name', '')}".strip(),
+            phone=validated_data['phone'],
+            city='',
+            pincode='',
         )
         return user
 

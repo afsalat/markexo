@@ -3,7 +3,7 @@ from django.test import TestCase
 from rest_framework.test import APIRequestFactory
 
 from api.models import Category, Customer, Product, Review
-from api.serializers import CustomTokenObtainPairSerializer, ReviewSerializer
+from api.serializers import CustomTokenObtainPairSerializer, RegistrationSerializer, ReviewSerializer
 
 
 class CustomerLinkingTests(TestCase):
@@ -61,7 +61,7 @@ class CustomerLinkingTests(TestCase):
         customer = Customer.objects.create(
             email='afsalat9@gmail.com',
             name='Afsal At',
-            phone='',
+            phone='9876543210',
             city='',
             pincode='',
         )
@@ -76,3 +76,21 @@ class CustomerLinkingTests(TestCase):
         customer.refresh_from_db()
         self.assertEqual(customer.user_id, user.id)
         self.assertEqual(data['user']['name'], 'Afsal At')
+        self.assertEqual(data['user']['phone'], '9876543210')
+
+    def test_registration_serializer_creates_customer_with_phone(self):
+        serializer = RegistrationSerializer(data={
+            'email': 'newuser@example.com',
+            'first_name': 'New',
+            'last_name': 'User',
+            'phone': '9876543210',
+            'password': 'strong-pass-123',
+            'password_confirm': 'strong-pass-123',
+        })
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        user = serializer.save()
+
+        customer = Customer.objects.get(user=user)
+        self.assertEqual(customer.phone, '9876543210')
+        self.assertEqual(customer.email, 'newuser@example.com')

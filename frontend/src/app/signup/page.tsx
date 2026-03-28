@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { registerUser } from '@/lib/api';
-import { Mail, Lock, User, ArrowRight, ArrowLeft, Github, Twitter } from 'lucide-react';
+import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Github, Twitter } from 'lucide-react';
 
 export default function SignupPage() {
     const { login } = useCustomerAuth();
     const router = useRouter();
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +32,7 @@ export default function SignupPage() {
 
             await registerUser({
                 email: formData.email,
+                phone: formData.phone,
                 password: formData.password,
                 password_confirm: formData.confirmPassword,
                 first_name,
@@ -49,29 +50,29 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-dark-900">
+        <div className="min-h-screen lg:h-screen lg:overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-dark-900">
             {/* Left Side - Image/Brand */}
-            <div className="hidden lg:flex flex-col justify-center p-12 bg-dark-800 relative overflow-hidden border-r border-dark-700" data-aos="fade-right">
+            <div className="hidden lg:flex flex-col justify-center p-10 xl:p-12 bg-dark-800 relative overflow-hidden border-r border-dark-700" data-aos="fade-right">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent-600/20 to-accent-900/40 opacity-90" />
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1472851294608-41525b34e2c9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-10" />
 
-                <div className="relative z-10 text-white max-w-lg mx-auto">
-                    <h1 className="font-display text-5xl font-bold mb-6">Join the Community</h1>
-                    <p className="text-xl text-silver-300 mb-8">
-                        Create an account to unlock exclusive deals, save your favorites, and experience faster checkout.
+                <div className="relative z-10 text-white max-w-md mx-auto">
+                    <h1 className="font-display text-4xl xl:text-5xl font-bold mb-4 xl:mb-5">Shop Better with VorionMart</h1>
+                    <p className="text-lg xl:text-xl text-silver-300 mb-6 xl:mb-8">
+                        Create your customer account to track orders, save favorite products, and check out faster every time.
                     </p>
-                    <div className="space-y-4">
+                    <div className="space-y-3 xl:space-y-4">
                         {[
-                            'Free delivery on first order',
-                            'Exclusive member-only discounts',
-                            'Early access to sales',
-                            'Earn points on every purchase'
+                            'Track your orders in one place',
+                            'Save products to your wishlist',
+                            'Faster checkout with saved details',
+                            'Access customer-only offers'
                         ].map((feature, i) => (
                             <div key={i} className="flex items-center gap-3" data-aos="fade-right" data-aos-delay={i * 100 + 300}>
-                                <div className="w-6 h-6 rounded-full bg-accent-500 flex items-center justify-center text-dark-900">
-                                    <ArrowRight size={14} />
+                                <div className="w-5 h-5 xl:w-6 xl:h-6 rounded-full bg-accent-500 flex items-center justify-center text-dark-900">
+                                    <ArrowRight size={12} />
                                 </div>
-                                <span className="font-medium text-silver-200">{feature}</span>
+                                <span className="font-medium text-base xl:text-lg text-silver-200">{feature}</span>
                             </div>
                         ))}
                     </div>
@@ -79,37 +80,37 @@ export default function SignupPage() {
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex flex-col justify-center p-6 sm:p-12 lg:p-24 bg-dark-900 relative" data-aos="fade-left" data-aos-delay="200">
+            <div className="flex flex-col justify-center p-5 sm:p-8 lg:px-16 lg:py-8 xl:px-20 xl:py-10 bg-dark-900 relative" data-aos="fade-left" data-aos-delay="200">
                 {/* Back Button */}
-                <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-silver-400 hover:text-accent-500 transition-colors">
-                    <ArrowLeft size={20} />
+                <Link href="/" className="absolute top-4 left-4 lg:top-5 lg:left-5 flex items-center gap-2 text-silver-400 hover:text-accent-500 transition-colors">
+                    <ArrowLeft size={18} />
                     <span className="text-sm font-medium">Back to Home</span>
                 </Link>
                 <div className="max-w-md mx-auto w-full">
-                    <div className="text-center mb-10">
-                        <Link href="/" className="inline-block font-display text-3xl font-bold text-accent-500 mb-6">
+                    <div className="text-center mb-6 lg:mb-7">
+                        <Link href="/" className="inline-block font-display text-3xl font-bold text-accent-500 mb-4">
                             VorionMart.
                         </Link>
-                        <h2 className="text-2xl font-bold text-white">Create your account</h2>
-                        <p className="text-silver-400 mt-2">
+                        <h2 className="text-xl lg:text-2xl font-bold text-white">Create your account</h2>
+                        <p className="text-silver-400 mt-1.5">
                             Already have an account? <Link href="/login" className="text-accent-500 font-medium hover:underline">Sign in</Link>
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-3.5">
                         {error && (
-                            <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm border border-red-500/20">
+                            <div className="bg-red-500/10 text-red-400 px-4 py-2.5 rounded-xl text-sm border border-red-500/20">
                                 {error}
                             </div>
                         )}
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-2">Full Name</label>
+                            <label className="block text-sm font-medium text-silver-300 mb-1.5">Full Name</label>
                             <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
+                                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
                                 <input
                                     type="text"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    className="w-full pl-11 pr-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
                                     placeholder="John Doe"
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -118,13 +119,13 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-2">Email Address</label>
+                            <label className="block text-sm font-medium text-silver-300 mb-1.5">Email Address</label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
+                                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    className="w-full pl-11 pr-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
                                     placeholder="john@example.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -133,13 +134,28 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-2">Password</label>
+                            <label className="block text-sm font-medium text-silver-300 mb-1.5">Phone Number</label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
+                                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
+                                <input
+                                    type="tel"
+                                    required
+                                    className="w-full pl-11 pr-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    placeholder="+91 9876543210"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-silver-300 mb-1.5">Password</label>
+                            <div className="relative">
+                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    className="w-full pl-11 pr-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
                                     placeholder="Create a strong password"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -148,13 +164,13 @@ export default function SignupPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-2">Confirm Password</label>
+                            <label className="block text-sm font-medium text-silver-300 mb-1.5">Confirm Password</label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
+                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    className="w-full pl-11 pr-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
                                     placeholder="Confirm your password"
                                     value={formData.confirmPassword}
                                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
@@ -162,9 +178,9 @@ export default function SignupPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-2.5">
                             <input type="checkbox" required className="mt-1 w-4 h-4 text-accent-500 bg-dark-800 border-dark-600 rounded focus:ring-accent-500" />
-                            <span className="text-sm text-silver-400">
+                            <span className="text-sm leading-snug text-silver-400">
                                 I agree to the <Link href="/terms" className="text-accent-500 hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-accent-500 hover:underline">Privacy Policy</Link>
                             </span>
                         </div>
@@ -172,7 +188,7 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full btn-primary py-3 flex items-center justify-center gap-2 text-base lg:text-lg disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Creating Account...' : (
                                 <>
@@ -182,7 +198,7 @@ export default function SignupPage() {
                         </button>
                     </form>
 
-                    <div className="mt-8">
+                    <div className="mt-5 lg:hidden">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-dark-600"></div>
@@ -192,12 +208,12 @@ export default function SignupPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 mt-6">
-                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors text-silver-300">
-                                <Github size={20} className="text-silver-300" /> GitHub
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors text-silver-300 text-sm">
+                                <Github size={18} className="text-silver-300" /> GitHub
                             </button>
-                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors text-silver-300">
-                                <Twitter size={20} className="text-blue-400" /> Twitter
+                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-2.5 bg-dark-800 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors text-silver-300 text-sm">
+                                <Twitter size={18} className="text-blue-400" /> Twitter
                             </button>
                         </div>
                     </div>

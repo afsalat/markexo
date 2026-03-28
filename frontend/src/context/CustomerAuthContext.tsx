@@ -134,7 +134,7 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
                 id: user.id.toString(),
                 name: user.name || user.email.split('@')[0],
                 email: user.email,
-                phone: '',
+                phone: user.phone || '',
                 avatar: `https://ui-avatars.com/api/?name=${(user.name || 'User').replace(' ', '+')}&background=random`
             };
 
