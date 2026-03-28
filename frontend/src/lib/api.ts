@@ -38,7 +38,10 @@ export interface Product {
     is_active: boolean;
     rating: number;
     review_count: number;
+    reviewCount?: number;
     sold_count?: number;
+    features?: string[];
+    specifications?: Record<string, string | number | boolean | null>;
 }
 
 export interface Banner {

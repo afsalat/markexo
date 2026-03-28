@@ -1,5 +1,5 @@
 import { Metadata, ResolvingMetadata } from 'next';
-import { fetchProduct } from '@/lib/api';
+import { fetchProduct, fetchReviews } from '@/lib/api';
 import { APP_URL } from '@/config/siteConfig';
 
 type Props = {
@@ -53,29 +53,101 @@ export default async function ProductDetailLayout({
 
     try {
         const product = await fetchProduct(params.slug);
+        const reviewsResponse = await fetchReviews(product.id).catch(() => []);
+        const reviews = Array.isArray(reviewsResponse)
+            ? reviewsResponse
+            : Array.isArray(reviewsResponse?.results)
+                ? reviewsResponse.results
+                : [];
+        const productImage = product.image || product.images?.[0]?.image || null;
+        const productUrl = `${APP_URL}/products/${product.slug}`;
+        const reviewCount = Number(product.review_count ?? product.reviewCount ?? reviews.length ?? 0);
+        const ratingValue = Number(product.rating ?? 0);
+        const salePrice = Number(product.current_price ?? product.price ?? 0);
+        const shippingRate = salePrice >= 500 ? 0 : 49;
+        const firstReview = reviews[0];
 
         jsonLd = {
             '@context': 'https://schema.org',
             '@type': 'Product',
             name: product.name,
-            image: product.image ? [product.image] : [],
+            url: productUrl,
+            ...(productImage ? { image: [productImage] } : {}),
             description: product.description.substring(0, 160),
-            sku: product.id.toString(), // Minimum SKU string
+            sku: String(product.sku || product.id),
+            mpn: String(product.sku || product.id),
+            brand: {
+                '@type': 'Brand',
+                name: 'VorionMart',
+            },
             offers: {
                 '@type': 'Offer',
-                url: `${APP_URL}/products/${product.slug}`,
+                url: productUrl,
                 priceCurrency: 'INR',
-                price: product.current_price,
+                price: Number(product.current_price ?? product.price ?? 0).toFixed(2),
                 // Valid for generic SEO, Google needs valid dates occasionally. Extend by 1 year.
                 priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
                 itemCondition: 'https://schema.org/NewCondition',
                 availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                hasMerchantReturnPolicy: {
+                    '@type': 'MerchantReturnPolicy',
+                    applicableCountry: 'IN',
+                    returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+                    merchantReturnDays: 7,
+                    returnMethod: 'https://schema.org/ReturnByMail',
+                    returnFees: 'https://schema.org/FreeReturn',
+                    url: `${APP_URL}/return-refund-policy`,
+                },
+                shippingDetails: {
+                    '@type': 'OfferShippingDetails',
+                    shippingRate: {
+                        '@type': 'MonetaryAmount',
+                        value: shippingRate.toFixed(2),
+                        currency: 'INR',
+                    },
+                    shippingDestination: {
+                        '@type': 'DefinedRegion',
+                        addressCountry: 'IN',
+                    },
+                    deliveryTime: {
+                        '@type': 'ShippingDeliveryTime',
+                        handlingTime: {
+                            '@type': 'QuantitativeValue',
+                            minValue: 0,
+                            maxValue: 1,
+                            unitCode: 'DAY',
+                        },
+                        transitTime: {
+                            '@type': 'QuantitativeValue',
+                            minValue: 5,
+                            maxValue: 10,
+                            unitCode: 'DAY',
+                        },
+                    },
+                    url: `${APP_URL}/shipping-policy`,
+                },
             },
-            ...(product.reviewCount > 0 ? {
+            ...(reviewCount > 0 ? {
                 aggregateRating: {
                     '@type': 'AggregateRating',
-                    ratingValue: product.rating,
-                    reviewCount: product.reviewCount,
+                    ratingValue: ratingValue || 0,
+                    reviewCount,
+                }
+            } : {}),
+            ...(firstReview ? {
+                review: {
+                    '@type': 'Review',
+                    author: {
+                        '@type': 'Person',
+                        name: firstReview.customer_name,
+                    },
+                    reviewRating: {
+                        '@type': 'Rating',
+                        ratingValue: firstReview.rating,
+                        bestRating: 5,
+                    },
+                    ...(firstReview.comment ? { reviewBody: firstReview.comment } : {}),
+                    ...(firstReview.created_at ? { datePublished: firstReview.created_at } : {}),
                 }
             } : {})
         };
