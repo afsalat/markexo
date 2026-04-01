@@ -291,6 +291,8 @@ class Customer(models.Model):
 
 class Order(models.Model):
     """Order model."""
+    SALES_EXCLUDED_STATUSES = {'cancelled', 'returned', 'rto', 'refunded'}
+
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('pending_verification', 'Pending Verification'),
@@ -342,6 +344,25 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @classmethod
+    def contributes_to_sales(cls, status):
+        return status not in cls.SALES_EXCLUDED_STATUSES
+
+    def sync_product_sold_counts(self, previous_status):
+        previously_counted = self.contributes_to_sales(previous_status)
+        currently_counted = self.contributes_to_sales(self.status)
+
+        if previously_counted == currently_counted:
+            return
+
+        delta = 1 if currently_counted else -1
+        for item in self.items.select_related('product').all():
+            if not item.product_id:
+                continue
+            product = item.product
+            product.sold_count = max(0, product.sold_count + (delta * item.quantity))
+            product.save(update_fields=['sold_count'])
+
     def save(self, *args, **kwargs):
         if not self.order_id:
             import random
@@ -366,6 +387,9 @@ class Order(models.Model):
             # Import here to avoid circular import
             from api.models import OrderStatusHistory
             OrderStatusHistory.objects.create(order=self, status=self.status)
+
+        if not is_new and old_status and old_status != self.status:
+            self.sync_product_sold_counts(old_status)
 
     def __str__(self):
         return self.order_id

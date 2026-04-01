@@ -10,6 +10,7 @@ interface PaymentsTabProps {
 
 export default function PaymentsTab({ initialFilter = '' }: PaymentsTabProps) {
     const { token } = useAuth();
+    const salesExcludedStatuses = new Set(['cancelled', 'returned', 'rto', 'refunded']);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -88,7 +89,15 @@ export default function PaymentsTab({ initialFilter = '' }: PaymentsTabProps) {
         const pending = orderList.filter(o => !o.payment_status || o.payment_status === 'pending' || o.payment_status === 'pending_cod').length;
         const refunded = orderList.filter(o => o.payment_status === 'refunded').length;
         const failed = orderList.filter(o => o.payment_status === 'failed_rto').length;
-        const revenue = orderList.reduce((acc, o) => acc + (o.payment_status === 'paid' || o.payment_status === 'received_from_meesho' || o.payment_status === 'received' ? (parseFloat(String(o.total_amount)) || 0) : 0), 0);
+        const revenue = orderList.reduce((acc, o) => (
+            salesExcludedStatuses.has(o.status || '')
+                ? acc
+                : acc + (
+                    o.payment_status === 'paid' || o.payment_status === 'received_from_meesho' || o.payment_status === 'received'
+                        ? (parseFloat(String(o.total_amount)) || 0)
+                        : 0
+                )
+        ), 0);
 
         setStats({ total, paid, pending, refunded, failed, total_revenue: revenue });
     };

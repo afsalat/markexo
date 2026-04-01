@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, action
 from django.db.models import Sum, Count, Q, F, DecimalField, Value
-from django.db.models.functions import TruncDay
+from django.db.models.functions import Coalesce, TruncDay
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.models import User, Group, Permission
@@ -47,6 +47,16 @@ from .order_emails import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def get_sales_orders_queryset(queryset=None):
+    base_queryset = queryset if queryset is not None else Order.objects.all()
+    return base_queryset.exclude(status__in=Order.SALES_EXCLUDED_STATUSES)
+
+
+def get_sales_order_items_queryset(queryset=None):
+    base_queryset = queryset if queryset is not None else OrderItem.objects.all()
+    return base_queryset.exclude(order__status__in=Order.SALES_EXCLUDED_STATUSES)
 
 
 def is_partner_user(user):
@@ -709,6 +719,7 @@ class AdminDashboardStatsView(APIView):
     permission_classes = [IsAuthenticated, AdminDashboardPermission]
     def get(self, request):
         orders = Order.objects.all()
+        sales_orders = get_sales_orders_queryset(orders)
 
         # Revenue History (Last 7 days)
         from django.utils import timezone
@@ -717,7 +728,7 @@ class AdminDashboardStatsView(APIView):
         from django.db.models.functions import TruncDay
         seven_days_ago = timezone.now().date() - timedelta(days=6)
         
-        revenue_history_qs = orders.filter(created_at__gte=seven_days_ago) \
+        revenue_history_qs = sales_orders.filter(created_at__gte=seven_days_ago) \
             .annotate(date=TruncDay('created_at')) \
             .values('date') \
             .annotate(
@@ -745,8 +756,8 @@ class AdminDashboardStatsView(APIView):
             .order_by('-count')
 
         # Calculate Total Profit
-        total_revenue = orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
-        total_cost = OrderItem.objects.filter(order__in=orders).aggregate(
+        total_revenue = sales_orders.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        total_cost = get_sales_order_items_queryset(OrderItem.objects.filter(order__in=orders)).aggregate(
             cost=Sum(F('product__supplier_price') * F('quantity'), output_field=DecimalField())
         )['cost'] or 0
         total_profit = total_revenue - total_cost
@@ -1271,23 +1282,42 @@ class AdminAnalyticsView(APIView):
     def get(self, request):
         # Most Clicked (Views)
         most_clicked = Product.objects.filter(is_active=True).order_by('-views')[:10]
-        
-        # Most Ordered (Sold Count)
-        most_ordered = Product.objects.filter(is_active=True).order_by('-sold_count')[:10]
-        
-        # Less Performed (Bottom 10 by sold_count then views)
-        less_performed = Product.objects.filter(is_active=True).order_by('sold_count', 'views')[:10]
 
-        serialize = lambda qs: ProductListSerializer(qs, many=True, context={'request': request}).data
+        sales_ranked_products = Product.objects.filter(is_active=True).annotate(
+            effective_sold_count=Coalesce(
+                Sum(
+                    'orderitem__quantity',
+                    filter=~Q(orderitem__order__status__in=Order.SALES_EXCLUDED_STATUSES),
+                ),
+                Value(0),
+            )
+        )
+
+        # Most Ordered (excluding cancelled/returned sales)
+        most_ordered = sales_ranked_products.order_by('-effective_sold_count', '-views')[:10]
+
+        # Less Performed (Bottom 10 by effective sold count then views)
+        less_performed = sales_ranked_products.order_by('effective_sold_count', 'views')[:10]
 
         return Response({
-            'most_clicked': serialize(most_clicked),
-            'most_ordered': serialize(most_ordered),
-            'less_performed': serialize(less_performed),
+            'most_clicked': self.serialize_products(most_clicked, request),
+            'most_ordered': self.serialize_products(most_ordered, request),
+            'less_performed': self.serialize_products(less_performed, request),
             'partner_payouts': self.get_partner_payouts(),
             'partner_revenue': self.get_partner_revenue(),
             'top_partners': self.get_top_partners(),
         })
+
+    def serialize_products(self, queryset, request):
+        products = list(queryset)
+        data = ProductListSerializer(products, many=True, context={'request': request}).data
+        effective_sold_counts = {
+            product.id: int(getattr(product, 'effective_sold_count', product.sold_count or 0) or 0)
+            for product in products
+        }
+        for item in data:
+            item['sold_count'] = effective_sold_counts.get(item['id'], item.get('sold_count', 0))
+        return data
 
     def get_top_partners(self):
         from django.db.models import Sum
@@ -1346,9 +1376,9 @@ class AdminAnalyticsView(APIView):
         
         six_months_ago = timezone.now().date() - timedelta(days=180)
         
-        revenue_qs = OrderItem.objects.filter(
+        revenue_qs = get_sales_order_items_queryset(OrderItem.objects.filter(
             order__created_at__gte=six_months_ago
-        ).annotate(
+        )).annotate(
             month=TruncMonth('order__created_at')
         ).values('month').annotate(
             total=Sum(F('price') * F('quantity'), output_field=DecimalField())
@@ -1370,8 +1400,9 @@ class PartnerDashboardStatsView(APIView):
         items = OrderItem.objects.filter(
             product__created_by=request.user
         ).distinct()
+        sales_items = get_sales_order_items_queryset(items)
 
-        total_sales = items.aggregate(
+        total_sales = sales_items.aggregate(
             sales=Sum(F('price') * F('quantity'), output_field=DecimalField())
         )['sales'] or 0
 
@@ -1379,7 +1410,7 @@ class PartnerDashboardStatsView(APIView):
         # Formula: Sum((Price - SupplierPrice) * Qty * CommissionRate) / 100
         from django.db.models.functions import Coalesce
         
-        earnings_agg = items.aggregate(
+        earnings_agg = sales_items.aggregate(
             earnings=Sum(
                 (F('price') - Coalesce(F('product__supplier_price'), Value(Decimal('0.00')), output_field=DecimalField())) * 
                 F('quantity') * 
@@ -1404,8 +1435,8 @@ class PartnerDashboardStatsView(APIView):
             'total_products': total_products,
             'pending_amount': my_earnings - requested_amount,
             'total_withdrawn': total_withdrawn,
-            'total_orders': items.values('order').distinct().count(),
-            'delivered_orders': items.filter(order__status='delivered').values('order').distinct().count(),
+            'total_orders': sales_items.values('order').distinct().count(),
+            'delivered_orders': items.filter(order__status__in=['delivered', 'completed']).values('order').distinct().count(),
             'returned_orders': items.filter(order__status='returned').values('order').distinct().count(),
             'recent_orders': OrderSerializer(recent_orders, many=True, context={'request': request}).data
         })

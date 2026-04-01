@@ -11,6 +11,7 @@ interface OrdersTabProps {
 }
 
 export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) {
+    const salesExcludedStatuses = new Set(['cancelled', 'returned', 'rto', 'refunded']);
     const { token } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
@@ -122,7 +123,11 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                         delivered: allOrders.filter((o: any) => o.status === 'delivered' || o.status === 'completed').length,
                         cancelled: allOrders.filter((o: any) => o.status === 'cancelled').length,
                         returned: allOrders.filter((o: any) => o.status === 'returned' || o.status === 'rto').length,
-                        revenue: allOrders.reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0)
+                        revenue: allOrders.reduce((sum: number, o: any) => (
+                            salesExcludedStatuses.has(o.status)
+                                ? sum
+                                : sum + (parseFloat(String(o.total_amount)) || 0)
+                        ), 0)
                     });
                 }
             }
