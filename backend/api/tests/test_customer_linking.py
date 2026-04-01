@@ -1,14 +1,29 @@
+import shutil
+import tempfile
+
 from django.contrib.auth.models import User
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory
+from django.test.utils import override_settings
+from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
+from rest_framework.test import APIClient, APIRequestFactory
 
 from api.models import Category, Customer, Product, Review
 from api.serializers import CustomTokenObtainPairSerializer, RegistrationSerializer, ReviewSerializer
 
 
 class CustomerLinkingTests(TestCase):
+    VALID_GIF_BYTES = (
+        b'GIF87a\x01\x00\x01\x00\x80\x00\x00'
+        b'\x00\x00\x00\xff\xff\xff!'
+        b'\xf9\x04\x01\x00\x00\x00\x00,'
+        b'\x00\x00\x00\x00\x01\x00\x01\x00'
+        b'\x00\x02\x02L\x01\x00;'
+    )
+
     def setUp(self):
         self.factory = APIRequestFactory()
+        self.client = APIClient()
         self.category = Category.objects.create(name='Apparel')
         self.product = Product.objects.create(
             name='Review Target',
@@ -94,3 +109,95 @@ class CustomerLinkingTests(TestCase):
         customer = Customer.objects.get(user=user)
         self.assertEqual(customer.phone, '9876543210')
         self.assertEqual(customer.email, 'newuser@example.com')
+
+    def test_review_submission_accepts_images(self):
+        temp_media_root = tempfile.mkdtemp()
+        self.addCleanup(lambda: shutil.rmtree(temp_media_root, ignore_errors=True))
+
+        with override_settings(MEDIA_ROOT=temp_media_root):
+            user = User.objects.create_user(
+                username='reviewer@example.com',
+                email='reviewer@example.com',
+                password='strong-pass-123',
+                is_staff=True,
+            )
+            Customer.objects.create(
+                email='reviewer@example.com',
+                name='Reviewer',
+                phone='9999999999',
+                city='',
+                pincode='',
+            )
+
+            self.client.force_authenticate(user=user)
+            image = SimpleUploadedFile(
+                'review-photo.gif',
+                self.VALID_GIF_BYTES,
+                content_type='image/gif',
+            )
+
+            response = self.client.post(
+                reverse('review-list'),
+                {
+                    'product': self.product.id,
+                    'rating': 5,
+                    'comment': 'Includes images',
+                    'images': [image],
+                },
+                format='multipart',
+            )
+
+            self.assertEqual(response.status_code, 201, response.data)
+            self.assertEqual(len(response.data['images']), 1)
+            self.assertTrue(response.data['images'][0]['image'].endswith('.gif'))
+
+    def test_review_resubmission_updates_existing_review_images(self):
+        temp_media_root = tempfile.mkdtemp()
+        self.addCleanup(lambda: shutil.rmtree(temp_media_root, ignore_errors=True))
+
+        with override_settings(MEDIA_ROOT=temp_media_root):
+            user = User.objects.create_user(
+                username='update-reviewer@example.com',
+                email='update-reviewer@example.com',
+                password='strong-pass-123',
+                is_staff=True,
+            )
+            customer = Customer.objects.create(
+                email='update-reviewer@example.com',
+                name='Update Reviewer',
+                phone='9999999999',
+                city='',
+                pincode='',
+            )
+            Review.objects.create(
+                product=self.product,
+                customer=customer,
+                rating=4,
+                comment='Old comment',
+            )
+
+            self.client.force_authenticate(user=user)
+            image = SimpleUploadedFile(
+                'updated-review-photo.gif',
+                self.VALID_GIF_BYTES,
+                content_type='image/gif',
+            )
+
+            response = self.client.post(
+                reverse('review-list'),
+                {
+                    'product': self.product.id,
+                    'rating': 5,
+                    'comment': 'Updated with image',
+                    'uploaded_images': [image],
+                },
+                format='multipart',
+            )
+
+            self.assertEqual(response.status_code, 201, response.data)
+            self.assertEqual(Review.objects.filter(product=self.product, customer=customer).count(), 1)
+
+            review = Review.objects.get(product=self.product, customer=customer)
+            self.assertEqual(review.rating, 5)
+            self.assertEqual(review.comment, 'Updated with image')
+            self.assertEqual(review.images.count(), 1)

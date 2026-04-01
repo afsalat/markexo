@@ -19,6 +19,16 @@ interface ProductFormProps {
 
 type QuickAddPanel = 'shop' | 'category' | null;
 type SearchDropdown = 'shop' | 'category' | null;
+type SearchOption = {
+    id: string;
+    label: string;
+    matchText?: string;
+};
+type CategoryOption = SearchOption & {
+    name: string;
+    depth: number;
+    parentLabel: string | null;
+};
 
 const emptyShopForm = {
     name: '',
@@ -47,6 +57,7 @@ export default function ProductForm({
 }: ProductFormProps) {
     const { token } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const galleryInputRef = useRef<HTMLInputElement>(null);
     const shopSearchRef = useRef<HTMLDivElement>(null);
     const categorySearchRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
@@ -80,7 +91,7 @@ export default function ProductForm({
         meesho_url: '',
         image: null as File | null,
         gallery_images: [] as File[],
-        specifications: [] as { key: string; value: string }[],
+        specificationsText: '',
     });
 
     const flattenCategories = (items: Category[]): Category[] => {
@@ -108,6 +119,38 @@ export default function ProductForm({
         }
 
         return [];
+    };
+
+    const stringifySpecifications = (specifications?: Record<string, unknown>) => {
+        if (!specifications) {
+            return '';
+        }
+
+        return Object.entries(specifications)
+            .map(([key, value]) => `${key}: ${String(value)}`)
+            .join('\n');
+    };
+
+    const parseSpecificationsText = (value: string) => {
+        return value
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .reduce((acc, line) => {
+                const separatorIndex = line.indexOf(':');
+                if (separatorIndex === -1) {
+                    return acc;
+                }
+
+                const key = line.slice(0, separatorIndex).trim();
+                const fieldValue = line.slice(separatorIndex + 1).trim();
+
+                if (key && fieldValue) {
+                    acc[key] = fieldValue;
+                }
+
+                return acc;
+            }, {} as Record<string, string>);
     };
 
     const loadOptions = useCallback(async () => {
@@ -187,12 +230,7 @@ export default function ProductForm({
                     meesho_url: product.meesho_url || '',
                     image: null,
                     gallery_images: [],
-                    specifications: (product as Product & { specifications?: Record<string, unknown> }).specifications
-                        ? Object.entries((product as Product & { specifications?: Record<string, unknown> }).specifications || {}).map(([key, value]) => ({
-                            key,
-                            value: String(value),
-                        }))
-                        : [],
+                    specificationsText: stringifySpecifications((product as Product & { specifications?: Record<string, unknown> }).specifications),
                 });
             } catch (error) {
                 console.error('Error loading product:', error);
@@ -223,22 +261,15 @@ export default function ProductForm({
                 ...prev,
                 gallery_images: [...prev.gallery_images, ...filesArray],
             }));
+            e.target.value = '';
         }
     };
 
-    const handleSpecChange = (index: number, field: 'key' | 'value', value: string) => {
-        const newSpecs = [...formData.specifications];
-        newSpecs[index][field] = value;
-        setFormData((prev) => ({ ...prev, specifications: newSpecs }));
-    };
-
-    const addSpec = () => {
-        setFormData((prev) => ({ ...prev, specifications: [...prev.specifications, { key: '', value: '' }] }));
-    };
-
-    const removeSpec = (index: number) => {
-        const newSpecs = formData.specifications.filter((_, i) => i !== index);
-        setFormData((prev) => ({ ...prev, specifications: newSpecs }));
+    const removeGalleryFile = (index: number) => {
+        setFormData((prev) => ({
+            ...prev,
+            gallery_images: prev.gallery_images.filter((_, fileIndex) => fileIndex !== index),
+        }));
     };
 
     const resetQuickAdd = (panel?: QuickAddPanel) => {
@@ -367,17 +398,8 @@ export default function ProductForm({
             data.append('image', formData.image);
         }
 
-        if (formData.specifications.length > 0) {
-            const specsObj = formData.specifications.reduce((acc, curr) => {
-                if (curr.key.trim() && curr.value.trim()) {
-                    acc[curr.key.trim()] = curr.value.trim();
-                }
-                return acc;
-            }, {} as Record<string, string>);
-            data.append('specifications', JSON.stringify(specsObj));
-        } else {
-            data.append('specifications', JSON.stringify({}));
-        }
+        const specsObj = parseSpecificationsText(formData.specificationsText);
+        data.append('specifications', JSON.stringify(specsObj));
 
         formData.gallery_images.forEach((file) => {
             data.append('uploaded_images', file);
@@ -424,25 +446,58 @@ export default function ProductForm({
         return depth;
     };
 
-    const renderCategoryLabel = (category: Category) => `${'-- '.repeat(getCategoryDepth(category))}${category.name}`;
+    const getCategoryPath = (category: Category) => {
+        const path = [category.name];
+        let parentId = category.parent ?? null;
+
+        while (parentId) {
+            const parent = categoryMap.get(parentId);
+            if (!parent) {
+                break;
+            }
+
+            path.unshift(parent.name);
+            parentId = parent.parent ?? null;
+        }
+
+        return path;
+    };
+
     const shopOptions = shops.map((shop) => ({
         id: String(shop.id),
         label: shop.city ? `${shop.name} - ${shop.city}` : shop.name,
     }));
-    const categoryOptions = categories.map((category) => ({
-        id: String(category.id),
-        label: renderCategoryLabel(category),
-    }));
+    const categoryOptions: CategoryOption[] = categories.map((category) => {
+        const path = getCategoryPath(category);
+        const depth = getCategoryDepth(category);
+
+        return {
+            id: String(category.id),
+            name: category.name,
+            depth,
+            parentLabel: path.length > 1 ? path.slice(0, -1).join(' / ') : null,
+            label: path.join(' / '),
+            matchText: `${category.name} ${path.join(' ')}`.toLowerCase(),
+        };
+    });
 
     useEffect(() => {
+        if (openDropdown === 'shop') {
+            return;
+        }
+
         const selectedShop = shopOptions.find((shop) => shop.id === formData.shop_id);
         setShopSearch(selectedShop?.label || '');
-    }, [formData.shop_id, shops.length]);
+    }, [formData.shop_id, openDropdown, shopOptions]);
 
     useEffect(() => {
+        if (openDropdown === 'category') {
+            return;
+        }
+
         const selectedCategory = categoryOptions.find((category) => category.id === formData.category_id);
         setCategorySearch(selectedCategory?.label || '');
-    }, [categories.length, formData.category_id]);
+    }, [categoryOptions, formData.category_id, openDropdown]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -474,14 +529,17 @@ export default function ProductForm({
     const handleSearchInputChange = (
         field: 'shop_id' | 'category_id',
         value: string,
-        options: { id: string; label: string }[],
+        options: SearchOption[],
         setSearch: (value: string) => void,
         dropdown: Exclude<SearchDropdown, null>,
     ) => {
         setSearch(value);
         setOpenDropdown(dropdown);
         const normalizedValue = value.trim().toLowerCase();
-        const selectedOption = options.find((option) => option.label.trim().toLowerCase() === normalizedValue);
+        const selectedOption = options.find((option) => {
+            const matchText = option.matchText ?? option.label.toLowerCase();
+            return option.label.trim().toLowerCase() === normalizedValue || matchText === normalizedValue;
+        });
 
         setFormData((prev) => ({
             ...prev,
@@ -491,7 +549,7 @@ export default function ProductForm({
 
     const selectSearchOption = (
         field: 'shop_id' | 'category_id',
-        option: { id: string; label: string },
+        option: SearchOption,
         setSearch: (value: string) => void,
     ) => {
         setSearch(option.label);
@@ -505,9 +563,26 @@ export default function ProductForm({
     const filteredShopOptions = shopOptions.filter((shop) =>
         shop.label.toLowerCase().includes(shopSearch.trim().toLowerCase())
     );
-    const filteredCategoryOptions = categoryOptions.filter((category) =>
-        category.label.toLowerCase().includes(categorySearch.trim().toLowerCase())
-    );
+    const filteredCategoryOptions = categoryOptions.filter((category) => {
+        const searchTokens = categorySearch
+            .trim()
+            .toLowerCase()
+            .split(/\s+/)
+            .filter(Boolean);
+
+        if (searchTokens.length === 0) {
+            return true;
+        }
+
+        const haystacks = [
+            category.name.toLowerCase(),
+            category.label.toLowerCase(),
+            (category.parentLabel ?? '').toLowerCase(),
+            category.matchText ?? '',
+        ];
+
+        return searchTokens.every((token) => haystacks.some((value) => value.includes(token)));
+    });
 
     return (
         <div className="animate-fade-in">
@@ -730,7 +805,15 @@ export default function ProductForm({
                                                             formData.category_id === category.id ? 'bg-dark-700 text-white' : 'text-silver-300'
                                                         }`}
                                                     >
-                                                        <span className="truncate">{category.label}</span>
+                                                        <div
+                                                            className="min-w-0"
+                                                            style={{ paddingLeft: `${category.depth * 18}px` }}
+                                                        >
+                                                            <span className="block truncate font-medium">{category.name}</span>
+                                                            <span className="mt-0.5 block truncate text-xs text-silver-500">
+                                                                {category.parentLabel ? `Inside ${category.parentLabel}` : 'Top-level category'}
+                                                            </span>
+                                                        </div>
                                                         {formData.category_id === category.id && <CheckCircle size={16} className="ml-3 flex-shrink-0 text-accent-500" />}
                                                     </button>
                                                 ))
@@ -982,22 +1065,41 @@ export default function ProductForm({
                             </div>
                         )}
 
-                        <div className="border-2 border-dashed border-dark-600 rounded-lg p-6 text-center hover:bg-dark-700 transition-colors cursor-pointer">
+                        <div
+                            className="cursor-pointer rounded-lg border-2 border-dashed border-dark-600 p-6 text-center transition-colors hover:bg-dark-700"
+                            onClick={() => galleryInputRef.current?.click()}
+                        >
                             <input
                                 type="file"
                                 multiple
                                 className="hidden"
-                                id="gallery-upload"
+                                ref={galleryInputRef}
                                 accept="image/*"
                                 onChange={handleGalleryChange}
                             />
-                            <label htmlFor="gallery-upload" className="cursor-pointer flex flex-col items-center gap-2 text-silver-500">
+                            <div className="flex flex-col items-center gap-2 text-silver-500">
                                 {formData.gallery_images.length > 0 ? (
                                     <div className="flex flex-wrap gap-2 justify-center">
                                         {formData.gallery_images.map((file, index) => (
-                                            <div key={index} className="flex items-center gap-2 bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-sm border border-green-500/20">
+                                            <div
+                                                key={`${file.name}-${file.size}-${index}`}
+                                                className="flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-sm text-green-500"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
                                                 <CheckCircle size={16} />
                                                 <span>{file.name}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        removeGalleryFile(index);
+                                                    }}
+                                                    className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                                                    title={`Remove ${file.name}`}
+                                                    aria-label={`Remove ${file.name}`}
+                                                >
+                                                    <X size={12} />
+                                                </button>
                                             </div>
                                         ))}
                                         <div className="w-full mt-2 text-xs text-silver-500">Click to add more images</div>
@@ -1009,55 +1111,34 @@ export default function ProductForm({
                                         <span className="text-xs text-silver-400">You can select multiple images</span>
                                     </>
                                 )}
-                            </label>
+                            </div>
                         </div>
                     </div>
 
                     <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <label className="block text-sm font-medium text-silver-300">Specifications (Key-Value Pairs)</label>
-                            <button
-                                type="button"
-                                onClick={addSpec}
-                                className="text-xs flex items-center gap-1 bg-dark-700 hover:bg-dark-600 text-silver-300 px-3 py-1.5 rounded-lg transition-colors shadow-sm"
-                            >
-                                <Plus size={14} /> Add Spec
-                            </button>
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                            <label className="block text-sm font-medium text-silver-300">Specifications</label>
+                            <span className="text-xs text-silver-500">One per line in `Key: Value` format</span>
                         </div>
-                        {formData.specifications.length === 0 ? (
-                            <div className="text-center py-6 border-2 border-dashed border-dark-600 rounded-lg text-silver-500 text-sm">
-                                No specifications added yet.
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {formData.specifications.map((spec, index) => (
-                                    <div key={index} className="flex gap-3 items-start">
-                                        <input
-                                            type="text"
-                                            value={spec.key}
-                                            onChange={(e) => handleSpecChange(index, 'key', e.target.value)}
-                                            placeholder="e.g. Brand"
-                                            className="flex-1 px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700 placeholder-silver-600"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={spec.value}
-                                            onChange={(e) => handleSpecChange(index, 'value', e.target.value)}
-                                            placeholder="e.g. Vorion"
-                                            className="flex-1 px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700 placeholder-silver-600"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSpec(index)}
-                                            className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors border border-red-500/20 flex-shrink-0"
-                                            title="Remove Specification"
-                                        >
-                                            <X size={20} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <textarea
+                            rows={10}
+                            value={formData.specificationsText}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, specificationsText: e.target.value }))}
+                            className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 font-mono text-sm leading-7 text-white outline-none resize-y placeholder-silver-600 focus:border-transparent focus:ring-2 focus:ring-accent-500"
+                            placeholder={`Brand: DALUCI
+Type: Socket Safety Cover / Plug Protector
+Quantity: Pack of 10
+Usage: Wall Socket Protection
+Feature: Child Proof & Shock Prevention
+Installation: Plug-in Type
+Compatibility: Standard Indian Sockets
+Safety: Non-toxic Material
+BIS/ISI Certification: Not Specified
+Country of Origin: India`}
+                        />
+                        <p className="mt-2 text-xs text-silver-500">
+                            Empty lines are ignored. Only lines with `:` are saved.
+                        </p>
                     </div>
 
                     <div className="flex items-center gap-2">

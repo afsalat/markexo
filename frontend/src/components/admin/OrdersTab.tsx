@@ -24,6 +24,16 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+    const [stats, setStats] = useState({
+        total: 0,
+        pending: 0,
+        confirmed: 0,
+        shipped: 0,
+        delivered: 0,
+        cancelled: 0,
+        returned: 0,
+        revenue: 0
+    });
 
     const handleUpdatePaymentStatus = async (orderId: string, newStatus: string) => {
         setEditingPaymentId(null);
@@ -38,7 +48,6 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
             });
 
             if (response.ok) {
-                // Optimistic update
                 setOrders(orders.map(o =>
                     o.id.toString() === orderId
                         ? { ...o, payment_status: newStatus }
@@ -52,18 +61,7 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
             alert('An error occurred');
         }
     };
-    const [stats, setStats] = useState({
-        total: 0,
-        pending: 0,
-        confirmed: 0,
-        shipped: 0,
-        delivered: 0,
-        cancelled: 0,
-        returned: 0,
-        revenue: 0
-    });
 
-    // Debounce search input
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
@@ -72,12 +70,10 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
         return () => clearTimeout(timer);
     }, [search]);
 
-    // Fetch orders when filters or page change
     useEffect(() => {
         fetchOrders();
     }, [debouncedSearch, statusFilter, currentPage]);
 
-    // Reset to page 1 when filter changes
     useEffect(() => {
         setCurrentPage(1);
     }, [statusFilter]);
@@ -95,13 +91,14 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                     'Authorization': `Bearer ${token}`
                 }
             });
+
             if (res.ok) {
                 const data = await res.json();
-                // Handle paginated response
+
                 if (data.results) {
                     setOrders(data.results);
                     setTotalCount(data.count || 0);
-                    const pageSize = 10; // Default PAGE_SIZE
+                    const pageSize = 10;
                     setTotalPages(Math.ceil((data.count || 0) / pageSize));
                 } else {
                     setOrders(data);
@@ -109,10 +106,10 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                     setTotalPages(1);
                 }
 
-                // Calculate stats from all orders (fetch without pagination for stats)
                 const statsRes = await fetch(`${API_BASE_URL}/admin/orders/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+
                 if (statsRes.ok) {
                     const statsData = await statsRes.json();
                     const allOrders = statsData.results || statsData;
@@ -172,56 +169,55 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
 
     return (
         <div className="animate-fade-in">
-            {/* Stats Dashboard */}
             <OrderStats stats={stats} onStatusClick={(status) => setStatusFilter(status)} />
 
-            <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <h1 className="font-display text-2xl font-bold text-white">Orders</h1>
-                <div className="flex flex-wrap gap-3 items-center w-full sm:w-auto flex-1 justify-start sm:justify-end">
-                    {/* View Toggle */}
-                    <div className="flex gap-1 bg-dark-800 p-1 rounded-lg border border-dark-700 shrink-0">
+                <div className="flex w-full flex-1 flex-wrap items-center justify-start gap-3 sm:w-auto sm:justify-end">
+                    <div className="flex shrink-0 gap-1 rounded-lg border border-dark-700 bg-dark-800 p-1">
                         <button
                             onClick={() => setViewMode('table')}
-                            className={`p-2 rounded transition-colors ${viewMode === 'table' ? 'bg-accent-500/10 text-accent-500 shadow-sm' : 'text-silver-500 hover:text-white'}`}
+                            className={`rounded p-2 transition-colors ${viewMode === 'table' ? 'bg-accent-500/10 text-accent-500 shadow-sm' : 'text-silver-500 hover:text-white'}`}
                             title="Table View"
                         >
                             <List size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded transition-colors ${viewMode === 'grid' ? 'bg-accent-500/10 text-accent-500 shadow-sm' : 'text-silver-500 hover:text-white'}`}
+                            className={`rounded p-2 transition-colors ${viewMode === 'grid' ? 'bg-accent-500/10 text-accent-500 shadow-sm' : 'text-silver-500 hover:text-white'}`}
                             title="Grid View"
                         >
                             <Grid size={18} />
                         </button>
                     </div>
 
-                    <div className="relative w-full sm:w-auto flex-1 min-w-[200px]">
+                    <div className="relative min-w-[200px] flex-1 sm:w-auto">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-silver-500" size={18} />
                         <input
                             type="text"
                             placeholder="Search orders..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-dark-700 rounded-lg outline-none focus:ring-2 focus:ring-accent-500 bg-dark-800 text-white placeholder-silver-600"
+                            className="w-full rounded-lg border border-dark-700 bg-dark-800 py-2 pl-10 pr-4 text-white outline-none placeholder-silver-600 focus:ring-2 focus:ring-accent-500"
                         />
                     </div>
+
                     <div className="relative">
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${statusFilter
-                                ? 'bg-accent-600 text-white border border-accent-600'
-                                : 'bg-dark-800 text-silver-300 border border-dark-700 hover:bg-dark-700'}`}
+                            className={`flex items-center gap-2 rounded-lg px-4 py-2 transition-colors ${statusFilter
+                                ? 'border border-accent-600 bg-accent-600 text-white'
+                                : 'border border-dark-700 bg-dark-800 text-silver-300 hover:bg-dark-700'}`}
                         >
                             <Filter size={18} />
                             <span>{statusFilter ? statusFilter.replace(/_/g, ' ') : 'Filter'}</span>
                         </button>
 
                         {showFilters && (
-                            <div className="absolute right-0 mt-2 w-56 bg-dark-800 rounded-xl shadow-lg border border-dark-700 py-1 z-50">
+                            <div className="absolute right-0 z-50 mt-2 w-56 rounded-xl border border-dark-700 bg-dark-800 py-1 shadow-lg">
                                 <button
                                     onClick={() => { setStatusFilter(''); setShowFilters(false); }}
-                                    className="block w-full text-left px-4 py-2 text-sm text-silver-300 hover:bg-dark-700"
+                                    className="block w-full px-4 py-2 text-left text-sm text-silver-300 hover:bg-dark-700"
                                 >
                                     All Orders
                                 </button>
@@ -229,7 +225,7 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                     <button
                                         key={s}
                                         onClick={() => { setStatusFilter(s); setShowFilters(false); }}
-                                        className={`block w-full text-left px-4 py-2 text-sm hover:bg-dark-700 ${statusFilter === s ? 'bg-accent-500/10 text-accent-500 font-medium' : 'text-silver-300'}`}
+                                        className={`block w-full px-4 py-2 text-left text-sm hover:bg-dark-700 ${statusFilter === s ? 'bg-accent-500/10 font-medium text-accent-500' : 'text-silver-300'}`}
                                     >
                                         {s.replace(/_/g, ' ')}
                                     </button>
@@ -237,15 +233,17 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                             </div>
                         )}
                     </div>
+
                     <button
                         onClick={fetchOrders}
-                        className="p-2 bg-dark-800 border border-dark-700 rounded-lg hover:bg-dark-700 text-silver-400"
+                        className="rounded-lg border border-dark-700 bg-dark-800 p-2 text-silver-400 hover:bg-dark-700"
                         title="Refresh"
                     >
                         <RefreshCcw size={18} />
                     </button>
+
                     <button
-                        className="flex items-center gap-2 px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-500 transition-colors shadow-lg shadow-accent-500/20"
+                        className="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500"
                         title="Export Orders"
                     >
                         <Download size={18} />
@@ -254,25 +252,25 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                 </div>
             </div>
 
-            <div className="bg-dark-800 rounded-2xl shadow-sm overflow-hidden min-h-[400px] border border-dark-700">
+            <div className="min-h-[400px] overflow-hidden rounded-2xl border border-dark-700 bg-dark-800 shadow-sm">
                 {loading ? (
-                    <div className="flex items-center justify-center h-64">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500"></div>
+                    <div className="flex h-64 items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-accent-500"></div>
                     </div>
                 ) : viewMode === 'table' ? (
                     <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full min-w-[1240px] table-fixed">
                             <thead className="bg-dark-700/50">
                                 <tr>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Order ID</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Customer</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Products</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Amount</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Cost</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Profit</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Status</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Payment</th>
-                                    <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Date</th>
+                                    <th className="w-[170px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Order ID</th>
+                                    <th className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Customer</th>
+                                    <th className="w-[320px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Products</th>
+                                    <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Amount</th>
+                                    <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Cost</th>
+                                    <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Profit</th>
+                                    <th className="w-[170px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
+                                    <th className="w-[230px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Payment</th>
+                                    <th className="w-[130px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Date</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-700">
@@ -280,38 +278,42 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                     <tr
                                         key={order.id}
                                         onClick={() => setSelectedOrder(order)}
-                                        className="hover:bg-dark-700 border-transparent transition-all cursor-pointer group"
+                                        className="group cursor-pointer border-transparent transition-all hover:bg-dark-700"
                                     >
-                                        <td className="px-6 py-4 font-bold text-white group-hover:text-accent-500 transition-colors flex items-center gap-2">
-                                            {order.order_id}
-                                            <Eye size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-accent-400" />
+                                        <td className="px-6 py-4 align-top font-bold text-white transition-colors group-hover:text-accent-500">
+                                            <div className="flex items-center gap-2 whitespace-nowrap">
+                                                <span>{order.order_id}</span>
+                                                <Eye size={14} className="text-accent-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 text-silver-400 font-medium">{order.customer?.name || 'Guest'}</td>
-                                        <td className="px-6 py-4 text-white text-sm">
+                                        <td className="px-6 py-4 align-top whitespace-normal break-normal font-medium text-silver-400">{order.customer?.name || 'Guest'}</td>
+                                        <td className="px-6 py-4 align-top text-sm text-white">
                                             {order.items && order.items.length > 0 ? (
-                                                <span>
-                                                    {order.items[0].product_name}
-                                                    {order.items.length > 1 && <span className="text-silver-500 text-xs ml-1">+{order.items.length - 1} more</span>}
-                                                </span>
+                                                <div className="space-y-1">
+                                                    <span className="block whitespace-normal break-normal leading-snug">
+                                                        {order.items[0].product_name}
+                                                    </span>
+                                                    {order.items.length > 1 && <span className="text-xs text-silver-500">+{order.items.length - 1} more</span>}
+                                                </div>
                                             ) : (
-                                                <span className="text-silver-600 italic">No Items</span>
+                                                <span className="italic text-silver-600">No Items</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 font-bold text-white tracking-tight">₹{formatNumber(order.total_amount)}</td>
-                                        <td className="px-6 py-4 font-medium text-silver-400">₹{formatNumber(order.supplier_total_cost || 0)}</td>
-                                        <td className={`px-6 py-4 font-bold ${(order.profit || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                                            ₹{formatNumber(order.profit || 0)}
+                                        <td className="px-6 py-4 align-top whitespace-nowrap font-bold tracking-tight text-white">&#8377;{formatNumber(order.total_amount)}</td>
+                                        <td className="px-6 py-4 align-top whitespace-nowrap font-medium text-silver-400">&#8377;{formatNumber(order.supplier_total_cost || 0)}</td>
+                                        <td className={`px-6 py-4 align-top whitespace-nowrap font-bold ${(order.profit || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                            &#8377;{formatNumber(order.profit || 0)}
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider border ${getStatusColor(order.status)}`}>
+                                        <td className="px-6 py-4 align-top">
+                                            <span className={`inline-flex whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-black uppercase tracking-wider ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <div className="relative flex items-center gap-2">
-                                                <span className={`inline-block whitespace-nowrap px-2 py-1 rounded text-xs font-bold border ${order.payment_status === 'received_from_meesho' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                                    order.payment_status === 'failed_rto' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                                        'bg-dark-700 text-silver-500 border-dark-600'
+                                        <td className="px-6 py-4 align-top">
+                                            <div className="relative flex items-center gap-2 whitespace-nowrap">
+                                                <span className={`inline-block rounded border px-2 py-1 text-xs font-bold whitespace-nowrap ${order.payment_status === 'received_from_meesho' ? 'border-green-500/20 bg-green-500/10 text-green-500' :
+                                                    order.payment_status === 'failed_rto' ? 'border-red-500/20 bg-red-500/10 text-red-500' :
+                                                        'border-dark-600 bg-dark-700 text-silver-500'
                                                     }`}>
                                                     {order.payment_status_display || order.payment_status || 'Pending'}
                                                 </span>
@@ -320,13 +322,13 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                                         e.stopPropagation();
                                                         setEditingPaymentId(editingPaymentId === order.id.toString() ? null : order.id.toString());
                                                     }}
-                                                    className="p-1 text-silver-600 hover:text-accent-500 rounded transition-colors"
+                                                    className="rounded p-1 text-silver-600 transition-colors hover:text-accent-500"
                                                 >
                                                     <Edit3 size={14} />
                                                 </button>
 
                                                 {editingPaymentId === order.id.toString() && (
-                                                    <div className="absolute left-0 top-full mt-2 w-48 bg-dark-800 rounded-xl shadow-xl border border-dark-700 py-1 z-50 animate-fade-in">
+                                                    <div className="absolute left-0 top-full z-50 mt-2 w-48 animate-fade-in rounded-xl border border-dark-700 bg-dark-800 py-1 shadow-xl">
                                                         {[
                                                             { value: 'pending', label: 'Pending' },
                                                             { value: 'received_from_meesho', label: 'Received (Meesho)' },
@@ -340,7 +342,7 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                                                     e.stopPropagation();
                                                                     handleUpdatePaymentStatus(order.id.toString(), status.value);
                                                                 }}
-                                                                className="w-full text-left px-4 py-2 text-sm text-silver-300 hover:bg-dark-700 hover:text-white transition-colors"
+                                                                className="w-full px-4 py-2 text-left text-sm text-silver-300 transition-colors hover:bg-dark-700 hover:text-white"
                                                             >
                                                                 {status.label}
                                                             </button>
@@ -348,15 +350,15 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                                     </div>
                                                 )}
 
-                                                {order.is_cod && <span className="text-[10px] bg-dark-700 border border-dark-600 px-1 rounded text-silver-500">COD</span>}
+                                                {order.is_cod && <span className="rounded border border-dark-600 bg-dark-700 px-1 py-0.5 text-[10px] text-silver-500">COD</span>}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-silver-500 font-medium">{formatDate(order.created_at)}</td>
+                                        <td className="px-6 py-4 align-top whitespace-nowrap font-medium text-silver-500">{formatDate(order.created_at)}</td>
                                     </tr>
                                 ))}
                                 {orders.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-12 text-center text-silver-500">
+                                        <td colSpan={9} className="px-6 py-12 text-center text-silver-500">
                                             No orders found matching your criteria.
                                         </td>
                                     </tr>
@@ -365,61 +367,60 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                         </table>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                    <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 lg:grid-cols-3">
                         {orders.map((order) => (
                             <div
                                 key={order.id}
                                 onClick={() => setSelectedOrder(order)}
-                                className="bg-dark-800 border border-dark-700 rounded-xl p-4 hover:shadow-lg hover:border-accent-500/50 transition-all cursor-pointer group"
+                                className="group cursor-pointer rounded-xl border border-dark-700 bg-dark-800 p-4 transition-all hover:border-accent-500/50 hover:shadow-lg"
                             >
-                                <div className="flex justify-between items-start mb-3">
+                                <div className="mb-3 flex items-start justify-between">
                                     <div>
-                                        <p className="text-xs text-silver-500 font-medium">Order ID</p>
+                                        <p className="text-xs font-medium text-silver-500">Order ID</p>
                                         <p className="text-sm font-bold text-accent-500 group-hover:text-accent-400">{order.order_id}</p>
                                     </div>
-                                    <Eye size={16} className="text-silver-600 group-hover:text-accent-500 transition-colors" />
+                                    <Eye size={16} className="text-silver-600 transition-colors group-hover:text-accent-500" />
                                 </div>
 
-                                <div className="space-y-2 mb-3">
-                                    <div className="flex justify-between items-center">
+                                <div className="mb-3 space-y-2">
+                                    <div className="flex items-center justify-between gap-3">
                                         <span className="text-xs text-silver-500">Customer</span>
-                                        <span className="text-sm font-medium text-white">{order.customer?.name || 'Guest'}</span>
+                                        <span className="text-right text-sm font-medium text-white">{order.customer?.name || 'Guest'}</span>
                                     </div>
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex items-center justify-between gap-3">
                                         <span className="text-xs text-silver-500">Amount</span>
-                                        <span className="text-sm font-bold text-white">₹{formatNumber(order.total_amount)}</span>
+                                        <span className="whitespace-nowrap text-sm font-bold text-white">&#8377;{formatNumber(order.total_amount)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center">
+                                    <div className="flex items-center justify-between gap-3">
                                         <span className="text-xs text-silver-500">Date</span>
-                                        <span className="text-xs text-silver-400">{formatDate(order.created_at)}</span>
+                                        <span className="whitespace-nowrap text-xs text-silver-400">{formatDate(order.created_at)}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2 flex-wrap">
-                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(order.status)}`}>
+                                <div className="flex flex-wrap gap-2">
+                                    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase ${getStatusColor(order.status)}`}>
                                         {order.status}
                                     </span>
-                                    <span className={`inline-block whitespace-nowrap px-2 py-1 rounded text-[10px] font-bold border ${order.payment_status === 'received_from_meesho' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                        order.payment_status === 'failed_rto' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                            'bg-dark-700 text-silver-500 border-dark-600'
+                                    <span className={`inline-block whitespace-nowrap rounded border px-2 py-1 text-[10px] font-bold ${order.payment_status === 'received_from_meesho' ? 'border-green-500/20 bg-green-500/10 text-green-500' :
+                                        order.payment_status === 'failed_rto' ? 'border-red-500/20 bg-red-500/10 text-red-500' :
+                                            'border-dark-600 bg-dark-700 text-silver-500'
                                         }`}>
                                         {order.payment_status_display || order.payment_status || 'Pending'}
                                     </span>
-                                    {order.is_cod && <span className="text-[10px] bg-dark-700 border border-dark-600 px-2 py-1 rounded text-silver-500">COD</span>}
+                                    {order.is_cod && <span className="rounded border border-dark-600 bg-dark-700 px-2 py-1 text-[10px] text-silver-500">COD</span>}
                                 </div>
                             </div>
                         ))}
                         {orders.length === 0 && (
-                            <div className="col-span-full text-center py-12 text-silver-500">
+                            <div className="col-span-full py-12 text-center text-silver-500">
                                 No orders found matching your criteria.
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
-                    <div className="flex flex-wrap items-center justify-between px-6 py-4 border-t border-dark-700 bg-dark-800 gap-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-dark-700 bg-dark-800 px-6 py-4">
                         <div className="text-sm text-silver-500">
                             Showing page <span className="font-medium text-white">{currentPage}</span> of{' '}
                             <span className="font-medium text-white">{totalPages}</span>
@@ -429,14 +430,14 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="flex items-center gap-1 px-4 py-2 bg-dark-800 border border-dark-600 rounded-lg hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-silver-300"
+                                className="flex items-center gap-1 rounded-lg border border-dark-600 bg-dark-800 px-4 py-2 text-sm font-medium text-silver-300 hover:bg-dark-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <ChevronLeft size={16} /> Previous
                             </button>
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="flex items-center gap-1 px-4 py-2 bg-dark-800 border border-dark-600 rounded-lg hover:bg-dark-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-silver-300"
+                                className="flex items-center gap-1 rounded-lg border border-dark-600 bg-dark-800 px-4 py-2 text-sm font-medium text-silver-300 hover:bg-dark-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Next <ChevronRight size={16} />
                             </button>

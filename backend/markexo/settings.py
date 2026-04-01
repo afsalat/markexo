@@ -14,7 +14,7 @@ LOG_DIR.mkdir(exist_ok=True)
 SYSTEM_LOG_FILE = LOG_DIR / 'system.log'
 APP_CONFIG_PATH = BASE_DIR.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
 LOCAL_HOST_ALIASES = ['127.0.0.1', 'localhost']
-LOCAL_DEV_FRONTEND_PORTS = [3000]
+LOCAL_DEV_FRONTEND_PORTS = [3000, 443]
 
 def load_app_config():
     with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
@@ -135,7 +135,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-SERVE_MEDIA_FILES = False
+SERVE_MEDIA_FILES = DEBUG or APP_HOST in LOCAL_HOST_ALIASES
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -178,14 +178,15 @@ SIMPLE_JWT = {
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@vorionmart.com'
+DEFAULT_FROM_EMAIL = 'vorionnexustech@gmail.com'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_HOST = 'smtp.example.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'apikey'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_USER = 'vorionnexustech@gmail.com'
+EMAIL_HOST_PASSWORD = 'mgnp mfix pkyo ykzw'
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+EMAIL_TIMEOUT = 20
 
 USE_X_FORWARDED_HOST = False
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

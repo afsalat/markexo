@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { registerUser } from '@/lib/api';
 import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Github, Twitter } from 'lucide-react';
@@ -10,6 +10,9 @@ import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Github, Twitter } from 
 export default function SignupPage() {
     const { login } = useCustomerAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect') || '/profile';
+    const loginHref = `/login?redirect=${encodeURIComponent(redirectPath)}`;
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function SignupPage() {
 
             // Auto login after registration
             await login(formData.email, formData.password);
-            router.push('/profile');
+            router.push(redirectPath);
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {
@@ -93,7 +96,7 @@ export default function SignupPage() {
                         </Link>
                         <h2 className="text-xl lg:text-2xl font-bold text-white">Create your account</h2>
                         <p className="text-silver-400 mt-1.5">
-                            Already have an account? <Link href="/login" className="text-accent-500 font-medium hover:underline">Sign in</Link>
+                            Already have an account? <Link href={loginHref} className="text-accent-500 font-medium hover:underline">Sign in</Link>
                         </p>
                     </div>
 

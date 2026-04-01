@@ -11,7 +11,7 @@ from django.db.models.functions import Coalesce
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
-    Shop, Category, Product, ProductImage, Review, Customer,
+    Shop, Category, Product, ProductImage, Review, ReviewImage, Customer,
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner
 )
@@ -438,17 +438,36 @@ class ProductImageSerializer(serializers.ModelSerializer):
         return get_image_url(request, obj.image)
 
 
+class ReviewImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReviewImage
+        fields = ['id', 'image']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     customer_email = serializers.CharField(source='customer.email', read_only=True)
     product_name = serializers.CharField(source='product.name', read_only=True)
     created_at_formatted = serializers.SerializerMethodField()
+    images = ReviewImageSerializer(many=True, read_only=True)
+    uploaded_images = serializers.ListField(
+        child=serializers.ImageField(),
+        write_only=True,
+        required=False,
+        allow_empty=True,
+    )
 
     class Meta:
         model = Review
         fields = [
             'id', 'product', 'product_name', 'customer', 'customer_name', 'customer_email',
-            'rating', 'comment', 'verified', 'created_at', 'created_at_formatted'
+            'rating', 'comment', 'verified', 'created_at', 'created_at_formatted', 'images', 'uploaded_images'
         ]
         read_only_fields = ['id', 'verified', 'created_at', 'customer']
 
@@ -456,16 +475,32 @@ class ReviewSerializer(serializers.ModelSerializer):
         return obj.created_at.strftime('%Y-%m-%d')
 
     def create(self, validated_data):
-        # Set customer from request context
         request = self.context.get('request')
+        uploaded_images = list(validated_data.pop('uploaded_images', []))
+        if not uploaded_images and request:
+            uploaded_images = request.FILES.getlist('uploaded_images') or request.FILES.getlist('images')
+        if len(uploaded_images) > 5:
+            raise serializers.ValidationError({"images": "You can upload up to 5 review images."})
+
         if request and hasattr(request, 'user') and request.user.is_authenticated:
             customer = get_or_create_customer_for_user(request.user)
             validated_data['customer'] = customer
 
-            # Check for existing review
-            if Review.objects.filter(customer=customer, product=validated_data['product']).exists():
-                raise serializers.ValidationError({"detail": "You have already reviewed this product."})
-        return super().create(validated_data)
+            existing_review = Review.objects.filter(customer=customer, product=validated_data['product']).first()
+            if existing_review:
+                existing_review.rating = validated_data['rating']
+                existing_review.comment = validated_data['comment']
+                existing_review.save(update_fields=['rating', 'comment', 'updated_at'])
+                if uploaded_images:
+                    existing_review.images.all().delete()
+                    for image in uploaded_images:
+                        ReviewImage.objects.create(review=existing_review, image=image)
+                return existing_review
+
+        review = super().create(validated_data)
+        for image in uploaded_images:
+            ReviewImage.objects.create(review=review, image=image)
+        return review
 
 
 class PublicProductSerializer(serializers.ModelSerializer):

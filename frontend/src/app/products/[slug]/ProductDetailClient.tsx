@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw,
-    Award, ChevronRight, Plus, Minus, Check, MapPin, Store, CreditCard, Package
+    Award, ChevronRight, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
@@ -28,6 +28,7 @@ type ProductDetailClientProps = {
 
 export default function ProductDetailClient({ slug, initialProduct }: ProductDetailClientProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     const { addItem } = useCart();
     const [productData, setProductData] = useState<Product | null>(initialProduct);
@@ -37,14 +38,20 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'reviews'>('description');
-    const { addToWishlist, removeFromWishlist, isWishlisted, customer, isAuthenticated } = useCustomerAuth();
+    const { addToWishlist, removeFromWishlist, isWishlisted, customer, isAuthenticated, isLoading: authLoading } = useCustomerAuth();
     const [addedToCart, setAddedToCart] = useState(false);
     const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
     const [reviewSubmitting, setReviewSubmitting] = useState(false);
     const [reviewError, setReviewError] = useState<string | null>(null);
     const [reviewSuccess, setReviewSuccess] = useState(false);
+    const [reviewImages, setReviewImages] = useState<File[]>([]);
+    const [reviewImagePreviews, setReviewImagePreviews] = useState<{ file: File; url: string }[]>([]);
+    const [activeReviewImage, setActiveReviewImage] = useState<{ src: string; alt: string } | null>(null);
     const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>([]);
     const [shareMessage, setShareMessage] = useState<string | null>(null);
+    const reviewRedirectPath = `/products/${slug}?review=1#reviews`;
+    const loginReviewPath = `/login?redirect=${encodeURIComponent(reviewRedirectPath)}`;
+    const reviewIntent = searchParams.get('review') === '1';
 
     const normalizeProducts = (response: any): Product[] => {
         if (Array.isArray(response)) {
@@ -163,6 +170,64 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
         }
     }, [slug, initialProduct]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const hasReviewHash = window.location.hash === '#reviews';
+        if (!reviewIntent && !hasReviewHash) {
+            return;
+        }
+
+        setActiveTab('reviews');
+
+        if (!authLoading && reviewIntent && !isAuthenticated) {
+            router.replace(loginReviewPath);
+            return;
+        }
+
+        window.setTimeout(() => {
+            document.getElementById('reviews')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        }, 0);
+    }, [authLoading, isAuthenticated, loginReviewPath, reviewIntent, router, slug]);
+
+    useEffect(() => {
+        const previews = reviewImages.map((file) => ({
+            file,
+            url: URL.createObjectURL(file),
+        }));
+        setReviewImagePreviews(previews);
+
+        return () => {
+            previews.forEach((preview) => URL.revokeObjectURL(preview.url));
+        };
+    }, [reviewImages]);
+
+    useEffect(() => {
+        if (!activeReviewImage || typeof window === 'undefined') {
+            return;
+        }
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setActiveReviewImage(null);
+            }
+        };
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [activeReviewImage]);
+
     // Calculate real rating distribution from fetched reviews
     const getRatingPercent = (star: number) => {
         if (!reviews || reviews.length === 0) return 0;
@@ -176,7 +241,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
         // Check auth again before submitting
         if (!isAuthenticated) {
-            router.push(`/signup?redirect=/products/${slug}`);
+            router.push(loginReviewPath);
             return;
         }
 
@@ -188,23 +253,63 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 product: productData.id,
                 rating: reviewForm.rating,
                 comment: reviewForm.comment,
+                images: reviewImages,
             });
             setReviewSuccess(true);
             setReviewForm({ rating: 5, comment: '' });
+            setReviewImages([]);
             // Refresh reviews after successful submission
             const updatedReviews = await fetchReviews(productData.id);
             setReviews(Array.isArray(updatedReviews) ? updatedReviews : updatedReviews.results || []);
         } catch (err: any) {
-            // If backend returns 401, token is expired - redirect to signup
+            // If backend returns 401, token is expired - redirect to login
             const msg = err.message || '';
             if (msg.includes('Authentication credentials') || msg.includes('401') || msg.includes('not provided')) {
-                router.push(`/signup?redirect=/products/${slug}`);
+                router.push(loginReviewPath);
                 return;
             }
             setReviewError(msg || 'Failed to submit review. You may have already reviewed this product.');
         } finally {
             setReviewSubmitting(false);
         }
+    };
+
+    const handleReviewImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = Array.from(event.target.files || []);
+        if (selectedFiles.length === 0) {
+            return;
+        }
+
+        setReviewError(null);
+        let limitReached = false;
+        setReviewImages((prev) => {
+            const nextFiles = [...prev];
+            for (const file of selectedFiles) {
+                if (nextFiles.length >= 5) {
+                    limitReached = true;
+                    break;
+                }
+                const duplicate = nextFiles.some(
+                    (existing) =>
+                        existing.name === file.name &&
+                        existing.size === file.size &&
+                        existing.lastModified === file.lastModified
+                );
+                if (!duplicate) {
+                    nextFiles.push(file);
+                }
+            }
+            return nextFiles;
+        });
+        if (limitReached) {
+            setReviewError('You can upload up to 5 review images.');
+        }
+
+        event.target.value = '';
+    };
+
+    const removeReviewImage = (indexToRemove: number) => {
+        setReviewImages((prev) => prev.filter((_, index) => index !== indexToRemove));
     };
 
     // Loading state
@@ -646,7 +751,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 </div>
 
                 {/* Tabs Section */}
-                <div className="bg-dark-800 border border-dark-700 rounded-3xl overflow-hidden mb-12" data-aos="fade-up" data-aos-delay="300">
+                <div id="reviews" className="bg-dark-800 border border-dark-700 rounded-3xl overflow-hidden mb-12 scroll-mt-24" data-aos="fade-up" data-aos-delay="300">
                     {/* Tab Headers */}
                     <div className="border-b border-dark-700">
                         <div className="flex overflow-x-auto custom-scrollbar whitespace-nowrap hidden-scrollbar">
@@ -663,13 +768,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 Specifications
                             </button>
                             <button
-                                onClick={() => {
-                                    if (!isAuthenticated) {
-                                        router.push(`/signup?redirect=/products/${slug}`);
-                                    } else {
-                                        setActiveTab('reviews');
-                                    }
-                                }}
+                                onClick={() => setActiveTab('reviews')}
                                 className={`min-w-[124px] flex-1 px-4 py-3 text-sm font-semibold transition-colors sm:px-6 sm:py-4 sm:text-base ${activeTab === 'reviews' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
                             >
                                 Reviews ({reviews.length})
@@ -833,6 +932,45 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                     className="w-full px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl text-white placeholder-silver-600 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none transition"
                                                 />
                                             </div>
+                                            <div>
+                                                <div className="flex items-center justify-between gap-3 mb-2">
+                                                    <label className="block text-sm font-medium text-silver-300">Review Images</label>
+                                                    <span className="text-xs text-silver-500">Up to 5 images</span>
+                                                </div>
+                                                <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-dark-500 bg-dark-800/80 px-4 py-4 text-silver-300 transition hover:border-accent-500/60 hover:text-white">
+                                                    <ImagePlus size={20} className="text-accent-500" />
+                                                    <span className="text-sm font-medium">Upload product photos</span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        multiple
+                                                        onChange={handleReviewImageChange}
+                                                        className="hidden"
+                                                    />
+                                                </label>
+                                                {reviewImages.length > 0 && (
+                                                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                                                        {reviewImagePreviews.map(({ file, url }, index) => (
+                                                            <div key={`${file.name}-${file.lastModified}`} className="relative overflow-hidden rounded-xl border border-dark-600 bg-dark-800">
+                                                                <img
+                                                                    src={url}
+                                                                    alt={file.name}
+                                                                    className="h-28 w-full object-cover"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => removeReviewImage(index)}
+                                                                    className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-dark-900/80 text-white transition hover:bg-red-500"
+                                                                    aria-label={`Remove ${file.name}`}
+                                                                >
+                                                                    <X size={16} />
+                                                                </button>
+                                                                <div className="truncate px-3 py-2 text-xs text-silver-400">{file.name}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
                                             {reviewError && (
                                                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">{reviewError}</div>
                                             )}
@@ -852,7 +990,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                     ) : (
                                         <div className="text-center py-4">
                                             <p className="text-silver-400 mb-4">Please sign in to write a review.</p>
-                                            <Link href={`/signup?redirect=/products/${slug}`} className="btn-primary inline-flex items-center gap-2">
+                                            <Link href={loginReviewPath} className="btn-primary inline-flex items-center gap-2">
                                                 Sign In to Review
                                             </Link>
                                         </div>
@@ -893,6 +1031,32 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                     </div>
                                                 </div>
                                                 <p className="text-silver-300 leading-relaxed">{review.comment}</p>
+                                                {review.images?.length > 0 && (
+                                                    <div className="mt-4 overflow-x-auto pb-2 custom-scrollbar">
+                                                        <div className="flex min-w-max gap-4">
+                                                            {review.images.map((image, index) => (
+                                                                <button
+                                                                    key={image.id}
+                                                                    type="button"
+                                                                    onClick={() => setActiveReviewImage({
+                                                                        src: image.image,
+                                                                        alt: `Review photo ${index + 1} by ${review.customer_name}`,
+                                                                    })}
+                                                                    className="group block w-[280px] flex-none overflow-hidden rounded-2xl border border-dark-600 bg-dark-800 transition hover:border-accent-500/60 sm:w-[340px]"
+                                                                >
+                                                                    <div className="relative aspect-[4/3] overflow-hidden bg-dark-900">
+                                                                        <img
+                                                                            src={image.image}
+                                                                            alt={`Review photo ${index + 1} by ${review.customer_name}`}
+                                                                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                                                            loading="lazy"
+                                                                        />
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -942,6 +1106,34 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 </div>
                 )}
             </div>
+
+            {activeReviewImage && (
+                <div
+                    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+                    onClick={() => setActiveReviewImage(null)}
+                >
+                    <div
+                        className="relative w-full max-w-6xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setActiveReviewImage(null)}
+                            className="absolute right-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-dark-900/80 text-white transition hover:bg-red-500"
+                            aria-label="Close image preview"
+                        >
+                            <X size={20} />
+                        </button>
+                        <div className="overflow-hidden rounded-3xl border border-white/10 bg-dark-900 shadow-2xl">
+                            <img
+                                src={activeReviewImage.src}
+                                alt={activeReviewImage.alt}
+                                className="max-h-[85vh] w-full object-contain bg-black"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Sticky Mobile CTA */}
             <div className="sticky-cta">

@@ -1,4 +1,4 @@
-import { Search, Plus, Edit, Trash2, Info, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Info, CheckCircle } from 'lucide-react';
 import { Product, Category } from '@/types/admin';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -35,6 +35,8 @@ export default function ProductsTab({
     canDeleteOverride,
     title = 'Products',
 }: ProductsTabProps) {
+    void categories;
+
     const { token, hasPermission, user } = useAuth();
     const canAdd = canAddOverride ?? hasPermission('add_product');
     const canEdit = canEditOverride ?? hasPermission('change_product');
@@ -118,7 +120,6 @@ export default function ProductsTab({
         return p.approval_status === filterStatus;
     });
 
-    // Show form if editing or adding
     if (showForm) {
         return (
             <ProductForm
@@ -134,7 +135,6 @@ export default function ProductsTab({
         );
     }
 
-    // Show product detail if viewing
     if (viewingProduct) {
         return (
             <ProductDetail
@@ -146,21 +146,20 @@ export default function ProductsTab({
         );
     }
 
-    // Show products list
     return (
         <div className="animate-fade-in">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="font-display text-2xl font-bold text-white">{title}</h1>
-                <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-                    <div className="flex bg-dark-800 p-1 rounded-lg border border-dark-700 w-full sm:w-auto overflow-x-auto custom-scrollbar whitespace-nowrap hidden-scrollbar">
+                <div className="flex w-full flex-wrap gap-3 sm:w-auto">
+                    <div className="custom-scrollbar hidden-scrollbar flex w-full overflow-x-auto whitespace-nowrap rounded-lg border border-dark-700 bg-dark-800 p-1 sm:w-auto">
                         {(['all', 'pending', 'approved'] as const).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
-                                className={`flex-1 sm:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all ${filterStatus === status
-                                    ? 'bg-accent-600 text-white shadow-lg shadow-accent-500/20'
+                                className={`px-4 py-1.5 text-sm font-medium transition-all sm:flex-none ${filterStatus === status
+                                    ? 'rounded-md bg-accent-600 text-white shadow-lg shadow-accent-500/20'
                                     : 'text-silver-500 hover:text-white'
-                                    }`}
+                                    } flex-1`}
                             >
                                 {status.charAt(0).toUpperCase() + status.slice(1)}
                             </button>
@@ -169,7 +168,7 @@ export default function ProductsTab({
                     {canAdd && (
                         <button
                             onClick={handleAddNew}
-                            className="bg-accent-600 text-white px-4 py-2 rounded-lg hover:bg-accent-500 flex items-center justify-center gap-2 font-medium transition-colors shadow-lg shadow-accent-500/20 shrink-0"
+                            className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent-600 px-4 py-2 font-medium text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500"
                         >
                             <Plus size={20} />
                             <span className="hidden sm:inline">Add Product</span>
@@ -178,19 +177,19 @@ export default function ProductsTab({
                 </div>
             </div>
 
-            <div className="bg-dark-800 rounded-2xl shadow-sm overflow-hidden border border-dark-700">
+            <div className="overflow-hidden rounded-2xl border border-dark-700 bg-dark-800 shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full min-w-[1080px] table-fixed">
                         <thead className="bg-dark-700/50">
                             <tr>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Product</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Category</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Our Price</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Profit</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Stock</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Status</th>
-                                <th className="text-left px-6 py-3 text-xs font-medium text-silver-500 uppercase">Approval</th>
-                                {(canEdit || canDelete) && <th className="text-right px-6 py-3 text-xs font-medium text-silver-500 uppercase">Actions</th>}
+                                <th className="w-[380px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Product</th>
+                                <th className="w-[180px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Category</th>
+                                <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Our Price</th>
+                                <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Profit</th>
+                                <th className="w-[90px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Stock</th>
+                                <th className="w-[120px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
+                                <th className="w-[130px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Approval</th>
+                                {(canEdit || canDelete) && <th className="w-[110px] px-6 py-3 text-right text-xs font-medium uppercase text-silver-500">Actions</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-dark-700">
@@ -202,63 +201,63 @@ export default function ProductsTab({
                                 </tr>
                             ) : (
                                 filteredProducts.map((product) => (
-                                    <tr key={product.id} className="hover:bg-dark-700 group transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
+                                    <tr key={product.id} className="group transition-colors hover:bg-dark-700">
+                                        <td className="px-6 py-4 align-top">
+                                            <div className="flex min-w-0 items-start gap-3">
                                                 <div
-                                                    className="w-10 h-10 bg-dark-700 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer hover:ring-2 hover:ring-accent-500/50 transition-all border border-dark-600"
+                                                    className="h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-dark-600 bg-dark-700 transition-all hover:ring-2 hover:ring-accent-500/50"
                                                     onClick={() => setViewingProduct(product)}
                                                 >
                                                     {product.image ? (
-                                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                                        <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
                                                     ) : (
-                                                        <span className="text-xl">📦</span>
+                                                        <span className="flex h-full w-full items-center justify-center text-xl">📦</span>
                                                     )}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <div
-                                                        className="font-medium text-white cursor-pointer hover:text-accent-500 transition-colors flex items-center gap-1"
+                                                        className="flex cursor-pointer items-start gap-1 break-normal font-medium leading-snug text-white transition-colors hover:text-accent-500"
                                                         onClick={() => setViewingProduct(product)}
                                                     >
-                                                        {product.name}
-                                                        <Info size={14} className="opacity-0 group-hover:opacity-100 text-silver-400" />
+                                                        <span className="min-w-0 whitespace-normal">{product.name}</span>
+                                                        <Info size={14} className="mt-0.5 shrink-0 text-silver-400 opacity-0 group-hover:opacity-100" />
                                                     </div>
-                                                    <div className="text-xs text-silver-500">{product.category_name || 'N/A'}</div>
+                                                    <div className="mt-1 whitespace-normal break-normal text-xs text-silver-500">{product.category_name || 'N/A'}</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-silver-400">{product.category_name || 'Uncategorized'}</td>
-                                        <td className="px-6 py-4 font-semibold text-white">₹{formatNumber(product.current_price)}</td>
-                                        <td className="px-6 py-4 text-sm font-medium">
+                                        <td className="px-6 py-4 align-top whitespace-normal break-normal text-sm text-silver-400">{product.category_name || 'Uncategorized'}</td>
+                                        <td className="px-6 py-4 align-top whitespace-nowrap font-semibold text-white">&#8377;{formatNumber(product.current_price)}</td>
+                                        <td className="px-6 py-4 align-top whitespace-nowrap text-sm font-medium">
                                             {product.profit_margin ? (
-                                                <span className="text-green-500">₹{formatNumber(Number(product.profit_margin))}</span>
+                                                <span className="text-green-500">&#8377;{formatNumber(Number(product.profit_margin))}</span>
                                             ) : (
                                                 <span className="text-silver-600">-</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 text-silver-300">{product.stock}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${product.stock === 0 ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>
+                                        <td className="px-6 py-4 align-top whitespace-nowrap text-silver-300">{product.stock}</td>
+                                        <td className="px-6 py-4 align-top">
+                                            <span className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${product.stock === 0 ? 'border border-red-500/20 bg-red-500/10 text-red-500' : 'border border-green-500/20 bg-green-500/10 text-green-500'}`}>
                                                 {product.stock === 0 ? 'Out of Stock' : 'Active'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${product.approval_status === 'approved'
-                                                ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                        <td className="px-6 py-4 align-top">
+                                            <span className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium ${product.approval_status === 'approved'
+                                                ? 'border-blue-500/20 bg-blue-500/10 text-blue-500'
                                                 : product.approval_status === 'rejected'
-                                                    ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                                                    : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                                    ? 'border-red-500/20 bg-red-500/10 text-red-500'
+                                                    : 'border-yellow-500/20 bg-yellow-500/10 text-yellow-500'
                                                 }`}>
                                                 {product.approval_status ? (product.approval_status.charAt(0).toUpperCase() + product.approval_status.slice(1)) : 'Approved'}
                                             </span>
                                         </td>
                                         {(canEdit || canDelete) && (
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-1">
+                                            <td className="px-6 py-4 text-right align-top">
+                                                <div className="flex justify-end gap-1 whitespace-nowrap">
                                                     {canEdit && user?.is_superuser && product.approval_status === 'pending' && (
                                                         <button
                                                             onClick={(e) => handleApprove(e, product)}
-                                                            className="p-2 text-yellow-500 hover:bg-yellow-500/10 rounded-lg transition-colors"
+                                                            className="rounded-lg p-2 text-yellow-500 transition-colors hover:bg-yellow-500/10"
                                                             title="Approve Product"
                                                         >
                                                             <CheckCircle size={16} />
@@ -267,7 +266,7 @@ export default function ProductsTab({
                                                     {canEdit && (
                                                         <button
                                                             onClick={() => handleEdit(product)}
-                                                            className="p-2 text-silver-400 hover:text-accent-500 hover:bg-accent-500/10 rounded-lg transition-colors"
+                                                            className="rounded-lg p-2 text-silver-400 transition-colors hover:bg-accent-500/10 hover:text-accent-500"
                                                         >
                                                             <Edit size={16} />
                                                         </button>
@@ -275,7 +274,7 @@ export default function ProductsTab({
                                                     {canDelete && (
                                                         <button
                                                             onClick={() => handleDelete(product.id)}
-                                                            className="p-2 text-silver-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                            className="rounded-lg p-2 text-silver-400 transition-colors hover:bg-red-500/10 hover:text-red-500"
                                                         >
                                                             <Trash2 size={16} />
                                                         </button>

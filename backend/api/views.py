@@ -6,6 +6,7 @@ from collections import deque
 from pathlib import Path
 
 from rest_framework import viewsets, generics, status, permissions, serializers
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -34,7 +35,15 @@ from .serializers import (
     DashboardStatsSerializer, EnquirySerializer,
     UserSerializer, RoleSerializer, PermissionSerializer,
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
-    SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer
+    SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
+    normalize_email_value,
+)
+from .order_emails import (
+    send_order_created_email,
+    send_order_status_email,
+    send_payment_status_email,
+    send_refund_status_email,
+    send_return_request_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -80,6 +89,14 @@ def get_partner_payout_shops(user):
         return Shop.objects.none()
 
     return get_partner_catalog_shops(user)
+
+
+def get_existing_customer_by_email(email):
+    normalized_email = normalize_email_value(email)
+    if not normalized_email:
+        return None
+
+    return Customer.objects.filter(email__iexact=normalized_email).order_by('-user_id', 'id').first()
 
 
 # ============== Public API Views ==============
@@ -233,6 +250,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     """Public API for product reviews."""
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         queryset = Review.objects.all()
@@ -289,17 +307,25 @@ class CreateOrderView(APIView):
         if len(phone) < 10 or not phone.isdigit():
              return Response({'error': 'Invalid phone number'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create or get customer
-        customer, created = Customer.objects.get_or_create(
-            email=data['customer_email'],
-            defaults={
-                'name': data['customer_name'],
-                'phone': phone,
-                'address': data['delivery_address'],
-                'city': data['delivery_city'],
-                'pincode': data['delivery_pincode'],
-            }
-        )
+        # Reuse the oldest matching customer profile when duplicate emails exist.
+        normalized_email = normalize_email_value(data['customer_email'])
+        customer = get_existing_customer_by_email(normalized_email)
+        if customer is None:
+            customer = Customer.objects.create(
+                email=normalized_email,
+                name=data['customer_name'],
+                phone=phone,
+                address=data['delivery_address'],
+                city=data['delivery_city'],
+                pincode=data['delivery_pincode'],
+            )
+        else:
+            customer.name = data['customer_name'] or customer.name
+            customer.phone = phone or customer.phone
+            customer.address = data['delivery_address'] or customer.address
+            customer.city = data['delivery_city'] or customer.city
+            customer.pincode = data['delivery_pincode'] or customer.pincode
+            customer.save(update_fields=['name', 'phone', 'address', 'city', 'pincode'])
 
         # 2. Check RTO Risk
         if customer.rto_count >= 2:
@@ -352,6 +378,8 @@ class CreateOrderView(APIView):
         customer.order_count += 1
         customer.save()
 
+        send_order_created_email(order)
+
         return Response(
             OrderSerializer(order, context={'request': request}).data,
             status=status.HTTP_201_CREATED
@@ -395,6 +423,7 @@ class CancelOrderView(APIView):
         order.status = 'cancelled'
         order.cancellation_reason = request.data.get('reason', 'Cancelled by customer')
         order.save()
+        send_order_status_email(order)
         
         return Response(
             {
@@ -437,6 +466,8 @@ class ReturnOrderView(APIView):
         order.notes = f"[Return Reason]: {return_reason}\n{order.notes or ''}"
         order.refund_status = 'pending'
         order.save()
+        send_return_request_email(order)
+        send_refund_status_email(order)
         
         return Response(
             {
@@ -458,7 +489,9 @@ class CustomerOrdersView(APIView):
             return Response({'error': 'Email parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            customer = Customer.objects.get(email=email)
+            customer = get_existing_customer_by_email(email)
+            if customer is None:
+                return Response([])
             orders = Order.objects.filter(customer=customer).order_by('-created_at')
             serializer = OrderSerializer(orders, many=True, context={'request': request})
             return Response(serializer.data)
@@ -935,6 +968,8 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             order.refund_status = 'pending'
         
         order.save()
+        send_order_status_email(order)
+
         return Response({
             'status': 'success',
             'message': f'Order status updated to {new_status}',
@@ -956,6 +991,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         
         order.payment_status = new_status
         order.save()
+        send_payment_status_email(order)
         
         return Response({
             'status': 'success',
@@ -972,6 +1008,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         # If it was a prepaid order, we might set refund as pending
         # For simplicity, we'll let the admin decide the refund status
         order.save()
+        send_order_status_email(order)
         return Response({'status': 'Order cancelled', 'cancellation_reason': reason})
 
     @action(detail=True, methods=['post'])
@@ -981,6 +1018,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         if refund_status in dict(Order.REFUND_STATUS_CHOICES):
             order.refund_status = refund_status
             order.save()
+            send_refund_status_email(order)
             return Response({'status': f'Refund status updated to {refund_status}'})
         return Response({'error': 'Invalid refund status'}, status=status.HTTP_400_BAD_REQUEST)
 

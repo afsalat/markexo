@@ -70,6 +70,7 @@ export interface Review {
     verified: boolean;
     created_at: string;
     created_at_formatted: string;
+    images: { id: number; image: string }[];
     name?: string; // For backward compatibility
     date?: string; // For backward compatibility
 }
@@ -142,15 +143,23 @@ export async function createReview(reviewData: {
     product: number;
     rating: number;
     comment: string;
+    images?: File[];
 }) {
     const token = localStorage.getItem('access_token');
+    const formData = new FormData();
+    formData.append('product', String(reviewData.product));
+    formData.append('rating', String(reviewData.rating));
+    formData.append('comment', reviewData.comment);
+    for (const image of reviewData.images || []) {
+        formData.append('uploaded_images', image);
+    }
+
     const res = await fetch(`${API_URL}/reviews/`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(reviewData),
+        body: formData,
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));

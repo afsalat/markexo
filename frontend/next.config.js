@@ -2,8 +2,13 @@ const appConfig = require('./src/config/appConfig.json');
 
 const normalizeUrl = (value) => value.replace(/\/+$/, '');
 
-const buildOrigin = (port) =>
-    normalizeUrl(`${appConfig.protocol}://${appConfig.host}:${port}`);
+const buildOrigin = (port) => {
+    const origin = `${appConfig.protocol}://${appConfig.host}`;
+    if ((appConfig.protocol === 'http' && port !== 80) || (appConfig.protocol === 'https' && port !== 443)) {
+        return normalizeUrl(`${origin}:${port}`);
+    }
+    return normalizeUrl(origin);
+};
 
 const appUrl = buildOrigin(appConfig.frontendPort);
 const apiUrl = `${buildOrigin(appConfig.backendPort)}/api`;

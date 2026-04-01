@@ -609,6 +609,19 @@ class Review(models.Model):
         self.product.review_count = self.product.reviews.count()
         self.product.save(update_fields=['rating', 'review_count'])
 
+
+class ReviewImage(models.Model):
+    """Images attached to a product review."""
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='reviews/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for review {self.review_id}"
+
+    class Meta:
+        ordering = ['created_at', 'id']
+
 class PayoutRequest(models.Model):
     """Partner payout request model."""
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='payout_requests')

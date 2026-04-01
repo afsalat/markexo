@@ -10,6 +10,8 @@ export default function LoginPage() {
     const { login } = useCustomerAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect') || '/profile';
+    const signupHref = `/signup?redirect=${encodeURIComponent(redirectPath)}`;
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -21,8 +23,6 @@ export default function LoginPage() {
 
         try {
             await login(formData.email, formData.password);
-            // Handle redirect
-            const redirectPath = searchParams.get('redirect') || '/profile';
             router.push(redirectPath);
         } catch (err: any) {
             setError(err.message || 'Login failed. Please check your credentials.');
@@ -72,7 +72,7 @@ export default function LoginPage() {
                         </Link>
                         <h2 className="text-2xl font-bold text-white">Sign in to your account</h2>
                         <p className="text-silver-400 mt-2">
-                            Don't have an account? <Link href="/signup" className="text-accent-500 font-medium hover:underline">Sign up</Link>
+                            Don't have an account? <Link href={signupHref} className="text-accent-500 font-medium hover:underline">Sign up</Link>
                         </p>
                     </div>
 

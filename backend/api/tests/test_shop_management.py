@@ -155,3 +155,30 @@ class ShopManagementTests(TestCase):
         order = Order.objects.get(order_id=response.data['order_id'])
         item = order.items.get()
         self.assertEqual(item.shop_id, self.shop.id)
+
+    def test_create_order_reuses_existing_customer_when_duplicate_email_exists(self):
+        duplicate_customer = Customer.objects.create(
+            name='Buyer Duplicate',
+            email='buyer@example.com',
+            phone='9999999999',
+            city='Thrissur',
+            pincode='680001',
+        )
+        payload = {
+            'customer_name': 'Buyer Updated',
+            'customer_email': 'buyer@example.com',
+            'customer_phone': '9876543210',
+            'delivery_address': 'Addr',
+            'delivery_city': 'Kochi',
+            'delivery_pincode': '682001',
+            'items': [
+                {'product_id': self.product.id, 'quantity': 1},
+            ],
+        }
+
+        response = self.client.post('/api/orders/create/', payload, format='json')
+
+        self.assertEqual(response.status_code, 201, response.content)
+        order = Order.objects.get(order_id=response.data['order_id'])
+        self.assertIn(order.customer_id, {self.customer.id, duplicate_customer.id})
+        self.assertEqual(order.customer.email, 'buyer@example.com')
