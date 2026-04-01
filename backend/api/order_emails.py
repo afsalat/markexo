@@ -3,6 +3,7 @@ from decimal import Decimal
 from email.mime.image import MIMEImage
 from html import escape
 from pathlib import Path
+from typing import Optional
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -37,7 +38,7 @@ def attach_logo_image(message: EmailMultiAlternatives):
     message.attach(logo)
 
 
-def build_product_url(item) -> str | None:
+def build_product_url(item) -> Optional[str]:
     app_url = getattr(settings, 'APP_URL', '').rstrip('/')
     product = getattr(item, 'product', None)
     slug = getattr(product, 'slug', '') if product else ''
@@ -46,7 +47,7 @@ def build_product_url(item) -> str | None:
     return f"{app_url}/products/{slug}"
 
 
-def build_review_url(item) -> str | None:
+def build_review_url(item) -> Optional[str]:
     product_url = build_product_url(item)
     if not product_url:
         return None
@@ -62,7 +63,7 @@ def build_delivery_address(order) -> str:
     return ', '.join(part for part in parts if part)
 
 
-def build_return_reason(order) -> str | None:
+def build_return_reason(order) -> Optional[str]:
     notes = getattr(order, 'notes', '') or ''
     if '[Return Reason]:' not in notes:
         return None
@@ -189,6 +190,51 @@ def send_order_email(order, subject: str, intro: str):
 
     text_lines.extend(["", "Thank you,", "VorionMart"])
 
+    delivered_feedback_html = ""
+    if order.status in {'delivered', 'completed'}:
+        delivered_feedback_html = (
+            "<div style=\"margin-bottom:24px;padding:20px 22px;border-radius:18px;"
+            "background:linear-gradient(135deg,#ecfeff 0%,#f0fdfa 100%);border:1px solid #99f6e4;\">"
+            "<div style=\"font-size:12px;font-weight:700;color:#0f766e;text-transform:uppercase;"
+            "letter-spacing:0.08em;margin-bottom:8px;\">Share your feedback</div>"
+            "<div style=\"font-size:16px;font-weight:700;color:#134e4a;margin-bottom:6px;\">How was your order?</div>"
+            "<div style=\"font-size:14px;color:#115e59;line-height:1.7;\">"
+            "Your order was delivered successfully. You can now leave a review for each product "
+            "using the review button in the items section above."
+            "</div>"
+            "</div>"
+        )
+
+    cancellation_reason_html = ""
+    if order.cancellation_reason:
+        cancellation_reason_html = (
+            "<div style=\"margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#fff7ed;border:1px solid #fdba74;\">"
+            "<div style=\"font-size:12px;font-weight:700;color:#9a3412;text-transform:uppercase;"
+            "letter-spacing:0.08em;margin-bottom:6px;\">Cancellation reason</div>"
+            f"<div style=\"font-size:14px;color:#7c2d12;line-height:1.7;\">{escape(order.cancellation_reason)}</div>"
+            "</div>"
+        )
+
+    return_reason_html = ""
+    if return_reason:
+        return_reason_html = (
+            "<div style=\"margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#eff6ff;border:1px solid #93c5fd;\">"
+            "<div style=\"font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;"
+            "letter-spacing:0.08em;margin-bottom:6px;\">Return reason</div>"
+            f"<div style=\"font-size:14px;color:#1e3a8a;line-height:1.7;\">{escape(return_reason)}</div>"
+            "</div>"
+        )
+
+    notes_html = ""
+    if order.notes:
+        notes_html = (
+            "<div style=\"margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#f8fafc;border:1px solid #e5e7eb;\">"
+            "<div style=\"font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;"
+            "letter-spacing:0.08em;margin-bottom:6px;\">Notes</div>"
+            f"<div style=\"font-size:14px;color:#334155;line-height:1.7;\">{escape(order.notes)}</div>"
+            "</div>"
+        )
+
     html_body = f"""
     <html>
       <body style="margin:0;padding:0;background:#eef2ff;font-family:Arial,sans-serif;color:#111827;">
@@ -262,16 +308,10 @@ def send_order_email(order, subject: str, intro: str):
                         </td>
                       </tr>
                     </table>
-                    {"""
-                    <div style="margin-bottom:24px;padding:20px 22px;border-radius:18px;background:linear-gradient(135deg,#ecfeff 0%,#f0fdfa 100%);border:1px solid #99f6e4;">
-                      <div style="font-size:12px;font-weight:700;color:#0f766e;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Share your feedback</div>
-                      <div style="font-size:16px;font-weight:700;color:#134e4a;margin-bottom:6px;">How was your order?</div>
-                      <div style="font-size:14px;color:#115e59;line-height:1.7;">Your order was delivered successfully. You can now leave a review for each product using the review button in the items section above.</div>
-                    </div>
-                    """ if order.status in {'delivered', 'completed'} else ""}
-                    {f"<div style=\"margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#fff7ed;border:1px solid #fdba74;\"><div style=\"font-size:12px;font-weight:700;color:#9a3412;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;\">Cancellation reason</div><div style=\"font-size:14px;color:#7c2d12;line-height:1.7;\">{escape(order.cancellation_reason)}</div></div>" if order.cancellation_reason else ""}
-                    {f"<div style=\"margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#eff6ff;border:1px solid #93c5fd;\"><div style=\"font-size:12px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;\">Return reason</div><div style=\"font-size:14px;color:#1e3a8a;line-height:1.7;\">{escape(return_reason)}</div></div>" if return_reason else ""}
-                    {f"<div style=\"margin-bottom:16px;padding:16px 18px;border-radius:16px;background:#f8fafc;border:1px solid #e5e7eb;\"><div style=\"font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;\">Notes</div><div style=\"font-size:14px;color:#334155;line-height:1.7;\">{escape(order.notes)}</div></div>" if order.notes else ""}
+                    {delivered_feedback_html}
+                    {cancellation_reason_html}
+                    {return_reason_html}
+                    {notes_html}
                   </td>
                 </tr>
                 <tr>

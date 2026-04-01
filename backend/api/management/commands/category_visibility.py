@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.core.management.base import BaseCommand
 
 from api.models import Category
@@ -51,11 +53,11 @@ class Command(BaseCommand):
         if quiet:
             return
 
-        children_by_parent: dict[int | None, list[Category]] = {}
+        children_by_parent: dict[Optional[int], list[Category]] = {}
         for category in categories:
             children_by_parent.setdefault(category.parent_id, []).append(category)
 
-        def print_branch(parent_id: int | None, depth: int = 0):
+        def print_branch(parent_id: Optional[int], depth: int = 0):
             for category in children_by_parent.get(parent_id, []):
                 indent = '  ' * depth
                 marker = 'VISIBLE' if category.is_active else 'HIDDEN'
