@@ -234,6 +234,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
         const count = reviews.filter(r => r.rating === star).length;
         return Math.round((count / reviews.length) * 100);
     };
+    const fallbackReviewCount = Number(productData?.review_count ?? 0);
+    const fetchedReviewCount = reviews.length;
+    const displayReviewCount = fetchedReviewCount || fallbackReviewCount;
+    const averageRatingValue = fetchedReviewCount > 0
+        ? reviews.reduce((sum, review) => sum + review.rating, 0) / fetchedReviewCount
+        : Number(productData?.rating ?? 0);
+    const formattedDisplayRating = averageRatingValue.toFixed(1);
+    const roundedDisplayRating = Math.round(averageRatingValue);
 
     const handleReviewSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -578,13 +586,13 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                         <Star
                                             key={star}
                                             size={18}
-                                            className={star <= Math.floor(productData.rating) ? 'fill-amber-400 text-amber-400' : 'text-dark-500'}
+                                            className={star <= roundedDisplayRating ? 'fill-amber-400 text-amber-400' : 'text-dark-500'}
                                         />
                                     ))}
-                                    <span className="ml-2 text-white font-semibold">{productData.rating}</span>
+                                    <span className="ml-2 text-white font-semibold">{formattedDisplayRating}</span>
                                 </div>
                                 <span className="text-dark-500">|</span>
-                                <span className="text-silver-400">{reviews.length} Reviews</span>
+                                <span className="text-silver-400">{displayReviewCount} Review{displayReviewCount !== 1 ? 's' : ''}</span>
                                 <span className="text-dark-500">|</span>
                                 <span className="text-silver-400">{getPurchaseSignal()}</span>
                             </div>
@@ -771,7 +779,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 onClick={() => setActiveTab('reviews')}
                                 className={`min-w-[124px] flex-1 px-4 py-3 text-sm font-semibold transition-colors sm:px-6 sm:py-4 sm:text-base ${activeTab === 'reviews' ? 'text-accent-500 border-b-2 border-accent-500 bg-dark-700' : 'text-silver-400 hover:text-white'}`}
                             >
-                                Reviews ({reviews.length})
+                                Reviews ({displayReviewCount})
                             </button>
                         </div>
                     </div>
@@ -864,14 +872,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                     <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
                                         <div className="text-center flex-shrink-0">
                                             <div className="text-5xl font-bold text-white mb-2">
-                                                {reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : '0.0'}
+                                                {formattedDisplayRating}
                                             </div>
                                             <div className="flex items-center gap-1 mb-1 justify-center">
                                                 {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={20} className={star <= Math.round(reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0) ? 'fill-amber-400 text-amber-400' : 'text-dark-500'} />
+                                                    <Star key={star} size={20} className={star <= roundedDisplayRating ? 'fill-amber-400 text-amber-400' : 'text-dark-500'} />
                                                 ))}
                                             </div>
-                                            <p className="text-sm text-silver-500">{reviews.length} review{reviews.length !== 1 ? 's' : ''}</p>
+                                            <p className="text-sm text-silver-500">{displayReviewCount} review{displayReviewCount !== 1 ? 's' : ''}</p>
                                         </div>
                                         <div className="flex-1 w-full">
                                             {[5, 4, 3, 2, 1].map((star) => {
