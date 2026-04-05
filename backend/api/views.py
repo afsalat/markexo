@@ -24,7 +24,14 @@ from django.core.cache import cache
 from .models import (
     Shop, Category, Product, ProductImage, Review, Customer,
     Order, OrderItem, Banner, SiteSetting, Enquiry,
-    Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner
+    Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
+    ChecklistSection, ChecklistItem
+)
+from .launch_checklist import (
+    LAUNCH_CHECKLIST_PROJECT_NAME,
+    ensure_launch_checklist_seeded,
+    normalize_section_display_order,
+    sync_launch_checklist_from_seed,
 )
 from .serializers import (
     ShopSerializer, ShopListSerializer,
@@ -36,6 +43,7 @@ from .serializers import (
     UserSerializer, RoleSerializer, PermissionSerializer,
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
     SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
+    ChecklistSectionSerializer, ChecklistSectionWriteSerializer, ChecklistItemSerializer, ChecklistItemWriteSerializer,
     normalize_email_value,
 )
 from .order_emails import (
@@ -670,6 +678,101 @@ class AdminSystemLogsPermission(permissions.BasePermission):
                 request.user.has_perm('api.view_sitesetting')
             )
         )
+
+
+class AdminLaunchChecklistView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        sections = ensure_launch_checklist_seeded()
+        serializer = ChecklistSectionSerializer(sections, many=True)
+        return Response({
+            'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
+            'sections': serializer.data,
+        })
+
+
+class AdminLaunchChecklistSeedView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        replace_existing = bool(request.data.get('replace_existing', False))
+        sections = sync_launch_checklist_from_seed(replace_existing=replace_existing)
+        serializer = ChecklistSectionSerializer(sections, many=True)
+        return Response({
+            'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
+            'sections': serializer.data,
+        }, status=status.HTTP_200_OK)
+
+
+class AdminLaunchChecklistSectionCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = ChecklistSectionWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        section = serializer.save()
+        normalize_section_display_order()
+        section.refresh_from_db()
+        return Response(
+            ChecklistSectionSerializer(section).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AdminLaunchChecklistSectionDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_object(self, pk):
+        return get_object_or_404(ChecklistSection, pk=pk)
+
+    def patch(self, request, pk):
+        section = self.get_object(pk)
+        serializer = ChecklistSectionWriteSerializer(section, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        section = serializer.save()
+        normalize_section_display_order()
+        section.refresh_from_db()
+        return Response(ChecklistSectionSerializer(section).data)
+
+    def delete(self, request, pk):
+        section = self.get_object(pk)
+        section.delete()
+        normalize_section_display_order()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminLaunchChecklistItemCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        serializer = ChecklistItemWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save()
+        return Response(
+            ChecklistItemSerializer(item).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AdminLaunchChecklistItemDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_object(self, pk):
+        return get_object_or_404(ChecklistItem.objects.select_related('section'), pk=pk)
+
+    def patch(self, request, pk):
+        item = self.get_object(pk)
+        serializer = ChecklistItemWriteSerializer(item, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        item = serializer.save()
+        return Response(ChecklistItemSerializer(item).data)
+
+    def delete(self, request, pk):
+        item = self.get_object(pk)
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     """Management of admin users."""

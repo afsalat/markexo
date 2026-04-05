@@ -232,7 +232,7 @@ export default function PartnerRegisterPage() {
                         <div className="flex items-start gap-3">
                             <input type="checkbox" required className="mt-1 w-4 h-4 text-accent-500 bg-dark-800 border-dark-600 rounded focus:ring-accent-500" />
                             <span className="text-sm text-silver-400">
-                                I agree to the <Link href="/terms" className="text-accent-500 hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-accent-500 hover:underline">Privacy Policy</Link>
+                                I agree to the <Link href="/terms-and-conditions" className="text-accent-500 hover:underline">Terms of Service</Link> and <Link href="/privacy-policy" className="text-accent-500 hover:underline">Privacy Policy</Link>
                             </span>
                         </div>
 

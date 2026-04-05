@@ -469,6 +469,79 @@ class SiteSetting(models.Model):
         verbose_name_plural = 'Site Settings'
 
 
+class ChecklistSection(models.Model):
+    """Launch-readiness checklist section."""
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True, blank=True)
+    description = models.TextField(blank=True)
+    display_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(ChecklistSection, self.title, instance_id=self.pk, max_length=200)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['display_order', 'id']
+
+
+class ChecklistItem(models.Model):
+    """Launch-readiness checklist item."""
+    PRIORITY_CRITICAL = 'Critical'
+    PRIORITY_HIGH = 'High'
+    PRIORITY_MEDIUM = 'Medium'
+    PRIORITY_LOW = 'Low'
+    PRIORITY_CHOICES = [
+        (PRIORITY_CRITICAL, 'Critical'),
+        (PRIORITY_HIGH, 'High'),
+        (PRIORITY_MEDIUM, 'Medium'),
+        (PRIORITY_LOW, 'Low'),
+    ]
+
+    STATUS_NOT_STARTED = 'Not Started'
+    STATUS_IN_PROGRESS = 'In Progress'
+    STATUS_BLOCKED = 'Blocked'
+    STATUS_TESTING = 'Testing'
+    STATUS_COMPLETED = 'Completed'
+    STATUS_CHOICES = [
+        (STATUS_NOT_STARTED, 'Not Started'),
+        (STATUS_IN_PROGRESS, 'In Progress'),
+        (STATUS_BLOCKED, 'Blocked'),
+        (STATUS_TESTING, 'Testing'),
+        (STATUS_COMPLETED, 'Completed'),
+    ]
+
+    section = models.ForeignKey(ChecklistSection, on_delete=models.CASCADE, related_name='items')
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    description = models.TextField(blank=True)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default=PRIORITY_HIGH)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_NOT_STARTED)
+    owner = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    is_completed = models.BooleanField(default=False)
+    display_order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(ChecklistItem, self.title, instance_id=self.pk, max_length=255)
+        self.is_completed = self.status == self.STATUS_COMPLETED
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.section.title}: {self.title}"
+
+    class Meta:
+        ordering = ['display_order', 'id']
+
+
 class Enquiry(models.Model):
     """Customer enquiry model."""
     STATUS_CHOICES = [

@@ -3,6 +3,13 @@
  */
 
 import { API_BASE_URL } from '@/config/apiConfig';
+import type {
+    LaunchChecklistDocument,
+    LaunchChecklistItem,
+    LaunchChecklistSection,
+    LaunchChecklistStatus,
+    LaunchChecklistPriority,
+} from '@/types/launchChecklist';
 
 const API_URL = API_BASE_URL;
 
@@ -95,6 +102,44 @@ export interface Order {
         price: number;
     }[];
     created_at: string;
+}
+
+export interface LaunchChecklistItemPayload {
+    section?: number;
+    title?: string;
+    description?: string;
+    priority?: LaunchChecklistPriority;
+    status?: LaunchChecklistStatus;
+    owner?: string;
+    notes?: string;
+    is_completed?: boolean;
+    display_order?: number;
+}
+
+export interface LaunchChecklistSectionPayload {
+    title?: string;
+    description?: string;
+    display_order?: number;
+}
+
+async function parseApiError(response: Response, fallbackMessage: string) {
+    const payload = await response.json().catch(() => null);
+
+    if (payload && typeof payload === 'object') {
+        if ('detail' in payload && typeof payload.detail === 'string') {
+            throw new Error(payload.detail);
+        }
+
+        const firstValue = Object.values(payload)[0];
+        if (typeof firstValue === 'string') {
+            throw new Error(firstValue);
+        }
+        if (Array.isArray(firstValue) && typeof firstValue[0] === 'string') {
+            throw new Error(firstValue[0]);
+        }
+    }
+
+    throw new Error(fallbackMessage);
 }
 
 // Fetch functions
@@ -350,6 +395,145 @@ export async function loginUser(credentials: any) {
 
         throw new Error(errorMessage);
     }
+    return res.json();
+}
+
+export async function fetchLaunchChecklist(token: string): Promise<LaunchChecklistDocument> {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to fetch launch checklist');
+    }
+
+    return res.json();
+}
+
+export async function createLaunchChecklistItem(
+    token: string,
+    payload: Required<Pick<LaunchChecklistItemPayload, 'section' | 'title'>> & LaunchChecklistItemPayload
+): Promise<LaunchChecklistItem> {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/items/`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to create checklist item');
+    }
+
+    return res.json();
+}
+
+export async function createLaunchChecklistSection(
+    token: string,
+    payload: Required<Pick<LaunchChecklistSectionPayload, 'title'>> & LaunchChecklistSectionPayload
+): Promise<LaunchChecklistSection> {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/sections/`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to create checklist section');
+    }
+
+    return res.json();
+}
+
+export async function updateLaunchChecklistSection(
+    token: string,
+    sectionId: number,
+    payload: LaunchChecklistSectionPayload
+): Promise<LaunchChecklistSection> {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/sections/${sectionId}/`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to update checklist section');
+    }
+
+    return res.json();
+}
+
+export async function deleteLaunchChecklistSection(token: string, sectionId: number) {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/sections/${sectionId}/`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to delete checklist section');
+    }
+}
+
+export async function updateLaunchChecklistItem(
+    token: string,
+    itemId: number,
+    payload: LaunchChecklistItemPayload
+): Promise<LaunchChecklistItem> {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/items/${itemId}/`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to update checklist item');
+    }
+
+    return res.json();
+}
+
+export async function deleteLaunchChecklistItem(token: string, itemId: number) {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/items/${itemId}/`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to delete checklist item');
+    }
+}
+
+export async function seedLaunchChecklist(token: string, replaceExisting: boolean = false): Promise<LaunchChecklistDocument> {
+    const res = await fetch(`${API_URL}/admin/launch-checklist/seed/`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ replace_existing: replaceExisting }),
+    });
+
+    if (!res.ok) {
+        await parseApiError(res, 'Failed to seed launch checklist');
+    }
+
     return res.json();
 }
 

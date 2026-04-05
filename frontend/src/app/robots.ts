@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*',
             allow: '/',
-            disallow: ['/admin/', '/partner/'], // Keep admin and partner interfaces out of search results
+            disallow: ['/admin', '/partner'], // Keep admin and partner interfaces out of search results
         },
         sitemap: `${APP_URL}/sitemap.xml`,
     };

@@ -1,18 +1,10 @@
 const appConfig = require('./src/config/appConfig.json');
 
 const normalizeUrl = (value) => value.replace(/\/+$/, '');
-
-const buildOrigin = (port) => {
-    const origin = `${appConfig.protocol}://${appConfig.host}`;
-    if ((appConfig.protocol === 'http' && port !== 80) || (appConfig.protocol === 'https' && port !== 443)) {
-        return normalizeUrl(`${origin}:${port}`);
-    }
-    return normalizeUrl(origin);
-};
-
-const appUrl = buildOrigin(appConfig.frontendPort);
-const apiUrl = `${buildOrigin(appConfig.backendPort)}/api`;
-const mediaUrl = `${buildOrigin(appConfig.backendPort)}/media`;
+const siteOrigin = normalizeUrl(`${appConfig.protocol}://${appConfig.host}`);
+const appUrl = siteOrigin;
+const apiUrl = `${siteOrigin}/api`;
+const mediaUrl = `${siteOrigin}/media`;
 
 function getHostname(value) {
     try {
@@ -29,6 +21,30 @@ const nextConfig = {
     reactStrictMode: true,
     output: 'standalone',
     poweredByHeader: false,
+    async redirects() {
+        return [
+            {
+                source: '/privacy',
+                destination: '/privacy-policy',
+                permanent: true,
+            },
+            {
+                source: '/terms',
+                destination: '/terms-and-conditions',
+                permanent: true,
+            },
+            {
+                source: '/returns',
+                destination: '/return-refund-policy',
+                permanent: true,
+            },
+            {
+                source: '/shipping',
+                destination: '/shipping-policy',
+                permanent: true,
+            },
+        ];
+    },
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
     },

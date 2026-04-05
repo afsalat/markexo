@@ -21,12 +21,13 @@ import SystemLogsTab from '@/components/admin/SystemLogsTab';
 import ProductAnalyticsTab from '@/components/admin/ProductAnalyticsTab';
 import PartnersTab from '@/components/admin/PartnersTab';
 import ShopsTab from '@/components/admin/ShopsTab';
+import LaunchReadinessTab from '@/components/admin/LaunchReadinessTab';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 
 const API_BASE_URL = API_URL;
 
-type TabType = 'dashboard' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners';
+type TabType = 'dashboard' | 'launch-readiness' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners';
 
 export default function AdminPage() {
     const { token, user, hasPermission, loading: authLoading } = useAuth();
@@ -138,6 +139,7 @@ export default function AdminPage() {
 
         const checkMap: Record<TabType, string | null> = {
             dashboard: null,
+            'launch-readiness': null,
             analytics: 'view_product',
             orders: 'view_order',
             returns: 'view_order',
@@ -168,6 +170,8 @@ export default function AdminPage() {
                         <p className="text-silver-500">You have successfully logged into the admin panel. Your dashboard data is currently unavailable (Permission Denied). Use the sidebar to navigate to the sections you have access to.</p>
                     </div>
                 );
+            case 'launch-readiness':
+                return <LaunchReadinessTab />;
             case 'analytics':
                 return <ProductAnalyticsTab />;
             case 'orders':

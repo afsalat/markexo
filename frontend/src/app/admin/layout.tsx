@@ -1,10 +1,11 @@
-import { Metadata } from 'next';
 import AdminGuard from '@/components/AdminGuard';
+import { buildNoIndexMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = buildNoIndexMetadata({
     title: 'Admin Dashboard | VorionMart',
     description: 'Manage your D2C platform - orders, products, fulfillment, and more.',
-};
+    path: '/admin',
+});
 
 import { AuthProvider } from '@/context/AuthContext';
 

@@ -13,7 +13,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     Shop, Category, Product, ProductImage, Review, ReviewImage, Customer,
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
-    Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner
+    Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
+    ChecklistSection, ChecklistItem
 )
 
 logger = logging.getLogger(__name__)
@@ -777,6 +778,87 @@ class SiteSettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteSetting
         fields = '__all__'
+
+
+class ChecklistItemSerializer(serializers.ModelSerializer):
+    section_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = ChecklistItem
+        fields = [
+            'id', 'section_id', 'title', 'description', 'priority', 'status',
+            'owner', 'notes', 'is_completed', 'display_order',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class ChecklistSectionSerializer(serializers.ModelSerializer):
+    items = ChecklistItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ChecklistSection
+        fields = ['id', 'title', 'description', 'display_order', 'created_at', 'updated_at', 'items']
+
+
+class ChecklistSectionWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChecklistSection
+        fields = ['id', 'title', 'description', 'display_order', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_title(self, value):
+        normalized = value.strip()
+        queryset = ChecklistSection.objects.filter(title__iexact=normalized)
+        if self.instance is not None:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError('A checklist section with this title already exists.')
+        return normalized
+
+    def create(self, validated_data):
+        if validated_data.get('display_order') is None:
+            last_order = ChecklistSection.objects.order_by('-display_order').values_list('display_order', flat=True).first()
+            validated_data['display_order'] = (last_order or 0) + 1
+        return super().create(validated_data)
+
+
+class ChecklistItemWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChecklistItem
+        fields = [
+            'id', 'section', 'title', 'description', 'priority', 'status',
+            'owner', 'notes', 'is_completed', 'display_order',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        instance = getattr(self, 'instance', None)
+        status_value = attrs.get('status')
+        is_completed = attrs.get('is_completed')
+
+        if status_value is not None:
+            attrs['is_completed'] = status_value == ChecklistItem.STATUS_COMPLETED
+        elif is_completed is not None:
+            if is_completed:
+                attrs['status'] = ChecklistItem.STATUS_COMPLETED
+            else:
+                current_status = instance.status if instance else ChecklistItem.STATUS_NOT_STARTED
+                if current_status == ChecklistItem.STATUS_COMPLETED:
+                    attrs['status'] = ChecklistItem.STATUS_NOT_STARTED
+                attrs['is_completed'] = False
+        elif instance is not None:
+            attrs['is_completed'] = instance.is_completed
+
+        return attrs
+
+    def create(self, validated_data):
+        if validated_data.get('display_order') is None:
+            section = validated_data['section']
+            last_order = section.items.order_by('-display_order').values_list('display_order', flat=True).first()
+            validated_data['display_order'] = (last_order or 0) + 1
+        return super().create(validated_data)
 
 
 # Admin Dashboard Stats Serializer

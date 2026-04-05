@@ -9,7 +9,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         { path: '/products', changeFrequency: 'daily' as const, priority: 0.9 },
         { path: '/categories', changeFrequency: 'weekly' as const, priority: 0.8 },
         { path: '/contact', changeFrequency: 'monthly' as const, priority: 0.7 },
-        { path: '/track-order', changeFrequency: 'weekly' as const, priority: 0.7 },
         { path: '/shipping-policy', changeFrequency: 'monthly' as const, priority: 0.5 },
         { path: '/return-refund-policy', changeFrequency: 'monthly' as const, priority: 0.5 },
         { path: '/privacy-policy', changeFrequency: 'monthly' as const, priority: 0.4 },

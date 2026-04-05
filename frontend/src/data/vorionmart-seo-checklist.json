@@ -1,0 +1,942 @@
+{
+  "projectName": "Vorionmart",
+  "version": "1.0.0",
+  "generatedAt": "2026-04-05",
+  "totalTasks": 73,
+  "categories": [
+    {
+      "id": "technical-seo",
+      "title": "Technical SEO",
+      "description": "Foundation-level crawlability, speed, mobile optimization, and Core Web Vitals fixes that determine whether search engines can access and rank Vorionmart properly.",
+      "icon": "⚙️",
+      "items": [
+        {
+          "id": "ts-001",
+          "title": "Generate dynamic XML sitemap with all product and category URLs",
+          "description": "Verify the Next.js sitemap.ts output includes every active product slug, category page, and static route. Validate the file at /sitemap.xml returns proper XML with lastmod dates and correct priorities.",
+          "category": "technical-seo",
+          "priority": "Critical",
+          "status": "In Progress",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ts-002",
+          "title": "Configure robots.txt to block admin, partner, and internal paths",
+          "description": "Ensure robots.ts disallows /admin/, /partner/, /login/, /signup/, /profile/, /cart/, /checkout/ routes while allowing all public storefront, product, and category pages. Test with Google's robots.txt tester.",
+          "category": "technical-seo",
+          "priority": "Critical",
+          "status": "In Progress",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ts-003",
+          "title": "Implement canonical URLs on all product and category pages",
+          "description": "Add <link rel='canonical'> via Next.js metadata on every PDP and category page. Ensure filtered/sorted/paginated URLs point back to their canonical parent. Prevent duplicate content from query parameters like ?sort= or ?page=.",
+          "category": "technical-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ts-004",
+          "title": "Enforce HTTPS across all pages and mixed content audit",
+          "description": "Run full-site crawl to confirm every page loads over HTTPS. Check all image URLs, API endpoints, external scripts, and CDN assets for HTTP references. Fix any mixed content warnings in browser console.",
+          "category": "technical-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "DevOps",
+          "estimated_impact": "Technical",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ts-005",
+          "title": "Optimize Largest Contentful Paint (LCP) to under 2.5 seconds",
+          "description": "Audit homepage and top 20 PDP pages. Implement next/image with priority loading for hero banners and product images. Add fetchpriority='high' on main product images. Preload critical fonts. Target LCP < 2.5s on 4G mobile.",
+          "category": "technical-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "ts-006",
+          "title": "Fix Cumulative Layout Shift (CLS) on mobile product pages",
+          "description": "Set explicit width/height on all product images, banner carousels, and ad slots. Ensure font loading doesn't cause layout shift by using font-display: swap with size-adjust fallbacks. Target CLS < 0.1.",
+          "category": "technical-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ts-007",
+          "title": "Reduce First Input Delay (FID) / Interaction to Next Paint (INP)",
+          "description": "Audit JavaScript bundle size with next/bundle-analyzer. Code-split heavy components. Defer non-critical scripts (analytics, chat widgets). Ensure INP < 200ms on mobile devices.",
+          "category": "technical-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Technical",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "ts-008",
+          "title": "Implement mobile-first responsive design audit",
+          "description": "Test every page template on 360px, 390px, 414px widths. Ensure touch targets are 48px minimum, text is readable without zoom, and no horizontal scrolling occurs. Verify viewport meta tag is set correctly.",
+          "category": "technical-seo",
+          "priority": "Critical",
+          "status": "In Progress",
+          "assignee": "Frontend QA",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ts-009",
+          "title": "Set up proper 301 redirects for changed URLs",
+          "description": "Create redirect rules in next.config.js for any URL structure changes. Map old product URLs to new slugs. Ensure no redirect chains exist (max 1 hop). Set up monitoring for 404 spikes in Search Console.",
+          "category": "technical-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Indexing",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ts-010",
+          "title": "Implement structured breadcrumb navigation with schema markup",
+          "description": "Add breadcrumb UI and BreadcrumbList JSON-LD schema on all product and category pages. Format: Home > Category > Subcategory > Product Name. Ensure each breadcrumb item has a valid URL.",
+          "category": "technical-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "id": "on-page-seo",
+      "title": "On-Page SEO",
+      "description": "Title tags, meta descriptions, heading hierarchy, keyword placement, and internal linking optimizations for maximum SERP click-through rates.",
+      "icon": "📝",
+      "items": [
+        {
+          "id": "op-001",
+          "title": "Create keyword-rich title tag templates for all page types",
+          "description": "Set template: Products → '{Product Name} - Buy Online at ₹{Price} | VorionMart'. Categories → '{Category} - Shop Online | Cash on Delivery | VorionMart'. Homepage → 'VorionMart - Premium Products | COD Available | Free Delivery'. Keep under 60 characters.",
+          "category": "on-page-seo",
+          "priority": "Critical",
+          "status": "In Progress",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "op-002",
+          "title": "Write unique meta descriptions for top 50 product pages",
+          "description": "Create compelling 150-160 character descriptions with: product name, key benefit, price indicator, and CTA. Include phrases like 'Cash on Delivery', 'Free Shipping', or '₹{price} only'. Avoid duplicate descriptions across products.",
+          "category": "on-page-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "op-003",
+          "title": "Enforce single H1 per page with target keyword",
+          "description": "Audit all page templates to ensure exactly one H1 tag per page. Product pages: H1 = product name with primary keyword. Category pages: H1 = 'Buy {Category} Online'. Homepage: H1 = 'Premium Products with Cash on Delivery'.",
+          "category": "on-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "op-004",
+          "title": "Build proper H2/H3 heading hierarchy on product pages",
+          "description": "Structure PDP headings: H1 (product name) → H2 (Product Description, Specifications, Reviews, Similar Products) → H3 (individual spec categories). Never skip heading levels. Each heading should include relevant secondary keywords.",
+          "category": "on-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "op-005",
+          "title": "Implement strategic internal linking from homepage to top categories",
+          "description": "Add contextual links from homepage content blocks to top 10 category pages. Each category page should link to its top 5 products. Product pages should link to related products and parent category. Target 3-5 internal links per page.",
+          "category": "on-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "op-006",
+          "title": "Optimize URL slugs for all products and categories",
+          "description": "Ensure URLs follow pattern: /products/{keyword-rich-slug} and /categories/{category-slug}. Remove special characters, numbers-only slugs, and auto-generated gibberish. Keep slugs under 5 words. Example: /products/wireless-earbuds-under-500",
+          "category": "on-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Catalog + SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "op-007",
+          "title": "Add keyword-focused content blocks to category pages",
+          "description": "Write 200-400 word content block for each category page above the product grid. Include: what the category offers, why buy from Vorionmart, available price ranges, COD availability. Target primary and LSI keywords naturally.",
+          "category": "on-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "op-008",
+          "title": "Place primary keyword in first 100 words of product descriptions",
+          "description": "Rewrite the first paragraph of every product description to include the primary search keyword naturally. Example: 'This wireless Bluetooth earphone delivers crystal sound quality...' rather than 'Product details: SKU-12345'.",
+          "category": "on-page-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "id": "product-seo",
+      "title": "Product SEO",
+      "description": "Product-level optimizations including structured data, image alt text, schema markup, and search-intent aligned product titles that directly drive purchase behavior.",
+      "icon": "🛍️",
+      "items": [
+        {
+          "id": "ps-001",
+          "title": "Rewrite product titles for search intent alignment",
+          "description": "Format: '{Brand} {Product Type} {Key Feature} - {Variant/Size/Color}'. Example: 'boAt Rockerz 255 Pro Wireless Neckband Earphone - Active Black'. Include the exact phrase Indian shoppers search for, not supplier-generated titles.",
+          "category": "product-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ps-002",
+          "title": "Write SEO-optimized product descriptions with buying keywords",
+          "description": "Each product description must include: primary buying keyword, price value mention, COD availability, delivery timeline, key specifications, and comparison point. Minimum 150 words per product. Include phrases like 'buy online', 'best price', 'cash on delivery'.",
+          "category": "product-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ps-003",
+          "title": "Add descriptive alt text to all product images",
+          "description": "Write alt text for every product image: '{Product Name} - {angle/view} | VorionMart'. Main image: full product name + primary keyword. Gallery images: product name + specific detail shown. Never leave alt text blank or use 'image1.jpg'.",
+          "category": "product-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Catalog Team",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ps-004",
+          "title": "Implement Product schema (JSON-LD) on all PDP pages",
+          "description": "Add complete Product structured data: name, image, description, sku, brand, offers (price, priceCurrency: INR, availability, url), aggregateRating (only if real reviews exist). Validate each page with Google's Rich Results Test.",
+          "category": "product-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ps-005",
+          "title": "Add pricing and availability schema to product offers",
+          "description": "Include Offer schema with: price, priceCurrency (INR), availability (InStock/OutOfStock), seller (Vorionmart), itemCondition (NewCondition), priceValidUntil, and shippingDetails. Update availability dynamically based on actual stock.",
+          "category": "product-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ps-006",
+          "title": "Implement Review schema for products with verified reviews",
+          "description": "Add Review and AggregateRating schema only on products that have real customer reviews. Never fabricate review data. Include: reviewCount, ratingValue, bestRating (5), worstRating (1). Link to the review section on the PDP.",
+          "category": "product-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ps-007",
+          "title": "Optimize product image file sizes and formats",
+          "description": "Convert all product images to WebP format via next/image. Set quality to 80. Implement lazy loading for below-fold gallery images. Ensure primary product image loads in < 200ms. Use responsive srcset for mobile/desktop.",
+          "category": "product-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Technical",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ps-008",
+          "title": "Add FAQ schema to top 20 product pages",
+          "description": "Create 3-5 FAQs per product covering: shipping time, COD availability, return policy, product specifications, and compatibility. Implement FAQPage JSON-LD schema. Use questions Indian shoppers actually ask (e.g., 'Is COD available?', 'What is delivery time?').",
+          "category": "product-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "id": "category-seo",
+      "title": "Category SEO",
+      "description": "Category page optimization for high-volume head terms and aggregate product discovery through content, internal linking, and proper taxonomical structure.",
+      "icon": "📂",
+      "items": [
+        {
+          "id": "cs-001",
+          "title": "Add SEO content blocks to every category page",
+          "description": "Write 200-400 word descriptions for each category with: what products are available, price ranges, why shop at Vorionmart, COD/delivery info. Place above or below the product grid. Include primary category keyword 2-3 times naturally.",
+          "category": "category-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "cs-002",
+          "title": "Create SEO-friendly category URL structure",
+          "description": "Ensure all category URLs follow /categories/{keyword-slug} pattern. Example: /categories/wireless-earphones not /categories/cat-id-42. For subcategories: /categories/electronics/bluetooth-speakers. No ID-only or encoded URLs.",
+          "category": "category-seo",
+          "priority": "High",
+          "status": "In Progress",
+          "assignee": "Frontend",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cs-003",
+          "title": "Target high-volume category keywords for each page",
+          "description": "Map primary keyword to each category: Electronics → 'buy electronics online India', Fashion → 'trendy fashion online COD', Home & Kitchen → 'home essentials online delivery'. Add LSI keywords in content and headings.",
+          "category": "category-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "cs-004",
+          "title": "Build internal linking from homepage to all category pages",
+          "description": "Add visible category navigation links in: homepage hero section, category cards grid, footer navigation, and breadcrumbs. Each category should be reachable within 2 clicks from homepage. Use keyword-rich anchor text.",
+          "category": "category-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cs-005",
+          "title": "Add category-specific meta titles and descriptions",
+          "description": "Each category page: Title = 'Buy {Category} Online at Best Price | COD Available | VorionMart'. Description = 'Shop {category} at VorionMart. {product count}+ products available. Cash on Delivery. Free shipping on orders above ₹499.'",
+          "category": "category-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cs-006",
+          "title": "Implement CollectionPage schema on category pages",
+          "description": "Add CollectionPage or ItemList JSON-LD schema listing the products on each category page. Include: name, description, numberOfItems, and itemListElement array with product references.",
+          "category": "category-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "Frontend SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Medium"
+        }
+      ]
+    },
+    {
+      "id": "content-seo",
+      "title": "Content SEO",
+      "description": "Blog strategy, informational content, buying guides, and comparison posts designed to capture top-of-funnel traffic and guide users toward purchase decisions.",
+      "icon": "✍️",
+      "items": [
+        {
+          "id": "ct-001",
+          "title": "Set up blog section with SEO-optimized URL structure",
+          "description": "Create /blog route in Next.js with URL pattern /blog/{keyword-rich-slug}. Implement Article schema on every blog post. Add pagination, category filters, and a search function. Ensure blog is linked from header navigation.",
+          "category": "content-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "ct-002",
+          "title": "Write 5 buying guide articles for top-selling categories",
+          "description": "Create comprehensive buying guides (1500+ words): 'How to Choose the Best Wireless Earphones Under ₹1000', 'Complete Guide to Buying Kitchen Appliances Online', etc. Include comparison tables, price ranges, and links to Vorionmart products.",
+          "category": "content-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "ct-003",
+          "title": "Create 5 product comparison articles",
+          "description": "Write detailed comparison posts: 'boAt vs Noise Earbuds: Which Should You Buy?', 'Top 5 Smartwatches Under ₹2000 in India', etc. Include specs tables, pros/cons, and 'Buy Now' CTAs linking to Vorionmart product pages.",
+          "category": "content-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "ct-004",
+          "title": "Publish 5 informational articles targeting high-search keywords",
+          "description": "Target informational queries: 'Is Cash on Delivery safe?', 'How to track your online order', 'Best online shopping tips India 2026'. Each article should naturally lead readers toward Vorionmart products and build topical authority.",
+          "category": "content-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "SEO Content",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ct-005",
+          "title": "Create internal linking strategy between blog and product pages",
+          "description": "Every blog post must link to at least 3 relevant product pages with keyword-rich anchor text. Every category page should link to 1-2 relevant blog guides. Add 'Recommended Reads' section on product pages linking to guides.",
+          "category": "content-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "id": "keyword-strategy",
+      "title": "Keyword Strategy (India Focus)",
+      "description": "India-specific keyword research targeting Tier 2/3 city search behavior, price-based queries, COD-related searches, and regional buying intent patterns.",
+      "icon": "🔑",
+      "items": [
+        {
+          "id": "ks-001",
+          "title": "Research and map 50 short-tail head terms to pages",
+          "description": "Identify 50 short-tail keywords (1-2 words) like 'earphones', 'smartwatch', 'kitchen appliance'. Map each to the most relevant category or product page. Document search volume and current ranking position.",
+          "category": "keyword-strategy",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ks-002",
+          "title": "Build long-tail keyword list of 100+ buying queries",
+          "description": "Create spreadsheet of long-tail keywords (4+ words) Indian shoppers use: 'best wireless earphones under 500 COD', 'buy smartwatch online cash on delivery India', 'affordable home decor items online'. Group by category and intent.",
+          "category": "keyword-strategy",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ks-003",
+          "title": "Target price-based search queries across all categories",
+          "description": "Create pages or product filters targeting: 'earphones under ₹500', 'smartwatch under ₹1000', 'gifts under ₹300'. Indian shoppers heavily use price-based searches. Add price range filters to category pages and optimize titles accordingly.",
+          "category": "keyword-strategy",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO + Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ks-004",
+          "title": "Target COD-specific search queries",
+          "description": "Optimize for India-specific COD queries: 'buy {product} cash on delivery', '{product} COD available', 'COD shopping site India'. Add 'Cash on Delivery Available' prominently on pages. Create a dedicated COD landing page.",
+          "category": "keyword-strategy",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Conversion",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ks-005",
+          "title": "Research regional and Hinglish search terms",
+          "description": "Identify regional search patterns: 'sasta earphone online' (cheap earphone), 'accha smartwatch' (good smartwatch), 'ghar ka saman online' (home items). Test incorporating Hinglish keywords in meta descriptions and FAQ sections.",
+          "category": "keyword-strategy",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ks-006",
+          "title": "Identify high-conversion keywords with low competition",
+          "description": "Find 30+ keywords with: search volume > 500/month, keyword difficulty < 30, and clear buying intent. Focus on underserved niches like specific product models, brand alternatives, and local delivery queries.",
+          "category": "keyword-strategy",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Conversion",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ks-007",
+          "title": "Map WhatsApp trust signal keywords",
+          "description": "Target queries like 'WhatsApp order online', 'order via WhatsApp India'. Add WhatsApp contact button prominently on product pages. Include WhatsApp number in structured data and homepage. Indian shoppers trust WhatsApp-verified stores.",
+          "category": "keyword-strategy",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Growth + SEO",
+          "estimated_impact": "Conversion",
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "id": "indexing-search-console",
+      "title": "Indexing & Search Console",
+      "description": "Google Search Console setup, sitemap submission, URL inspection, indexing error resolution, and ongoing index health monitoring.",
+      "icon": "🔍",
+      "items": [
+        {
+          "id": "isc-001",
+          "title": "Complete Google Search Console setup and domain verification",
+          "description": "Verify Vorionmart domain in Google Search Console via DNS TXT record. Add both www and non-www versions. Set preferred domain. Grant team access with appropriate permission levels.",
+          "category": "indexing-search-console",
+          "priority": "Critical",
+          "status": "In Progress",
+          "assignee": "Growth",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "isc-002",
+          "title": "Submit XML sitemap to Google Search Console",
+          "description": "Submit /sitemap.xml URL in Search Console. Verify all submitted URLs are accepted. Monitor for coverage errors within 48 hours. Resubmit after any major URL structure changes or product catalog updates.",
+          "category": "indexing-search-console",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "isc-003",
+          "title": "Run URL inspection on top 20 priority pages",
+          "description": "Inspect homepage, top 10 category pages, and top 10 product pages via URL Inspection tool. Verify each is: crawled, indexed, mobile-friendly, and has no structured data errors. Request indexing for any non-indexed pages.",
+          "category": "indexing-search-console",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Indexing",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "isc-004",
+          "title": "Fix all indexing errors and coverage issues",
+          "description": "Review Index Coverage report. Fix: 'Crawled - not indexed', 'Discovered - not indexed', 'Excluded by noindex', '404 errors'. Prioritize fixing errors on product and category pages. Set up weekly monitoring.",
+          "category": "indexing-search-console",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO + Frontend",
+          "estimated_impact": "Indexing",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "isc-005",
+          "title": "Monitor Core Web Vitals in Search Console",
+          "description": "Check Core Web Vitals report weekly. Set up alerts for any URLs falling into 'Poor' status. Prioritize fixing mobile CWV issues first as 80%+ of Vorionmart traffic will be mobile.",
+          "category": "indexing-search-console",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Technical",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "isc-006",
+          "title": "Set up Bing Webmaster Tools",
+          "description": "Verify Vorionmart on Bing Webmaster Tools. Submit sitemap. Bing drives 3-5% of Indian search traffic and has near-zero competition. Quick win for additional organic traffic.",
+          "category": "indexing-search-console",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "id": "off-page-seo",
+      "title": "Off-Page SEO",
+      "description": "Backlink acquisition strategy, local SEO for India, business directory listings, and social signal optimization for domain authority growth.",
+      "icon": "🌐",
+      "items": [
+        {
+          "id": "ofp-001",
+          "title": "Create Google Business Profile for Vorionmart",
+          "description": "Set up and verify Google Business Profile. Add: business name, category (Online Retailer), service areas (India), contact info, website URL, business hours, photos, and product highlights. Enable messaging.",
+          "category": "off-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Growth",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ofp-002",
+          "title": "List Vorionmart on 20 Indian business directories",
+          "description": "Submit to: JustDial, Sulekha, IndiaMART, TradeIndia, Grotal, Yelp India, Yellow Pages India, ExportersIndia, Click.in, and 11 more relevant directories. Ensure NAP (Name, Address, Phone) consistency across all listings.",
+          "category": "off-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Growth",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ofp-003",
+          "title": "Build 10 quality backlinks from Indian tech/shopping blogs",
+          "description": "Outreach to: ProductNation, Cashify blog, GadgetGig, Indian tech YouTube channels with blogs, and startup ecosystems. Offer product reviews, guest posts, or affiliate partnerships. Target DA 30+ sites only.",
+          "category": "off-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Growth",
+          "estimated_impact": "Traffic",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "ofp-004",
+          "title": "Create and optimize social media profiles for SEO",
+          "description": "Set up Vorionmart profiles on: Instagram, Facebook Page, Twitter/X, LinkedIn, Pinterest, and YouTube. Add website link, consistent branding, keyword-rich descriptions, and product showcases. Pin important posts.",
+          "category": "off-page-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Growth",
+          "estimated_impact": "Brand",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "ofp-005",
+          "title": "Launch referral and user-generated content strategy",
+          "description": "Encourage customers to share product photos on social media with #VorionMart. Create a WhatsApp community for customers. Collect and showcase real customer reviews and unboxing photos on the website.",
+          "category": "off-page-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "Growth",
+          "estimated_impact": "Brand",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "ofp-006",
+          "title": "Submit to startup listing sites",
+          "description": "List on: StartupIndia, ProductHunt, BetaList, Crunchbase, F6S. Include Vorionmart story, founding details, and product highlights. These provide high-quality profile backlinks and brand visibility.",
+          "category": "off-page-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "Growth",
+          "estimated_impact": "Traffic",
+          "difficulty": "Easy"
+        }
+      ]
+    },
+    {
+      "id": "conversion-seo",
+      "title": "Conversion SEO 🔥",
+      "description": "CTA optimization, trust signals, review displays, product page UX improvements, and page speed optimizations directly tied to purchase conversion rates.",
+      "icon": "🔥",
+      "items": [
+        {
+          "id": "cv-001",
+          "title": "Optimize Add to Cart CTA button visibility and copy",
+          "description": "Ensure 'Add to Cart' and 'Buy Now' buttons are: above the fold on mobile, high contrast color (never grey), minimum 48px height, and always visible. Test button copy: 'Buy Now - COD Available' vs 'Add to Cart'. A/B test if possible.",
+          "category": "conversion-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cv-002",
+          "title": "Add trust signals adjacent to purchase CTAs",
+          "description": "Display next to Add to Cart: '✓ Cash on Delivery Available', '✓ Free Delivery', '✓ Easy Returns', '✓ Secure Checkout'. Use icons + text. Show estimated delivery date. Add 'Trusted by X+ customers' if data exists.",
+          "category": "conversion-seo",
+          "priority": "Critical",
+          "status": "In Progress",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cv-003",
+          "title": "Display customer reviews prominently on product pages",
+          "description": "Show star rating and review count right below product title. Add a reviews section with verified badge, customer photos, and review date. Show 'No reviews yet - Be the first!' for products without reviews. Never show fake reviews.",
+          "category": "conversion-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "cv-004",
+          "title": "Optimize product page load speed for 3G connections",
+          "description": "Indian Tier 2/3 cities often have slow mobile internet. Target: page interactive in < 3s on 3G. Implement: lazy loading for images below fold, skeleton loading states, progressive image rendering, and API response caching.",
+          "category": "conversion-seo",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "cv-005",
+          "title": "Add sticky mobile Add to Cart bar on product pages",
+          "description": "On mobile, implement a sticky bottom bar showing: product price, 'Add to Cart' button, and 'COD Available' badge. Bar should appear when the main CTA scrolls out of view. Keep it slim (56-64px) to not block content.",
+          "category": "conversion-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "cv-006",
+          "title": "Show price savings and discount prominently",
+          "description": "Display: MRP with strikethrough, selling price in larger bold font, 'You Save ₹X (X% OFF)' in green. For products over ₹500, show EMI option text. Indian shoppers are extremely price-sensitive and respond to visible savings.",
+          "category": "conversion-seo",
+          "priority": "High",
+          "status": "In Progress",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cv-007",
+          "title": "Implement exit-intent popup with discount offer",
+          "description": "On desktop: show a popup when cursor moves toward close/back. On mobile: show after 30s of inactivity. Offer: 'Get 10% off your first order!' with email capture. Use cookie to show only once per session.",
+          "category": "conversion-seo",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "Frontend + Growth",
+          "estimated_impact": "Conversion",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "cv-008",
+          "title": "Add WhatsApp order support button on PDP",
+          "description": "Add a 'Order via WhatsApp' floating button on product pages. Pre-fill message with product name, price, and URL. Indian shoppers trust WhatsApp interactions and it reduces cart abandonment for uncertain buyers.",
+          "category": "conversion-seo",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Frontend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Easy"
+        },
+        {
+          "id": "cv-009",
+          "title": "Optimize checkout flow for minimal friction",
+          "description": "Reduce checkout to maximum 2 steps: Address → Confirm Order. Pre-fill returning customer data. Show order summary with product thumbnail. Display COD as the default/highlighted payment option. Show delivery estimate.",
+          "category": "conversion-seo",
+          "priority": "High",
+          "status": "In Progress",
+          "assignee": "Frontend + Backend",
+          "estimated_impact": "Conversion",
+          "difficulty": "Hard"
+        }
+      ]
+    },
+    {
+      "id": "growth-tasks",
+      "title": "Growth Tasks (Antigravity)",
+      "description": "High-impact, quick-execution SEO tasks designed for maximum organic growth with minimum effort. Trending product SEO and competitive gap exploitation.",
+      "icon": "🚀",
+      "items": [
+        {
+          "id": "gt-001",
+          "title": "Create landing pages for top 10 trending product searches",
+          "description": "Research Google Trends India for currently trending products. Create optimized landing pages for: trending gadgets, viral social media products, seasonal items. Update monthly. These pages capture spike traffic before competitors.",
+          "category": "growth-tasks",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Growth + Frontend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "gt-002",
+          "title": "Target 20 low-competition product keywords for quick ranking",
+          "description": "Find product keywords with: <100 competition, >200 monthly searches, clear buying intent. Examples: specific model names, brand alternatives, niche accessories. Create dedicated product or category pages for each.",
+          "category": "growth-tasks",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "gt-003",
+          "title": "Implement price-comparison schema for competitive keywords",
+          "description": "For products where Vorionmart has the best price, emphasize it in structured data and title tags. Use: 'Lowest Price Online' in titles if verifiable. Create comparison tables on blog showing Vorionmart vs competitors.",
+          "category": "growth-tasks",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO + Growth",
+          "estimated_impact": "Conversion",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "gt-004",
+          "title": "Build 'Best of' collection pages for SEO",
+          "description": "Create curated pages: 'Best Earphones Under ₹500', 'Top Smart Home Gadgets 2026', 'Best Gifts Under ₹300'. These target high-volume informational queries and convert visitors to buyers. Update monthly.",
+          "category": "growth-tasks",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO Content + Frontend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "gt-005",
+          "title": "Optimize for Google Shopping free listings",
+          "description": "Ensure all products have: correct pricing in INR, availability status, product images meeting Google's requirements, and GTIN/MPN when available. Submit product feed to Google Merchant Center for free listing eligibility.",
+          "category": "growth-tasks",
+          "priority": "Critical",
+          "status": "Not Started",
+          "assignee": "Growth + Backend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Hard"
+        },
+        {
+          "id": "gt-006",
+          "title": "Launch seasonal SEO campaigns (festivals, sales events)",
+          "description": "Create pre-made pages for: Diwali Sale, Republic Day Offers, Independence Day Deals, Rakhi Gifts, Back to School Sale. Publish 2 weeks before each event with targeted keywords. Reuse and update yearly.",
+          "category": "growth-tasks",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "Growth + SEO",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "gt-007",
+          "title": "Create city-specific landing pages for top 10 delivery cities",
+          "description": "Build pages: 'Online Shopping in Lucknow with COD', 'Buy Electronics Online Jaipur', etc. Target Tier 2/3 city names + product terms. Include delivery timeline specific to each city.",
+          "category": "growth-tasks",
+          "priority": "High",
+          "status": "Not Started",
+          "assignee": "SEO + Frontend",
+          "estimated_impact": "Traffic",
+          "difficulty": "Medium"
+        },
+        {
+          "id": "gt-008",
+          "title": "Set up automated SEO health monitoring alerts",
+          "description": "Configure weekly automated checks for: broken links (404s), dropped rankings, indexing errors, page speed regressions, and crawl budget waste. Use Search Console API or Screaming Frog automated crawls.",
+          "category": "growth-tasks",
+          "priority": "Medium",
+          "status": "Not Started",
+          "assignee": "SEO + DevOps",
+          "estimated_impact": "Technical",
+          "difficulty": "Hard"
+        }
+      ]
+    }
+  ],
+  "keywords": [
+    { "keyword": "buy earphones online cash on delivery", "search_volume": "8,100/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
+    { "keyword": "online shopping COD India", "search_volume": "12,000/mo", "difficulty": "Medium", "intent": "Transactional", "priority": "Critical" },
+    { "keyword": "best smartwatch under 1000", "search_volume": "22,000/mo", "difficulty": "Medium", "intent": "Informational + Transactional", "priority": "High" },
+    { "keyword": "wireless earbuds under 500", "search_volume": "18,000/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
+    { "keyword": "cash on delivery shopping website", "search_volume": "6,600/mo", "difficulty": "Low", "intent": "Navigational", "priority": "High" },
+    { "keyword": "buy kitchen items online India", "search_volume": "4,400/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
+    { "keyword": "affordable home decor online", "search_volume": "5,400/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
+    { "keyword": "phone accessories online COD", "search_volume": "3,600/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
+    { "keyword": "best bluetooth speaker under 500", "search_volume": "14,800/mo", "difficulty": "Medium", "intent": "Informational", "priority": "High" },
+    { "keyword": "online store with free delivery India", "search_volume": "5,200/mo", "difficulty": "Low", "intent": "Navigational", "priority": "High" },
+    { "keyword": "gifts under 300 rupees online", "search_volume": "9,900/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
+    { "keyword": "buy electronics online Tier 2 city", "search_volume": "2,400/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
+    { "keyword": "sasta online shopping India", "search_volume": "7,200/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
+    { "keyword": "WhatsApp se order kaise kare", "search_volume": "3,100/mo", "difficulty": "Low", "intent": "Informational", "priority": "Medium" },
+    { "keyword": "pay on delivery electronics India", "search_volume": "4,100/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
+    { "keyword": "best earphones under 300", "search_volume": "12,500/mo", "difficulty": "Medium", "intent": "Transactional", "priority": "Critical" },
+    { "keyword": "online shopping offers today India", "search_volume": "8,800/mo", "difficulty": "High", "intent": "Transactional", "priority": "Medium" },
+    { "keyword": "trusted online store India COD", "search_volume": "2,900/mo", "difficulty": "Low", "intent": "Navigational", "priority": "High" },
+    { "keyword": "smart home gadgets India", "search_volume": "6,100/mo", "difficulty": "Medium", "intent": "Informational", "priority": "Medium" },
+    { "keyword": "cheapest gadgets online delivery India", "search_volume": "3,800/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" }
+  ],
+  "blogIdeas": [
+    { "title": "Is Cash on Delivery Safe? Complete Guide for Indian Online Shoppers", "type": "Informational", "target_keyword": "is COD safe online shopping", "estimated_traffic": "3,000+/mo" },
+    { "title": "How to Track Your Online Order – Step by Step Guide", "type": "Informational", "target_keyword": "how to track online order India", "estimated_traffic": "5,000+/mo" },
+    { "title": "10 Tips to Avoid Online Shopping Scams in India (2026)", "type": "Informational", "target_keyword": "avoid online shopping scams India", "estimated_traffic": "4,200+/mo" },
+    { "title": "What is Cash on Delivery? Everything You Need to Know", "type": "Informational", "target_keyword": "what is cash on delivery", "estimated_traffic": "6,000+/mo" },
+    { "title": "Online Shopping Rights: Return and Refund Rules in India", "type": "Informational", "target_keyword": "online shopping return policy India", "estimated_traffic": "2,800+/mo" },
+    { "title": "Best Wireless Earbuds Under ₹500 in India (2026) – Buy with COD", "type": "Transactional", "target_keyword": "best earbuds under 500", "estimated_traffic": "12,000+/mo" },
+    { "title": "Top 10 Kitchen Gadgets Under ₹1000 You Can Buy Online Now", "type": "Transactional", "target_keyword": "kitchen gadgets under 1000", "estimated_traffic": "4,500+/mo" },
+    { "title": "Best Budget Smartwatches for Students in India (Under ₹2000)", "type": "Transactional", "target_keyword": "budget smartwatch for students India", "estimated_traffic": "7,000+/mo" },
+    { "title": "Unique Gift Ideas Under ₹300 – Perfect for Any Occasion", "type": "Transactional", "target_keyword": "gifts under 300 India", "estimated_traffic": "8,000+/mo" },
+    { "title": "Home Office Essentials Under ₹500 – Work From Home Setup", "type": "Transactional", "target_keyword": "home office essentials under 500", "estimated_traffic": "3,500+/mo" },
+    { "title": "boAt vs Noise Earbuds – Which Brand is Better in 2026?", "type": "Comparison", "target_keyword": "boat vs noise earbuds comparison", "estimated_traffic": "9,000+/mo" },
+    { "title": "Amazon vs Meesho vs VorionMart – Where to Get Best COD Deals?", "type": "Comparison", "target_keyword": "best COD shopping site India", "estimated_traffic": "5,500+/mo" },
+    { "title": "Realme vs Fire-Boltt Smartwatch – Complete Comparison Guide", "type": "Comparison", "target_keyword": "realme vs fire boltt smartwatch", "estimated_traffic": "6,200+/mo" },
+    { "title": "Wired vs Wireless Earphones – Which Should You Buy Under ₹500?", "type": "Comparison", "target_keyword": "wired vs wireless earphones India", "estimated_traffic": "4,800+/mo" },
+    { "title": "Flipkart vs VorionMart – COD Experience and Delivery Compared", "type": "Comparison", "target_keyword": "flipkart alternative COD India", "estimated_traffic": "3,000+/mo" }
+  ],
+  "quickWins": [
+    { "id": 1, "task": "Submit XML sitemap to Google Search Console and request indexing for all product pages", "impact": "Indexing - Get 100% of product pages discovered by Google within 48-72 hours", "time_estimate": "30 minutes", "category": "Indexing" },
+    { "id": 2, "task": "Add 'Cash on Delivery Available' badge and alt text to all product page hero images", "impact": "Conversion + Image SEO - Improve image search visibility and buyer confidence", "time_estimate": "2 hours", "category": "Product SEO" },
+    { "id": 3, "task": "Rewrite title tags for top 20 products with buying keywords and price", "impact": "Traffic - 15-30% CTR improvement on search results within 2 weeks", "time_estimate": "3 hours", "category": "On-Page SEO" },
+    { "id": 4, "task": "Add Product JSON-LD schema to all PDP pages using existing product data", "impact": "Rich Results - Prices, ratings, and availability shown directly in Google search", "time_estimate": "4 hours", "category": "Product SEO" },
+    { "id": 5, "task": "Update robots.txt to block cart, checkout, login, and admin routes from crawling", "impact": "Crawl Budget - Stop wasting Google's crawl budget on non-indexable pages", "time_estimate": "15 minutes", "category": "Technical SEO" },
+    { "id": 6, "task": "Create Google Business Profile with complete business info and product photos", "impact": "Local SEO - Appear in Google Maps and 'near me' searches for online stores", "time_estimate": "1 hour", "category": "Off-Page SEO" },
+    { "id": 7, "task": "Add WhatsApp floating button on all product pages with pre-filled product info", "impact": "Conversion - 10-20% increase in customer inquiries from hesitant buyers", "time_estimate": "2 hours", "category": "Conversion SEO" },
+    { "id": 8, "task": "Write unique meta descriptions for homepage and top 10 category pages", "impact": "CTR - 10-25% improvement in organic click-through rates from SERPs", "time_estimate": "2 hours", "category": "On-Page SEO" },
+    { "id": 9, "task": "Implement breadcrumb navigation with BreadcrumbList schema on product pages", "impact": "Rich Results + UX - Breadcrumbs appear in Google search and improve navigation", "time_estimate": "3 hours", "category": "Technical SEO" },
+    { "id": 10, "task": "Optimize top 20 product images: WebP format, proper alt text, and size < 100KB each", "impact": "Page Speed + Image SEO - 30-50% faster image loading and Google Image search visibility", "time_estimate": "4 hours", "category": "Product SEO" }
+  ]
+}

@@ -2,6 +2,7 @@
 Django settings for VorionMart project.
 """
 from datetime import timedelta
+import importlib.util
 import json
 from pathlib import Path
 import os
@@ -55,6 +56,7 @@ FRONTEND_ORIGINS = [build_origin(APP_PROTOCOL, host, FRONTEND_PORT) for host in 
 LOCAL_DEV_ORIGINS = build_local_dev_origins(FRONTEND_PORT)
 BACKEND_ORIGIN = build_origin(APP_PROTOCOL, APP_HOST, BACKEND_PORT)
 APP_URL = FRONTEND_ORIGINS[0]
+HAS_WHITENOISE = importlib.util.find_spec('whitenoise') is not None
 
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
@@ -80,7 +82,12 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+]
+
+if HAS_WHITENOISE:
+    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
+
+MIDDLEWARE += [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -131,7 +138,11 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = (
+    'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    if HAS_WHITENOISE
+    else 'django.contrib.staticfiles.storage.StaticFilesStorage'
+)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

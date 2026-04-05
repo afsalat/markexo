@@ -1,9 +1,10 @@
-import { Metadata } from 'next';
+import { buildNoIndexMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = buildNoIndexMetadata({
     title: 'Secure Checkout | Pay on Delivery',
     description: 'Complete your order securely with VorionMart. Choose Cash on Delivery and pay only when your products arrive at your doorstep.',
-};
+    path: '/checkout',
+});
 
 export default function CheckoutLayout({
     children,

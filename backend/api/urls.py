@@ -19,6 +19,8 @@ from .views import (
     AdminBannerViewSet, AdminSiteSettingView,
     AdminBannerViewSet, AdminSiteSettingView,
     AdminEnquiryViewSet, AdminUserViewSet, AdminRoleViewSet, PermissionListView, AdminAnalyticsView, AdminSystemLogsView,
+    AdminLaunchChecklistView, AdminLaunchChecklistSectionCreateView, AdminLaunchChecklistSectionDetailView,
+    AdminLaunchChecklistItemCreateView, AdminLaunchChecklistItemDetailView, AdminLaunchChecklistSeedView,
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
@@ -81,6 +83,12 @@ urlpatterns = [
     path('admin/settings/', AdminSiteSettingView.as_view(), name='admin-settings'),
     path('admin/system-logs/', AdminSystemLogsView.as_view(), name='admin-system-logs'),
     path('admin/permissions/', PermissionListView.as_view(), name='admin-permissions'),
+    path('admin/launch-checklist/', AdminLaunchChecklistView.as_view(), name='admin-launch-checklist'),
+    path('admin/launch-checklist/seed/', AdminLaunchChecklistSeedView.as_view(), name='admin-launch-checklist-seed'),
+    path('admin/launch-checklist/sections/', AdminLaunchChecklistSectionCreateView.as_view(), name='admin-launch-checklist-section-create'),
+    path('admin/launch-checklist/sections/<int:pk>/', AdminLaunchChecklistSectionDetailView.as_view(), name='admin-launch-checklist-section-detail'),
+    path('admin/launch-checklist/items/', AdminLaunchChecklistItemCreateView.as_view(), name='admin-launch-checklist-item-create'),
+    path('admin/launch-checklist/items/<int:pk>/', AdminLaunchChecklistItemDetailView.as_view(), name='admin-launch-checklist-item-detail'),
     path('admin/forward-orders/', ForwardOrdersView.as_view(), name='forward-orders'),
     path('admin/pending-orders-for-forwarding/', PendingOrdersForForwardingView.as_view(), name='pending-orders-for-forwarding'),
     path('admin/', include(admin_router.urls)),
