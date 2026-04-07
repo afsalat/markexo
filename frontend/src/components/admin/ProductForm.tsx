@@ -35,6 +35,8 @@ type QuickFillMessage = {
     text: string;
 };
 
+const MAX_UPLOAD_FILENAME_LENGTH = 100;
+
 function normalizeSearchText(value: string) {
     return value
         .toLowerCase()
@@ -326,7 +328,10 @@ export default function ProductForm({
         const extension = getFileExtension(file.name);
         const baseName = buildSeoImageBaseName();
         const suffix = variant === 'main' ? 'main' : `gallery-${(index ?? 0) + 1}`;
-        const fileName = `${baseName}-${suffix}.${extension}`;
+        const reservedLength = suffix.length + extension.length + 2;
+        const maxBaseLength = Math.max(1, MAX_UPLOAD_FILENAME_LENGTH - reservedLength);
+        const safeBaseName = baseName.slice(0, maxBaseLength).replace(/-+$/g, '') || 'product-image';
+        const fileName = `${safeBaseName}-${suffix}.${extension}`;
 
         return new File([file], fileName, {
             type: file.type,
