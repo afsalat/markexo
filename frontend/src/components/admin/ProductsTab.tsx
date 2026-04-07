@@ -1,4 +1,4 @@
-import { Plus, Edit, Trash2, Info, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Info, CheckCircle, Search } from 'lucide-react';
 import { Product, Category } from '@/types/admin';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -35,8 +35,6 @@ export default function ProductsTab({
     canDeleteOverride,
     title = 'Products',
 }: ProductsTabProps) {
-    void categories;
-
     const { token, hasPermission, user } = useAuth();
     const canAdd = canAddOverride ?? hasPermission('add_product');
     const canEdit = canEditOverride ?? hasPermission('change_product');
@@ -90,6 +88,8 @@ export default function ProductsTab({
     };
 
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved'>('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('all');
 
     const handleApprove = async (e: React.MouseEvent, product: Product) => {
         e.stopPropagation();
@@ -115,9 +115,35 @@ export default function ProductsTab({
         }
     };
 
+    const categoryOptions = (categories.length > 0
+        ? categories.map((category) => ({
+            id: String(category.id),
+            name: category.name,
+        }))
+        : products
+            .filter((product) => product.category_name)
+            .map((product) => ({
+                id: String(product.category_id ?? product.category?.id ?? product.category_name),
+                name: product.category_name as string,
+            }))
+    ).filter((category, index, allCategories) => (
+        allCategories.findIndex((item) => item.id === category.id) === index
+    ));
+
     const filteredProducts = products.filter(p => {
-        if (filterStatus === 'all') return true;
-        return p.approval_status === filterStatus;
+        const matchesStatus = filterStatus === 'all' || p.approval_status === filterStatus;
+        const productCategoryId = String(p.category_id ?? p.category?.id ?? p.category_name ?? '');
+        const matchesCategory = selectedCategory === 'all' || productCategoryId === selectedCategory;
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+        const matchesSearch = normalizedQuery.length === 0 || [
+            p.name,
+            p.category_name,
+            p.category?.name,
+            p.sku,
+            p.slug,
+        ].some((value) => String(value ?? '').toLowerCase().includes(normalizedQuery));
+
+        return matchesStatus && matchesCategory && matchesSearch;
     });
 
     if (showForm) {
@@ -149,9 +175,39 @@ export default function ProductsTab({
     return (
         <div className="animate-fade-in">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="font-display text-2xl font-bold text-white">{title}</h1>
-                <div className="flex w-full flex-wrap gap-3 sm:w-auto">
-                    <div className="custom-scrollbar hidden-scrollbar flex w-full overflow-x-auto whitespace-nowrap rounded-lg border border-dark-700 bg-dark-800 p-1 sm:w-auto">
+                <div>
+                    <h1 className="font-display text-2xl font-bold text-white">{title}</h1>
+                    <p className="mt-1 text-sm text-silver-500">
+                        Showing {filteredProducts.length} of {products.length} products
+                    </p>
+                </div>
+                <div className="flex w-full flex-col gap-3 sm:w-auto">
+                    <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
+                        <div className="relative w-full lg:w-80">
+                            <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-silver-500" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search product, SKU, slug..."
+                                className="w-full rounded-lg border border-dark-700 bg-dark-800 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-silver-500 focus:border-accent-500 focus:outline-none"
+                            />
+                        </div>
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            className="w-full rounded-lg border border-dark-700 bg-dark-800 px-3 py-2.5 text-sm text-white focus:border-accent-500 focus:outline-none lg:w-56"
+                        >
+                            <option value="all">All Categories</option>
+                            {categoryOptions.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:justify-end">
+                        <div className="custom-scrollbar hidden-scrollbar flex w-full overflow-x-auto whitespace-nowrap rounded-lg border border-dark-700 bg-dark-800 p-1 sm:w-auto">
                         {(['all', 'pending', 'approved'] as const).map((status) => (
                             <button
                                 key={status}
@@ -164,16 +220,17 @@ export default function ProductsTab({
                                 {status.charAt(0).toUpperCase() + status.slice(1)}
                             </button>
                         ))}
+                        </div>
+                        {canAdd && (
+                            <button
+                                onClick={handleAddNew}
+                                className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent-600 px-4 py-2 font-medium text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500"
+                            >
+                                <Plus size={20} />
+                                <span className="hidden sm:inline">Add Product</span>
+                            </button>
+                        )}
                     </div>
-                    {canAdd && (
-                        <button
-                            onClick={handleAddNew}
-                            className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent-600 px-4 py-2 font-medium text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500"
-                        >
-                            <Plus size={20} />
-                            <span className="hidden sm:inline">Add Product</span>
-                        </button>
-                    )}
                 </div>
             </div>
 

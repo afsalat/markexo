@@ -30,6 +30,19 @@ type CategoryOption = SearchOption & {
     parentLabel: string | null;
 };
 
+type QuickFillMessage = {
+    type: 'success' | 'error';
+    text: string;
+};
+
+function normalizeSearchText(value: string) {
+    return value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 const emptyShopForm = {
     name: '',
     email: '',
@@ -44,6 +57,115 @@ const emptyCategoryForm = {
     description: '',
     parent: '',
 };
+
+const quickFillFieldAliases: Record<string, string[]> = {
+    name: ['name', 'product name', 'title'],
+    description: ['description', 'desc', 'product description'],
+    mrp: ['mrp', 'maximum retail price', 'list price', 'retail price'],
+    supplier_price: ['supplier price', 'supplier cost', 'cost price', 'purchase price'],
+    our_price: ['our price', 'price', 'sale price', 'selling price', 'customer price', 'current price'],
+    stock: ['stock', 'quantity', 'inventory'],
+    sku: ['sku', 'product code'],
+    meesho_url: ['meesho url', 'source url', 'product url', 'meesho link'],
+    shop: ['shop', 'shop name', 'seller', 'store'],
+    category: ['category', 'subcategory', 'category path'],
+    is_featured: ['featured', 'is featured', 'featured product'],
+    specificationsText: ['specifications', 'specification', 'specs'],
+};
+
+function getQuickFillFieldName(rawKey: string) {
+    const normalizedKey = normalizeSearchText(rawKey);
+
+    return Object.entries(quickFillFieldAliases).find(([, aliases]) => (
+        aliases.some((alias) => normalizeSearchText(alias) === normalizedKey)
+    ))?.[0] ?? null;
+}
+
+function appendMultilineValue(currentValue: string, nextLine: string) {
+    return currentValue ? `${currentValue}\n${nextLine}` : nextLine;
+}
+
+function parseQuickFillInput(input: string) {
+    const trimmedInput = input.trim();
+
+    if (!trimmedInput) {
+        return null;
+    }
+
+    if (trimmedInput.startsWith('{')) {
+        try {
+            const payload = JSON.parse(trimmedInput);
+
+            if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+                const objectPayload = payload as Record<string, unknown>;
+
+                return {
+                    name: String(objectPayload.name ?? objectPayload.product_name ?? objectPayload.title ?? ''),
+                    description: String(objectPayload.description ?? objectPayload.desc ?? ''),
+                    mrp: String(objectPayload.mrp ?? objectPayload.maximum_retail_price ?? objectPayload.list_price ?? ''),
+                    supplier_price: String(objectPayload.supplier_price ?? objectPayload.cost_price ?? ''),
+                    our_price: String(objectPayload.our_price ?? objectPayload.price ?? objectPayload.sale_price ?? ''),
+                    stock: String(objectPayload.stock ?? objectPayload.quantity ?? ''),
+                    sku: String(objectPayload.sku ?? ''),
+                    meesho_url: String(objectPayload.meesho_url ?? objectPayload.source_url ?? objectPayload.product_url ?? ''),
+                    shop: String(objectPayload.shop ?? objectPayload.shop_name ?? objectPayload.seller ?? ''),
+                    category: String(objectPayload.category ?? objectPayload.subcategory ?? ''),
+                    is_featured: String(objectPayload.is_featured ?? objectPayload.featured ?? ''),
+                    specificationsText: typeof objectPayload.specifications === 'object' && objectPayload.specifications
+                        ? Object.entries(objectPayload.specifications as Record<string, unknown>)
+                            .map(([key, value]) => `${key}: ${String(value)}`)
+                            .join('\n')
+                        : String(objectPayload.specifications ?? objectPayload.specs ?? ''),
+                };
+            }
+        } catch {
+            // Fall back to line parsing below.
+        }
+    }
+
+    const result: Record<string, string> = {};
+    let currentMultilineField: 'description' | 'specificationsText' | null = null;
+
+    for (const rawLine of trimmedInput.split(/\r?\n/)) {
+        const line = rawLine.trim();
+
+        if (!line) {
+            continue;
+        }
+
+        const separatorIndex = line.indexOf(':');
+
+        if (separatorIndex !== -1) {
+            const possibleKey = line.slice(0, separatorIndex).trim();
+            const fieldName = getQuickFillFieldName(possibleKey);
+
+            if (fieldName) {
+                const fieldValue = line.slice(separatorIndex + 1).trim();
+
+                if (fieldName === 'description' || fieldName === 'specificationsText') {
+                    result[fieldName] = fieldValue;
+                    currentMultilineField = fieldName;
+                } else {
+                    result[fieldName] = fieldValue;
+                    currentMultilineField = null;
+                }
+
+                continue;
+            }
+        }
+
+        if (currentMultilineField) {
+            result[currentMultilineField] = appendMultilineValue(result[currentMultilineField] ?? '', line);
+        }
+    }
+
+    return result;
+}
+
+function parseBooleanInput(value: string) {
+    const normalizedValue = normalizeSearchText(value);
+    return ['true', 'yes', 'y', '1', 'featured', 'on'].includes(normalizedValue);
+}
 
 export default function ProductForm({
     productId,
@@ -76,6 +198,8 @@ export default function ProductForm({
     const [shopSearch, setShopSearch] = useState('');
     const [categorySearch, setCategorySearch] = useState('');
     const [openDropdown, setOpenDropdown] = useState<SearchDropdown>(null);
+    const [quickFillInput, setQuickFillInput] = useState('');
+    const [quickFillMessage, setQuickFillMessage] = useState<QuickFillMessage | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -470,14 +594,23 @@ export default function ProductForm({
     const categoryOptions: CategoryOption[] = categories.map((category) => {
         const path = getCategoryPath(category);
         const depth = getCategoryDepth(category);
+        const parentLabel = path.length > 1 ? path.slice(0, -1).join(' / ') : null;
+        const searchableText = [
+            category.name,
+            path.join(' / '),
+            path.join(' '),
+            parentLabel ?? '',
+            category.parent_name ?? '',
+            category.slug,
+        ].join(' ');
 
         return {
             id: String(category.id),
             name: category.name,
             depth,
-            parentLabel: path.length > 1 ? path.slice(0, -1).join(' / ') : null,
+            parentLabel,
             label: path.join(' / '),
-            matchText: `${category.name} ${path.join(' ')}`.toLowerCase(),
+            matchText: normalizeSearchText(searchableText),
         };
     });
 
@@ -560,28 +693,97 @@ export default function ProductForm({
         setOpenDropdown(null);
     };
 
+    const findMatchingOption = <T extends SearchOption>(options: T[], rawValue: string) => {
+        const normalizedValue = normalizeSearchText(rawValue);
+
+        if (!normalizedValue) {
+            return null;
+        }
+
+        return options.find((option) => normalizeSearchText(option.label) === normalizedValue)
+            ?? options.find((option) => normalizeSearchText(option.matchText ?? option.label).includes(normalizedValue))
+            ?? options.find((option) => normalizedValue.includes(normalizeSearchText(option.label)));
+    };
+
+    const handleQuickFill = () => {
+        const parsedData = parseQuickFillInput(quickFillInput);
+
+        if (!parsedData) {
+            setQuickFillMessage({
+                type: 'error',
+                text: 'Paste product details first.',
+            });
+            return;
+        }
+
+        const matchedShop = parsedData.shop ? findMatchingOption(shopOptions, parsedData.shop) : null;
+        const matchedCategory = parsedData.category ? findMatchingOption(categoryOptions, parsedData.category) : null;
+        const warnings: string[] = [];
+
+        if (parsedData.shop && !matchedShop) {
+            warnings.push(`Shop not matched: ${parsedData.shop}`);
+        }
+
+        if (parsedData.category && !matchedCategory) {
+            warnings.push(`Category not matched: ${parsedData.category}`);
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            name: parsedData.name || prev.name,
+            description: parsedData.description || prev.description,
+            mrp: parsedData.mrp || prev.mrp,
+            supplier_price: parsedData.supplier_price || prev.supplier_price,
+            our_price: parsedData.our_price || prev.our_price,
+            stock: parsedData.stock || prev.stock,
+            sku: parsedData.sku || prev.sku,
+            meesho_url: parsedData.meesho_url || prev.meesho_url,
+            is_featured: parsedData.is_featured ? parseBooleanInput(parsedData.is_featured) : prev.is_featured,
+            shop_id: matchedShop?.id || prev.shop_id,
+            category_id: matchedCategory?.id || prev.category_id,
+            specificationsText: parsedData.specificationsText || prev.specificationsText,
+        }));
+
+        if (matchedShop) {
+            setShopSearch(matchedShop.label);
+        }
+
+        if (matchedCategory) {
+            setCategorySearch(matchedCategory.label);
+        }
+
+        setQuickFillMessage({
+            type: warnings.length > 0 ? 'error' : 'success',
+            text: warnings.length > 0
+                ? `Fields filled. ${warnings.join(' | ')}`
+                : 'Fields filled successfully.',
+        });
+    };
+
+    const normalizedShopSearch = normalizeSearchText(shopSearch);
+    const normalizedCategorySearch = normalizeSearchText(categorySearch);
+    const selectedCategoryOption = categoryOptions.find((category) => category.id === formData.category_id);
+
     const filteredShopOptions = shopOptions.filter((shop) =>
-        shop.label.toLowerCase().includes(shopSearch.trim().toLowerCase())
+        normalizeSearchText(shop.label).includes(normalizedShopSearch)
     );
     const filteredCategoryOptions = categoryOptions.filter((category) => {
-        const searchTokens = categorySearch
-            .trim()
-            .toLowerCase()
-            .split(/\s+/)
-            .filter(Boolean);
+        if (
+            selectedCategoryOption &&
+            normalizedCategorySearch.length > 0 &&
+            normalizedCategorySearch === normalizeSearchText(selectedCategoryOption.label)
+        ) {
+            return true;
+        }
+
+        const searchTokens = normalizedCategorySearch.split(' ').filter(Boolean);
 
         if (searchTokens.length === 0) {
             return true;
         }
 
-        const haystacks = [
-            category.name.toLowerCase(),
-            category.label.toLowerCase(),
-            (category.parentLabel ?? '').toLowerCase(),
-            category.matchText ?? '',
-        ];
-
-        return searchTokens.every((token) => haystacks.some((value) => value.includes(token)));
+        const haystack = category.matchText ?? normalizeSearchText(category.label);
+        return searchTokens.every((token) => haystack.includes(token));
     });
 
     return (
@@ -602,6 +804,57 @@ export default function ProductForm({
 
             <form onSubmit={handleSubmit} className="bg-dark-800 rounded-2xl p-8 shadow-sm border border-dark-700">
                 <div className="space-y-6">
+                    <div className="rounded-xl border border-dark-700 bg-dark-900/50 p-5">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-sm font-semibold text-white">Quick Fill</h2>
+                                <p className="mt-1 text-xs text-silver-500">
+                                    Paste one formatted block and fill the product fields automatically.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleQuickFill}
+                                className="rounded-lg bg-accent-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-500"
+                            >
+                                Fill Fields
+                            </button>
+                        </div>
+                        <textarea
+                            rows={8}
+                            value={quickFillInput}
+                            onChange={(e) => {
+                                setQuickFillInput(e.target.value);
+                                if (quickFillMessage) {
+                                    setQuickFillMessage(null);
+                                }
+                            }}
+                            className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 text-sm leading-6 text-white outline-none resize-y placeholder-silver-600 focus:border-transparent focus:ring-2 focus:ring-accent-500"
+                            placeholder={`Name: Wooden Money Piggy Bank
+Description: Wooden money bank for kids
+MRP: 399
+Supplier Price: 180
+Our Price: 250
+Stock: 50
+SKU: SPAAC-02-11000
+Shop: meesho
+Category: Money Banks
+Meesho URL: https://meesho.com/product/...
+Featured: yes
+Specifications:
+Material: Wooden
+Savings Goal: 11000 Rupees`}
+                        />
+                        <p className="mt-2 text-xs text-silver-500">
+                            Supported labels: Name, Description, MRP, Supplier Price, Our Price, Stock, SKU, Shop, Category, Meesho URL, Featured, Specifications.
+                        </p>
+                        {quickFillMessage && (
+                            <p className={`mt-3 text-sm ${quickFillMessage.type === 'success' ? 'text-green-400' : 'text-amber-400'}`}>
+                                {quickFillMessage.text}
+                            </p>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <div className="space-y-3">
                             <div className="flex items-center justify-between gap-3">
@@ -847,9 +1100,9 @@ export default function ProductForm({
                                             className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700"
                                         >
                                             <option value="">No parent</option>
-                                            {categories.filter((category) => !category.parent).map((category) => (
+                                            {categoryOptions.map((category) => (
                                                 <option key={category.id} value={category.id}>
-                                                    {category.name}
+                                                    {`${'— '.repeat(category.depth)}${category.label}`}
                                                 </option>
                                             ))}
                                         </select>

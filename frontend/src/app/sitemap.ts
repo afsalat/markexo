@@ -29,7 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const routes: MetadataRoute.Sitemap = [...baseRoutes];
 
         products.forEach((product: any) => {
-            if (product.is_active) {
+            const isIndexable =
+                typeof product.is_active === 'boolean'
+                    ? product.is_active
+                    : product.approval_status === 'approved';
+
+            if (product.slug && isIndexable) {
                 routes.push({
                     url: `${APP_URL}/products/${product.slug}`,
                     lastModified: product.created_at ? new Date(product.created_at) : now,
