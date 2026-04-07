@@ -43,6 +43,30 @@ function normalizeSearchText(value: string) {
         .trim();
 }
 
+function slugifyFilePart(value: string) {
+    return value
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-+/g, '-');
+}
+
+function getFileExtension(fileName: string) {
+    const parts = fileName.split('.');
+    return parts.length > 1 ? parts.pop()!.toLowerCase() : 'jpg';
+}
+
+function buildSpecificationPreview(value: string) {
+    return value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+        .join(' ');
+}
+
 const emptyShopForm = {
     name: '',
     email: '',
@@ -277,6 +301,39 @@ export default function ProductForm({
             }, {} as Record<string, string>);
     };
 
+    const getSelectedCategoryLabel = () => {
+        const selectedCategory = categories.find((category) => String(category.id) === formData.category_id);
+        return selectedCategory?.name ?? '';
+    };
+
+    const buildSeoImageBaseName = () => {
+        const categoryPart = getSelectedCategoryLabel();
+        const baseParts = [
+            formData.name,
+            categoryPart,
+            formData.sku,
+            formData.description.split(/\s+/).slice(0, 8).join(' '),
+            buildSpecificationPreview(formData.specificationsText),
+        ]
+            .map((value) => slugifyFilePart(value))
+            .filter(Boolean);
+
+        const fallback = baseParts.join('-') || 'product-image';
+        return fallback.slice(0, 110);
+    };
+
+    const renameFileForUpload = (file: File, variant: 'main' | 'gallery', index?: number) => {
+        const extension = getFileExtension(file.name);
+        const baseName = buildSeoImageBaseName();
+        const suffix = variant === 'main' ? 'main' : `gallery-${(index ?? 0) + 1}`;
+        const fileName = `${baseName}-${suffix}.${extension}`;
+
+        return new File([file], fileName, {
+            type: file.type,
+            lastModified: file.lastModified,
+        });
+    };
+
     const loadOptions = useCallback(async () => {
         if (!token) {
             return;
@@ -374,7 +431,8 @@ export default function ProductForm({
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFormData((prev) => ({ ...prev, image: e.target.files![0] }));
+            const renamedFile = renameFileForUpload(e.target.files[0], 'main');
+            setFormData((prev) => ({ ...prev, image: renamedFile }));
         }
     };
 
@@ -383,7 +441,10 @@ export default function ProductForm({
             const filesArray = Array.from(e.target.files);
             setFormData((prev) => ({
                 ...prev,
-                gallery_images: [...prev.gallery_images, ...filesArray],
+                gallery_images: [
+                    ...prev.gallery_images,
+                    ...filesArray.map((file, index) => renameFileForUpload(file, 'gallery', prev.gallery_images.length + index)),
+                ],
             }));
             e.target.value = '';
         }
@@ -519,14 +580,14 @@ export default function ProductForm({
         }
 
         if (formData.image) {
-            data.append('image', formData.image);
+            data.append('image', renameFileForUpload(formData.image, 'main'));
         }
 
         const specsObj = parseSpecificationsText(formData.specificationsText);
         data.append('specifications', JSON.stringify(specsObj));
 
-        formData.gallery_images.forEach((file) => {
-            data.append('uploaded_images', file);
+        formData.gallery_images.forEach((file, index) => {
+            data.append('uploaded_images', renameFileForUpload(file, 'gallery', index));
         });
 
         try {
@@ -767,24 +828,61 @@ export default function ProductForm({
     const filteredShopOptions = shopOptions.filter((shop) =>
         normalizeSearchText(shop.label).includes(normalizedShopSearch)
     );
-    const filteredCategoryOptions = categoryOptions.filter((category) => {
-        if (
-            selectedCategoryOption &&
-            normalizedCategorySearch.length > 0 &&
-            normalizedCategorySearch === normalizeSearchText(selectedCategoryOption.label)
-        ) {
-            return true;
-        }
+    const filteredCategoryOptions = categoryOptions
+        .map((category) => {
+            if (
+                selectedCategoryOption &&
+                normalizedCategorySearch.length > 0 &&
+                normalizedCategorySearch === normalizeSearchText(selectedCategoryOption.label)
+            ) {
+                return { category, rank: 0, visible: true };
+            }
 
-        const searchTokens = normalizedCategorySearch.split(' ').filter(Boolean);
+            const searchTokens = normalizedCategorySearch.split(' ').filter(Boolean);
 
-        if (searchTokens.length === 0) {
-            return true;
-        }
+            if (searchTokens.length === 0) {
+                return {
+                    category,
+                    rank: normalizeSearchText(category.label),
+                    visible: true,
+                };
+            }
 
-        const haystack = category.matchText ?? normalizeSearchText(category.label);
-        return searchTokens.every((token) => haystack.includes(token));
-    });
+            const normalizedName = normalizeSearchText(category.name);
+            const normalizedLabel = normalizeSearchText(category.label);
+            const normalizedParent = normalizeSearchText(category.parentLabel ?? '');
+            const haystack = category.matchText ?? normalizedLabel;
+            const matchesAllTokens = searchTokens.every((token) => haystack.includes(token));
+
+            if (!matchesAllTokens) {
+                return { category, rank: Number.POSITIVE_INFINITY, visible: false };
+            }
+
+            let score = 50;
+
+            if (normalizedName === normalizedCategorySearch || normalizedLabel === normalizedCategorySearch) {
+                score = 0;
+            } else if (normalizedName.startsWith(normalizedCategorySearch)) {
+                score = 5;
+            } else if (normalizedLabel.startsWith(normalizedCategorySearch)) {
+                score = 10;
+            } else if (normalizedName.includes(normalizedCategorySearch)) {
+                score = 15;
+            } else if (normalizedParent.includes(normalizedCategorySearch)) {
+                score = 20;
+            } else if (normalizedLabel.includes(normalizedCategorySearch)) {
+                score = 25;
+            }
+
+            return {
+                category,
+                rank: `${String(score).padStart(2, '0')}-${String(category.depth).padStart(2, '0')}-${normalizedLabel}`,
+                visible: true,
+            };
+        })
+        .filter((item) => item.visible)
+        .sort((a, b) => String(a.rank).localeCompare(String(b.rank)))
+        .map((item) => item.category);
 
     return (
         <div className="animate-fade-in">
