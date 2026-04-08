@@ -62,7 +62,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ['title', 'is_active', 'order']
+    list_display = ['title', 'section', 'is_active', 'order']
+    list_filter = ['section', 'is_active']
     list_editable = ['is_active', 'order']
 
 

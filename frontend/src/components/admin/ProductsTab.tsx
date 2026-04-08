@@ -1,6 +1,6 @@
-import { Plus, Edit, Trash2, Info, CheckCircle, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X } from 'lucide-react';
 import { Product, Category } from '@/types/admin';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import ProductDetail from './ProductDetail';
@@ -90,6 +90,9 @@ export default function ProductsTab({
     const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved'>('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [categorySearch, setCategorySearch] = useState('');
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+    const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
     const handleApprove = async (e: React.MouseEvent, product: Product) => {
         e.stopPropagation();
@@ -129,6 +132,52 @@ export default function ProductsTab({
     ).filter((category, index, allCategories) => (
         allCategories.findIndex((item) => item.id === category.id) === index
     ));
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+                setIsCategoryDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (selectedCategory === 'all') {
+            setCategorySearch('');
+            return;
+        }
+
+        const selectedOption = categoryOptions.find((category) => category.id === selectedCategory);
+        setCategorySearch(selectedOption?.name ?? '');
+    }, [selectedCategory, categoryOptions]);
+
+    const filteredCategoryOptions = categoryOptions.filter((category) => (
+        category.name.toLowerCase().includes(categorySearch.trim().toLowerCase())
+    ));
+
+    const handleCategoryInputChange = (value: string) => {
+        setCategorySearch(value);
+        setIsCategoryDropdownOpen(true);
+
+        if (!value.trim()) {
+            setSelectedCategory('all');
+        }
+    };
+
+    const handleCategorySelect = (categoryId: string, categoryName: string) => {
+        setSelectedCategory(categoryId);
+        setCategorySearch(categoryName);
+        setIsCategoryDropdownOpen(false);
+    };
+
+    const clearCategoryFilter = () => {
+        setSelectedCategory('all');
+        setCategorySearch('');
+        setIsCategoryDropdownOpen(false);
+    };
 
     const filteredProducts = products.filter(p => {
         const matchesStatus = filterStatus === 'all' || p.approval_status === filterStatus;
@@ -193,18 +242,72 @@ export default function ProductsTab({
                                 className="w-full rounded-lg border border-dark-700 bg-dark-800 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-silver-500 focus:border-accent-500 focus:outline-none"
                             />
                         </div>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full rounded-lg border border-dark-700 bg-dark-800 px-3 py-2.5 text-sm text-white focus:border-accent-500 focus:outline-none lg:w-56"
-                        >
-                            <option value="all">All Categories</option>
-                            {categoryOptions.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                    {category.name}
-                                </option>
-                            ))}
-                        </select>
+                        <div ref={categoryDropdownRef} className="relative w-full lg:w-56">
+                            <input
+                                type="text"
+                                value={categorySearch}
+                                onChange={(e) => handleCategoryInputChange(e.target.value)}
+                                onFocus={() => setIsCategoryDropdownOpen(true)}
+                                placeholder="Search category..."
+                                className="w-full rounded-lg border border-dark-700 bg-dark-800 py-2.5 pl-3 pr-16 text-sm text-white placeholder:text-silver-500 focus:border-accent-500 focus:outline-none"
+                            />
+                            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                                {selectedCategory !== 'all' || categorySearch ? (
+                                    <button
+                                        type="button"
+                                        onClick={clearCategoryFilter}
+                                        className="rounded-md p-1 text-silver-500 transition-colors hover:bg-dark-700 hover:text-white"
+                                        aria-label="Clear category filter"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                ) : null}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCategoryDropdownOpen((prev) => !prev)}
+                                    className="rounded-md p-1 text-silver-500 transition-colors hover:bg-dark-700 hover:text-white"
+                                    aria-label="Toggle category options"
+                                >
+                                    <ChevronDown size={16} className={`transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                            </div>
+
+                            {isCategoryDropdownOpen && (
+                                <div className="custom-scrollbar absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-xl border border-dark-700 bg-dark-800 py-1 shadow-2xl">
+                                    <button
+                                        type="button"
+                                        onClick={clearCategoryFilter}
+                                        className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors ${
+                                            selectedCategory === 'all'
+                                                ? 'bg-accent-500/15 text-white'
+                                                : 'text-silver-300 hover:bg-dark-700 hover:text-white'
+                                        }`}
+                                    >
+                                        All Categories
+                                    </button>
+                                    {filteredCategoryOptions.length > 0 ? (
+                                        filteredCategoryOptions.map((category) => (
+                                            <button
+                                                key={category.id}
+                                                type="button"
+                                                onClick={() => handleCategorySelect(category.id, category.name)}
+                                                className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors ${
+                                                    selectedCategory === category.id
+                                                        ? 'bg-accent-500/15 text-white'
+                                                        : 'text-silver-300 hover:bg-dark-700 hover:text-white'
+                                                }`}
+                                            >
+                                                {category.name}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="px-3 py-2 text-sm text-silver-500">
+                                            No categories found
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:justify-end">
                         <div className="custom-scrollbar hidden-scrollbar flex w-full overflow-x-auto whitespace-nowrap rounded-lg border border-dark-700 bg-dark-800 p-1 sm:w-auto">

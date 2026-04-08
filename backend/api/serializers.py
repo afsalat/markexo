@@ -763,21 +763,35 @@ class OrderCreateSerializer(serializers.Serializer):
 
 
 class BannerSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
+    section_display = serializers.CharField(source='get_section_display', read_only=True)
 
     class Meta:
         model = Banner
-        fields = ['id', 'title', 'subtitle', 'image', 'link', 'is_active', 'order']
+        fields = ['id', 'title', 'subtitle', 'section', 'section_display', 'image', 'link', 'is_active', 'order']
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        return get_image_url(request, obj.image)
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get('image'):
+            raise serializers.ValidationError({'image': 'Banner image is required.'})
+        return attrs
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['image'] = get_image_url(self.context.get('request'), instance.image)
+        return data
 
 
 class SiteSettingSerializer(serializers.ModelSerializer):
+    logo = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = SiteSetting
         fields = '__all__'
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['logo'] = get_image_url(self.context.get('request'), instance.logo)
+        return data
 
 
 class ChecklistItemSerializer(serializers.ModelSerializer):

@@ -433,8 +433,20 @@ class OrderItem(models.Model):
 
 class Banner(models.Model):
     """Homepage banner model."""
+    SECTION_HOME_HERO = 'home_hero'
+    SECTION_CATEGORY_HERO = 'category_hero'
+    SECTION_PROMO = 'promo'
+    SECTION_GENERAL = 'general'
+    SECTION_CHOICES = [
+        (SECTION_HOME_HERO, 'Homepage Hero'),
+        (SECTION_CATEGORY_HERO, 'Category Page Hero'),
+        (SECTION_PROMO, 'Promo / Campaign'),
+        (SECTION_GENERAL, 'General'),
+    ]
+
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=300, blank=True)
+    section = models.CharField(max_length=30, choices=SECTION_CHOICES, default=SECTION_HOME_HERO)
     image = models.ImageField(upload_to='banners/')
     link = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)
@@ -458,6 +470,7 @@ class SiteSetting(models.Model):
     address = models.TextField(blank=True)
     facebook_url = models.URLField(blank=True)
     instagram_url = models.URLField(blank=True)
+    twitter_url = models.URLField(blank=True)
     whatsapp_number = models.CharField(max_length=20, blank=True)
 
 

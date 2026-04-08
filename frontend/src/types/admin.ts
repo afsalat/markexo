@@ -150,18 +150,22 @@ export interface Banner {
     title: string;
     image: string;
     link: string;
+    section: 'home_hero' | 'category_hero' | 'promo' | 'general';
+    section_display?: string;
     is_active: boolean;
 }
 
 export interface SiteSetting {
     id: number;
     site_name: string;
-    site_logo: string;
+    site_tagline?: string;
+    logo?: string | null;
     contact_email: string;
     contact_phone: string;
     address: string;
     facebook_url: string;
     instagram_url: string;
+    whatsapp_number?: string;
     twitter_url: string;
 }
 

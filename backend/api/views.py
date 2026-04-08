@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, action
 from django.db.models import Sum, Count, Q, F, DecimalField, Value
 from django.db.models.functions import Coalesce, TruncDay
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.auth.models import User, Group, Permission
@@ -52,6 +53,13 @@ from .order_emails import (
     send_payment_status_email,
     send_refund_status_email,
     send_return_request_email,
+)
+from .whatsapp import (
+    build_twiml_message,
+    is_valid_twilio_signature,
+    normalize_phone_digits,
+    send_order_alert_whatsapp,
+    send_order_confirmation_whatsapp,
 )
 
 logger = logging.getLogger(__name__)
@@ -283,9 +291,15 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class BannerListView(generics.ListAPIView):
     """Public API for active banners."""
-    queryset = Banner.objects.filter(is_active=True)
     serializer_class = BannerSerializer
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        queryset = Banner.objects.filter(is_active=True)
+        section = (self.request.query_params.get('section') or '').strip()
+        if section:
+            queryset = queryset.filter(section=section)
+        return queryset
 
 
 class CreateEnquiryView(generics.CreateAPIView):
@@ -397,11 +411,88 @@ class CreateOrderView(APIView):
         customer.save()
 
         send_order_created_email(order)
+        site_setting = SiteSetting.objects.filter(pk=1).first() or SiteSetting.objects.first()
+        try:
+            send_order_confirmation_whatsapp(order)
+            send_order_alert_whatsapp(order, getattr(site_setting, 'whatsapp_number', ''))
+        except Exception:
+            logger.exception("WhatsApp notification flow failed for order %s", order.order_id)
 
         return Response(
             OrderSerializer(order, context={'request': request}).data,
             status=status.HTTP_201_CREATED
         )
+
+
+class TwilioWhatsAppWebhookView(APIView):
+    """Handle inbound WhatsApp replies from customers."""
+    permission_classes = [AllowAny]
+    parser_classes = [FormParser, MultiPartParser, JSONParser]
+
+    def post(self, request):
+        if not is_valid_twilio_signature(request):
+            logger.warning('Rejected Twilio WhatsApp webhook due to invalid signature.')
+            return HttpResponse('Invalid signature', status=403, content_type='text/plain')
+
+        from_number = request.data.get('From', '')
+        body = (request.data.get('Body') or '').strip()
+        profile_name = (request.data.get('ProfileName') or '').strip()
+        to_number = request.data.get('To', '')
+        message_sid = request.data.get('MessageSid', '')
+
+        customer = self._find_customer_by_phone(from_number)
+        latest_order = customer.orders.order_by('-created_at').first() if customer else None
+        fallback_email = f"whatsapp-{normalize_phone_digits(from_number) or 'unknown'}@local.vorionmart"
+        subject = (
+            f"WhatsApp reply for order {latest_order.order_id}"
+            if latest_order else
+            f"WhatsApp reply from {from_number}"
+        )
+        message_body = body or '(empty WhatsApp message)'
+        if latest_order:
+            message_body = (
+                f"{message_body}\n\n"
+                f"[WhatsApp Meta]\n"
+                f"Order ID: {latest_order.order_id}\n"
+                f"Customer Phone: {from_number}\n"
+                f"Twilio Message SID: {message_sid}\n"
+                f"To: {to_number}"
+            )
+
+        Enquiry.objects.create(
+            name=profile_name or getattr(customer, 'name', '') or from_number or 'WhatsApp Customer',
+            email=getattr(customer, 'email', '') or fallback_email,
+            subject=subject,
+            message=message_body,
+            status='pending',
+            is_read=False,
+        )
+
+        reply_text = (
+            f"Thanks {customer.name}, we received your message for order {latest_order.order_id}. "
+            "Our team will reply shortly."
+            if customer and latest_order else
+            "Thanks, we received your message. Our team will reply shortly."
+        )
+        return HttpResponse(build_twiml_message(reply_text), content_type='application/xml')
+
+    def _find_customer_by_phone(self, from_number):
+        incoming_digits = normalize_phone_digits(from_number)
+        if not incoming_digits:
+            return None
+
+        candidate_numbers = {incoming_digits}
+        if len(incoming_digits) > 10:
+            candidate_numbers.add(incoming_digits[-10:])
+
+        queryset = Customer.objects.all().order_by('-created_at')
+        for customer in queryset:
+            stored_digits = normalize_phone_digits(customer.phone)
+            if not stored_digits:
+                continue
+            if stored_digits in candidate_numbers or stored_digits[-10:] in candidate_numbers:
+                return customer
+        return None
 
 
 
@@ -1180,12 +1271,12 @@ class AdminSiteSettingView(APIView):
 
     def get(self, request):
         setting, created = SiteSetting.objects.get_or_create(pk=1)
-        serializer = SiteSettingSerializer(setting)
+        serializer = SiteSettingSerializer(setting, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request):
         setting, created = SiteSetting.objects.get_or_create(pk=1)
-        serializer = SiteSettingSerializer(setting, data=request.data, partial=True)
+        serializer = SiteSettingSerializer(setting, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

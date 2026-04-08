@@ -14,12 +14,47 @@ LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 SYSTEM_LOG_FILE = LOG_DIR / 'system.log'
 APP_CONFIG_PATH = BASE_DIR.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
-LOCAL_HOST_ALIASES = ['127.0.0.1', 'localhost']
+LOCAL_HOST_ALIASES = ['127.0.0.1', 'localhost', '0.0.0.0']
 LOCAL_DEV_FRONTEND_PORTS = [3000, 443]
 
 def load_app_config():
     with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:
         return json.load(config_file)
+
+
+def parse_env_list(name):
+    raw_value = os.environ.get(name, '')
+    if not raw_value.strip():
+        return []
+
+    parts = []
+    for chunk in raw_value.replace(';', ',').split(','):
+        value = chunk.strip()
+        if value:
+            parts.append(value)
+    return parts
+
+
+def parse_bool_env(name, default=False):
+    raw_value = os.environ.get(name)
+    if raw_value is None:
+        return default
+    return raw_value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def normalize_host(value):
+    parsed = urlparse(value if '://' in value else f'//{value}')
+    return (parsed.hostname or value.strip()).strip().lower()
+
+
+def normalize_origin(value):
+    parsed = urlparse(value if '://' in value else f'https://{value}')
+    if not parsed.hostname:
+        return None
+
+    protocol = parsed.scheme or 'https'
+    port = parsed.port
+    return build_origin(protocol, parsed.hostname.lower(), port or (443 if protocol == 'https' else 80))
 
 def build_origin(protocol, host, port):
     origin = f"{protocol}://{host}"
@@ -52,6 +87,7 @@ APP_HOST = APP_CONFIG['host']
 FRONTEND_PORT = int(APP_CONFIG['frontendPort'])
 BACKEND_PORT = int(APP_CONFIG['backendPort'])
 HOST_ALIASES = build_host_aliases(APP_HOST)
+EXTRA_ALLOWED_HOSTS = [host for host in (normalize_host(item) for item in parse_env_list('DJANGO_ALLOWED_HOSTS')) if host]
 FRONTEND_ORIGINS = [build_origin(APP_PROTOCOL, host, FRONTEND_PORT) for host in HOST_ALIASES]
 LOCAL_DEV_ORIGINS = build_local_dev_origins(FRONTEND_PORT)
 BACKEND_ORIGIN = build_origin(APP_PROTOCOL, APP_HOST, BACKEND_PORT)
@@ -63,6 +99,7 @@ SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
 ALLOWED_HOSTS = sorted({
     *HOST_ALIASES,
     *LOCAL_HOST_ALIASES,
+    *EXTRA_ALLOWED_HOSTS,
     urlparse(APP_URL).hostname,
     urlparse(BACKEND_ORIGIN).hostname,
 })
@@ -151,7 +188,10 @@ SERVE_MEDIA_FILES = DEBUG or APP_HOST in LOCAL_HOST_ALIASES
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = sorted({*FRONTEND_ORIGINS, *LOCAL_DEV_ORIGINS})
+EXTRA_CORS_ALLOWED_ORIGINS = [
+    origin for origin in (normalize_origin(item) for item in parse_env_list('DJANGO_CORS_ALLOWED_ORIGINS')) if origin
+]
+CORS_ALLOWED_ORIGINS = sorted({*FRONTEND_ORIGINS, *LOCAL_DEV_ORIGINS, *EXTRA_CORS_ALLOWED_ORIGINS})
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 
 REST_FRAMEWORK = {
@@ -211,6 +251,14 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '').strip()
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '').strip()
+TWILIO_WHATSAPP_FROM = os.environ.get('TWILIO_WHATSAPP_FROM', '').strip()
+TWILIO_WHATSAPP_ORDER_CONFIRMATION_CONTENT_SID = os.environ.get('TWILIO_WHATSAPP_ORDER_CONFIRMATION_CONTENT_SID', '').strip()
+TWILIO_WHATSAPP_ORDER_ALERT_CONTENT_SID = os.environ.get('TWILIO_WHATSAPP_ORDER_ALERT_CONTENT_SID', '').strip()
+TWILIO_WHATSAPP_STATUS_CALLBACK_URL = os.environ.get('TWILIO_WHATSAPP_STATUS_CALLBACK_URL', '').strip()
+TWILIO_VALIDATE_WEBHOOK_SIGNATURE = parse_bool_env('TWILIO_VALIDATE_WEBHOOK_SIGNATURE', default=False)
 
 LOGGING = {
     'version': 1,

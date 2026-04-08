@@ -1,12 +1,28 @@
-import { Plus, Trash2, ExternalLink, RefreshCcw, X } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, RefreshCcw, X, Upload } from 'lucide-react';
 import { Banner } from '@/types/admin';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface BannersTabProps {
     banners: Banner[];
 }
+
+const BANNER_SECTION_OPTIONS = [
+    { value: 'home_hero', label: 'Homepage Hero' },
+    { value: 'category_hero', label: 'Category Page Hero' },
+    { value: 'promo', label: 'Promo / Campaign' },
+    { value: 'general', label: 'General' },
+] as const;
+
+type BannerSection = (typeof BANNER_SECTION_OPTIONS)[number]['value'];
+
+const initialFormState = {
+    title: '',
+    link: '',
+    section: 'home_hero' as BannerSection,
+    is_active: true,
+};
 
 export default function BannersTab({ banners: initialBanners }: BannersTabProps) {
     const { hasPermission, token } = useAuth();
@@ -17,22 +33,44 @@ export default function BannersTab({ banners: initialBanners }: BannersTabProps)
     const [banners, setBanners] = useState<Banner[]>(initialBanners);
     const [loading, setLoading] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [formData, setFormData] = useState({
-        title: '',
-        link: '',
-        image: '',
-        is_active: true
-    });
+    const [formData, setFormData] = useState(initialFormState);
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         setBanners(initialBanners);
     }, [initialBanners]);
 
+    useEffect(() => {
+        if (!selectedImage) {
+            setImagePreview(null);
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(selectedImage);
+        setImagePreview(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [selectedImage]);
+
+    const groupedBanners = useMemo(() => {
+        return BANNER_SECTION_OPTIONS.map((section) => ({
+            ...section,
+            items: banners.filter((banner) => banner.section === section.value),
+        }));
+    }, [banners]);
+
+    const resetForm = () => {
+        setFormData(initialFormState);
+        setSelectedImage(null);
+        setImagePreview(null);
+    };
+
     const fetchBanners = async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE_URL}/admin/banners/`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
                 const data = await res.json();
@@ -47,21 +85,37 @@ export default function BannersTab({ banners: initialBanners }: BannersTabProps)
 
     const handleAddBanner = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!selectedImage) {
+            alert('Please upload a banner image.');
+            return;
+        }
+
         try {
+            const payload = new FormData();
+            payload.append('title', formData.title);
+            payload.append('section', formData.section);
+            payload.append('image', selectedImage);
+            payload.append('is_active', String(formData.is_active));
+            if (formData.link.trim()) {
+                payload.append('link', formData.link.trim());
+            }
+
             const res = await fetch(`${API_BASE_URL}/admin/banners/`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(formData)
+                body: payload,
             });
+
             if (res.ok) {
                 setShowAddModal(false);
-                setFormData({ title: '', link: '', image: '', is_active: true });
+                resetForm();
                 fetchBanners();
             } else {
-                alert('Failed to add banner');
+                const errorData = await res.json().catch(() => ({}));
+                alert(`Failed to add banner: ${JSON.stringify(errorData)}`);
             }
         } catch (error) {
             console.error('Error adding banner:', error);
@@ -75,10 +129,10 @@ export default function BannersTab({ banners: initialBanners }: BannersTabProps)
         try {
             const res = await fetch(`${API_BASE_URL}/admin/banners/${id}/`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             if (res.ok) {
-                setBanners(banners.filter(b => b.id !== id));
+                setBanners(banners.filter((banner) => banner.id !== id));
             } else {
                 alert('Failed to delete banner');
             }
@@ -93,14 +147,14 @@ export default function BannersTab({ banners: initialBanners }: BannersTabProps)
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ is_active: !banner.is_active })
+                body: JSON.stringify({ is_active: !banner.is_active }),
             });
             if (res.ok) {
-                setBanners(banners.map(b =>
-                    b.id === banner.id ? { ...b, is_active: !b.is_active } : b
-                ));
+                setBanners(banners.map((item) => (
+                    item.id === banner.id ? { ...item, is_active: !item.is_active } : item
+                )));
             }
         } catch (error) {
             console.error('Error toggling banner:', error);
@@ -109,18 +163,21 @@ export default function BannersTab({ banners: initialBanners }: BannersTabProps)
 
     return (
         <div className="animate-fade-in">
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6 flex items-center justify-between">
                 <h1 className="font-display text-2xl font-bold text-white">Banners</h1>
                 <div className="flex gap-2">
                     <button
                         onClick={fetchBanners}
-                        className="p-2 border border-dark-600 rounded-lg hover:bg-dark-700 text-silver-400 hover:text-white transition-colors"
+                        className="rounded-lg border border-dark-600 p-2 text-silver-400 transition-colors hover:bg-dark-700 hover:text-white"
                         title="Refresh"
                     >
                         <RefreshCcw size={18} />
                     </button>
                     {canAdd && (
-                        <button onClick={() => setShowAddModal(true)} className="btn-primary flex items-center gap-2 shadow-lg shadow-accent-500/20">
+                        <button
+                            onClick={() => setShowAddModal(true)}
+                            className="btn-primary flex items-center gap-2 shadow-lg shadow-accent-500/20"
+                        >
                             <Plus size={18} /> Add Banner
                         </button>
                     )}
@@ -128,118 +185,193 @@ export default function BannersTab({ banners: initialBanners }: BannersTabProps)
             </div>
 
             {loading ? (
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-500"></div>
+                <div className="flex h-64 items-center justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-accent-500"></div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {banners.length === 0 ? (
-                        <div className="col-span-full bg-dark-800 rounded-2xl p-12 text-center text-silver-500 shadow-sm border border-dark-700">
-                            No banners found. Add one to get started.
-                        </div>
-                    ) : (
-                        banners.map((banner) => (
-                            <div key={banner.id} className="bg-dark-800 rounded-2xl shadow-sm overflow-hidden group border border-dark-700 hover:border-dark-600 transition-all">
-                                <div className="relative h-48 bg-dark-900">
-                                    <img
-                                        src={banner.image || "https://placehold.co/600x400?text=No+Image"}
-                                        alt={banner.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    {canDelete && (
-                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                onClick={() => handleDelete(banner.id)}
-                                                className="p-2 bg-dark-800/90 rounded-full text-red-500 shadow-md hover:bg-red-500/10 backdrop-blur-sm border border-dark-600"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    )}
-                                    <div className="absolute bottom-2 left-2">
-                                        {canEdit ? (
-                                            <button
-                                                onClick={() => handleToggleActive(banner)}
-                                                className={`px-2 py-1 rounded-md text-xs font-bold transition-all border ${banner.is_active ? 'bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20' : 'bg-dark-700/80 text-silver-400 border-dark-600 hover:text-white'}`}
-                                            >
-                                                {banner.is_active ? 'Active' : 'Inactive'}
-                                            </button>
-                                        ) : (
-                                            <span className={`px-2 py-1 rounded-md text-xs font-bold border ${banner.is_active ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-dark-700/80 text-silver-400 border-dark-600'}`}>
-                                                {banner.is_active ? 'Active' : 'Inactive'}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="p-4">
-                                    <h3 className="font-bold text-white mb-1">{banner.title}</h3>
-                                    {banner.link && (
-                                        <a href={banner.link} target="_blank" rel="noreferrer" className="text-sm text-accent-500 flex items-center gap-1 hover:underline hover:text-accent-400">
-                                            <ExternalLink size={14} /> {banner.link}
-                                        </a>
-                                    )}
+                <div className="space-y-8">
+                    {groupedBanners.map((section) => (
+                        <div key={section.value}>
+                            <div className="mb-4 flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">{section.label}</h2>
+                                    <p className="text-sm text-silver-500">{section.items.length} banner(s)</p>
                                 </div>
                             </div>
-                        ))
-                    )}
+
+                            {section.items.length === 0 ? (
+                                <div className="rounded-2xl border border-dark-700 bg-dark-800 p-8 text-center text-silver-500 shadow-sm">
+                                    No banners in this section.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    {section.items.map((banner) => (
+                                        <div
+                                            key={banner.id}
+                                            className="group overflow-hidden rounded-2xl border border-dark-700 bg-dark-800 shadow-sm transition-all hover:border-dark-600"
+                                        >
+                                            <div className="relative h-48 bg-dark-900">
+                                                <img
+                                                    src={banner.image || 'https://placehold.co/600x400?text=No+Image'}
+                                                    alt={banner.title}
+                                                    className="h-full w-full object-cover"
+                                                />
+                                                {canDelete && (
+                                                    <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        <button
+                                                            onClick={() => handleDelete(banner.id)}
+                                                            className="rounded-full border border-dark-600 bg-dark-800/90 p-2 text-red-500 shadow-md backdrop-blur-sm hover:bg-red-500/10"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                <div className="absolute bottom-2 left-2 flex gap-2">
+                                                    <span className="rounded-md border border-dark-600 bg-dark-800/85 px-2 py-1 text-xs font-bold text-silver-200 backdrop-blur-sm">
+                                                        {banner.section_display || section.label}
+                                                    </span>
+                                                    {canEdit ? (
+                                                        <button
+                                                            onClick={() => handleToggleActive(banner)}
+                                                            className={`rounded-md border px-2 py-1 text-xs font-bold transition-all ${
+                                                                banner.is_active
+                                                                    ? 'border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
+                                                                    : 'border-dark-600 bg-dark-700/80 text-silver-400 hover:text-white'
+                                                            }`}
+                                                        >
+                                                            {banner.is_active ? 'Active' : 'Inactive'}
+                                                        </button>
+                                                    ) : (
+                                                        <span
+                                                            className={`rounded-md border px-2 py-1 text-xs font-bold ${
+                                                                banner.is_active
+                                                                    ? 'border-green-500/20 bg-green-500/10 text-green-500'
+                                                                    : 'border-dark-600 bg-dark-700/80 text-silver-400'
+                                                            }`}
+                                                        >
+                                                            {banner.is_active ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="p-4">
+                                                <h3 className="mb-1 font-bold text-white">{banner.title}</h3>
+                                                {banner.link && (
+                                                    <a
+                                                        href={banner.link}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="flex items-center gap-1 text-sm text-accent-500 hover:text-accent-400 hover:underline"
+                                                    >
+                                                        <ExternalLink size={14} /> {banner.link}
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Add Banner Modal */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-dark-800 rounded-2xl p-6 max-w-md w-full border border-dark-700 shadow-2xl">
-                        <div className="flex justify-between items-center mb-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-2xl border border-dark-700 bg-dark-800 p-6 shadow-2xl">
+                        <div className="mb-4 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-white">Add New Banner</h2>
-                            <button onClick={() => setShowAddModal(false)} className="text-silver-500 hover:text-white transition-colors">
+                            <button
+                                onClick={() => {
+                                    setShowAddModal(false);
+                                    resetForm();
+                                }}
+                                className="text-silver-500 transition-colors hover:text-white"
+                            >
                                 <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleAddBanner} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-silver-300 mb-1">Title</label>
+                                <label className="mb-1 block text-sm font-medium text-silver-300">Title</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none bg-dark-700 text-white placeholder-silver-600"
+                                    className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-2 text-white outline-none placeholder-silver-600 focus:border-transparent focus:ring-2 focus:ring-accent-500"
                                 />
                             </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-silver-300 mb-1">Image URL</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                    className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none bg-dark-700 text-white placeholder-silver-600"
-                                />
+                                <label className="mb-1 block text-sm font-medium text-silver-300">Section</label>
+                                <select
+                                    value={formData.section}
+                                    onChange={(e) => setFormData({ ...formData, section: e.target.value as BannerSection })}
+                                    className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-2 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-accent-500"
+                                >
+                                    {BANNER_SECTION_OPTIONS.map((section) => (
+                                        <option key={section.value} value={section.value}>
+                                            {section.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-silver-300 mb-1">Link (Optional)</label>
+                                <label className="mb-1 block text-sm font-medium text-silver-300">Banner Image</label>
+                                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-dark-500 bg-dark-700 px-4 py-4 text-sm text-silver-300 transition-colors hover:border-accent-500 hover:text-white">
+                                    <Upload size={18} />
+                                    <span>{selectedImage ? selectedImage.name : 'Upload banner image'}</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => setSelectedImage(e.target.files?.[0] ?? null)}
+                                    />
+                                </label>
+                                {imagePreview ? (
+                                    <div className="mt-3 overflow-hidden rounded-xl border border-dark-600 bg-dark-900">
+                                        <img src={imagePreview} alt="Banner preview" className="h-40 w-full object-cover" />
+                                    </div>
+                                ) : null}
+                            </div>
+
+                            <div>
+                                <label className="mb-1 block text-sm font-medium text-silver-300">Link (Optional)</label>
                                 <input
                                     type="text"
                                     value={formData.link}
                                     onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                                    className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none bg-dark-700 text-white placeholder-silver-600"
+                                    className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-2 text-white outline-none placeholder-silver-600 focus:border-transparent focus:ring-2 focus:ring-accent-500"
                                 />
                             </div>
+
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
                                     id="is_active"
                                     checked={formData.is_active}
                                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                                    className="w-4 h-4 text-accent-600 border-dark-600 rounded focus:ring-accent-500 bg-dark-700"
+                                    className="h-4 w-4 rounded border-dark-600 bg-dark-700 text-accent-600 focus:ring-accent-500"
                                 />
-                                <label htmlFor="is_active" className="text-sm font-medium text-silver-300">Active</label>
+                                <label htmlFor="is_active" className="text-sm font-medium text-silver-300">
+                                    Active
+                                </label>
                             </div>
+
                             <div className="flex gap-2 pt-4">
-                                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 border border-dark-600 text-silver-400 rounded-lg hover:bg-dark-700 hover:text-white transition-colors">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddModal(false);
+                                        resetForm();
+                                    }}
+                                    className="flex-1 rounded-lg border border-dark-600 px-4 py-2 text-silver-400 transition-colors hover:bg-dark-700 hover:text-white"
+                                >
                                     Cancel
                                 </button>
-                                <button type="submit" className="flex-1 btn-primary shadow-lg shadow-accent-500/20">
+                                <button type="submit" className="btn-primary flex-1 shadow-lg shadow-accent-500/20">
                                     Add Banner
                                 </button>
                             </div>

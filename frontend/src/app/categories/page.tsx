@@ -57,7 +57,8 @@ export default function CategoriesPage() {
 
     const featuredCategories = categories.slice(0, 3); // Just pick first 3 as featured for demo
 
-    const heroBanner = banners.find(b => b.is_active);
+    const heroBanner = banners.find((banner) => banner.is_active && banner.section === 'category_hero')
+        || banners.find((banner) => banner.is_active);
 
     return (
         <div className="min-h-screen bg-white dark:bg-dark-900">

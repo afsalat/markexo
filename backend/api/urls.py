@@ -12,7 +12,7 @@ from .views import (
     # Public views
     CategoryViewSet, ProductViewSet, ReviewViewSet,
     BannerListView, SiteSettingView, CreateOrderView, OrderDetailView, CancelOrderView, ReturnOrderView, CreateEnquiryView,
-    CartAPIView, RegisterUserView, RegisterPartnerView, CustomTokenObtainPairView, CustomerOrdersView,
+    CartAPIView, RegisterUserView, RegisterPartnerView, CustomTokenObtainPairView, CustomerOrdersView, TwilioWhatsAppWebhookView,
     # Admin views
     AdminDashboardStatsView, AdminShopViewSet, AdminCategoryViewSet,
     AdminProductViewSet, AdminOrderViewSet, AdminCustomerViewSet,
@@ -60,6 +60,7 @@ urlpatterns = [
     path('orders/<str:order_id>/', OrderDetailView.as_view(), name='order-detail'),
     path('orders/<str:order_id>/cancel/', CancelOrderView.as_view(), name='cancel-order'),
     path('orders/<str:order_id>/return/', ReturnOrderView.as_view(), name='return-order'),
+    path('integrations/twilio/whatsapp/webhook/', TwilioWhatsAppWebhookView.as_view(), name='twilio-whatsapp-webhook'),
     path('enquiries/', CreateEnquiryView.as_view(), name='create-enquiry'),
     path('cart/', CartAPIView.as_view(), name='cart'),
     

@@ -57,6 +57,8 @@ export interface Banner {
     subtitle: string;
     image: string;
     link: string;
+    section: 'home_hero' | 'category_hero' | 'promo' | 'general';
+    section_display?: string;
     is_active: boolean;
 }
 
