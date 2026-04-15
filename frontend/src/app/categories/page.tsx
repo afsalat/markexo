@@ -79,7 +79,7 @@ export default function CategoriesPage() {
                         </>
                     ) : (
                         <div className="absolute inset-0 bg-gray-50 dark:bg-dark-950">
-                            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,#00f5d4_0%,transparent_50%)] opacity-20 dark:block hidden" />
+                            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,#6366f1_0%,transparent_50%)] opacity-20 dark:block hidden" />
                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:hidden" />
                         </div>
                     )}

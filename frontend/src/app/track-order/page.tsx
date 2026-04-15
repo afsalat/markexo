@@ -16,7 +16,7 @@ function TrackOrderContent() {
 
     // Auto-track if order ID is in URL
     useEffect(() => {
-        const urlOrderId = searchParams.get('id');
+        const urlOrderId = searchParams?.get('id');
         if (urlOrderId) {
             setOrderId(urlOrderId);
             fetchOrderData(urlOrderId);
@@ -419,7 +419,7 @@ function TrackOrderContent() {
                             </div>
                         )}
                     </div>
-                ) : isAuthenticated && orders.length > 0 && !searchParams.get('id') ? (
+                ) : isAuthenticated && orders.length > 0 && !searchParams?.get('id') ? (
                     /* Authenticated user with orders and no specific order ID - show orders list */
                     <div className="max-w-4xl mx-auto">
                         <div className="text-center mb-10">

@@ -1066,6 +1066,7 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated, IsAdminUser, AdminModelPermissions]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
 
 class AdminProductViewSet(viewsets.ModelViewSet):

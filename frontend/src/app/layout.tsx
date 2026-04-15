@@ -47,8 +47,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className="dark">
-            <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-dark-900 text-white`}>
+        <html lang="en" className="light">
+            <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-[#f8f9fb] text-gray-900`}>
                 <ThemeProvider>
                     <CustomerAuthProvider>
                         <CartProvider>

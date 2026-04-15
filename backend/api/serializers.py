@@ -389,7 +389,7 @@ class CategorySerializer(serializers.ModelSerializer):
     children = serializers.SerializerMethodField()
     parent_name = serializers.CharField(source='parent.name', read_only=True)
     product_count = serializers.SerializerMethodField()
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Category
@@ -405,9 +405,10 @@ class CategorySerializer(serializers.ModelSerializer):
     def get_product_count(self, obj):
         return obj.products.filter(is_active=True).count()
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        return get_image_url(request, obj.image)
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['image'] = get_image_url(self.context.get('request'), instance.image)
+        return data
 
 
 class CategoryListSerializer(serializers.ModelSerializer):

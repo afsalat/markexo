@@ -10,7 +10,7 @@ export default function LoginPage() {
     const { login } = useCustomerAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const redirectPath = searchParams.get('redirect') || '/profile';
+    const redirectPath = searchParams?.get('redirect') || '/profile';
     const signupHref = `/signup?redirect=${encodeURIComponent(redirectPath)}`;
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);

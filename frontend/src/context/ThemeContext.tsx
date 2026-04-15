@@ -20,23 +20,23 @@ const defaultContext: ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType>(defaultContext);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setThemeState] = useState<Theme>('dark');
+    const [theme, setThemeState] = useState<Theme>('light');
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
-        // Load saved theme or default to dark
+        // Load saved theme or default to light
         try {
             const savedTheme = localStorage.getItem('VorionMart-theme') as Theme;
             if (savedTheme === 'light' || savedTheme === 'dark') {
                 setThemeState(savedTheme);
                 updateDocumentClass(savedTheme);
             } else {
-                // Default to dark
-                updateDocumentClass('dark');
+                // Default to light
+                updateDocumentClass('light');
             }
         } catch (e) {
-            updateDocumentClass('dark');
+            updateDocumentClass('light');
         }
     }, []);
 

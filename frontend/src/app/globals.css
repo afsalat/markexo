@@ -1,41 +1,37 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
+/* ============================================
+   ROOT VARIABLES — Premium Light Theme
+   ============================================ */
 :root {
-  /* VorionMart Dark Theme */
-  --background: #0a0a0f;
-  --background-secondary: #12121a;
-  --foreground: #f8fafc;
-  --foreground-muted: #94a3b8;
-
-  /* Accent Colors */
-  --accent: #00f5d4;
-  --accent-glow: rgba(0, 245, 212, 0.4);
-  --primary: #7c3aed;
-  --primary-glow: rgba(124, 58, 237, 0.4);
-
-  /* Trust Colors */
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --error: #ef4444;
-}
-
-/* Light Mode Variables */
-html.light {
   --background: #f8fafc;
   --background-secondary: #ffffff;
   --foreground: #0f172a;
   --foreground-muted: #64748b;
 
-  --accent: #0ea5e9;
-  --accent-glow: rgba(14, 165, 233, 0.3);
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.3);
   --primary: #7c3aed;
   --primary-glow: rgba(124, 58, 237, 0.3);
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 }
 
+/* ============================================
+   RESET & BASE
+   ============================================ */
 * {
   box-sizing: border-box;
   padding: 0;
@@ -51,559 +47,51 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: #f9fafb;
   font-family: 'Inter', system-ui, sans-serif;
-}
-
-/* Light mode body overrides */
-html.light body {
-  background-color: #f9fafb;
-  color: #111827;
-}
-
-/* Light mode header glass effect */
-html.light .glass {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================
-   DARK SECTION - Preserve dark backgrounds in light mode
-   Use .dark-section class for sections that should 
-   keep their dark appearance even in light mode
+   SCROLLBAR — Refined
    ============================================ */
-
-.dark-section {
-  background-color: #1f2937 !important;
-}
-
-.dark-section h1,
-.dark-section h2,
-.dark-section h3,
-.dark-section h4,
-.dark-section h5,
-.dark-section h6 {
-  color: #ffffff !important;
-}
-
-.dark-section p,
-.dark-section span,
-.dark-section label {
-  color: #d1d5db !important;
-}
-
-html.light .dark-section {
-  background: linear-gradient(to right, #374151, #4b5563, #374151) !important;
-}
-
-html.light .dark-section h1,
-html.light .dark-section h2,
-html.light .dark-section h3,
-html.light .dark-section h4 {
-  color: #ffffff !important;
-}
-
-html.light .dark-section p,
-html.light .dark-section span {
-  color: #e5e7eb !important;
-}
-
-/* ============================================
-   ADMIN PANEL PROTECTION
-   Preserve admin panel dark styling in all modes
-   ============================================ */
-
-/* Admin sidebar - force dark background and preserve text colors */
-html.light aside.bg-gray-900 {
-  background-color: #111827 !important;
-}
-
-/* Prevent light mode from overriding sidebar text colors */
-html.light aside.bg-gray-900 * {
-  color: inherit !important;
-}
-
-html.light aside.bg-gray-900 button,
-html.light aside.bg-gray-900 a {
-  color: inherit !important;
-}
-
-
-
-
-
-/* ============================================
-   LIGHT MODE TEXT COLORS
-   Target elements directly to avoid circular deps
-   Exclude admin panel (aside.bg-gray-900)
-   ============================================ */
-
-/* Global text colors for light mode - exclude admin */
-html.light main h1,
-html.light main h2,
-html.light main h3,
-html.light main h4,
-html.light main h5,
-html.light main h6,
-html.light section h1,
-html.light section h2,
-html.light section h3,
-html.light section h4,
-html.light section h5,
-html.light section h6 {
-  color: #111827 !important;
-}
-
-html.light main p,
-html.light main span,
-html.light main label,
-html.light section p,
-html.light section span,
-html.light section label {
-  color: #374151;
-}
-
-/* Make sure text in common containers is dark */
-html.light header:not(aside header),
-html.light main,
-html.light section,
-html.light article,
-html.light footer {
-  color: #374151;
-}
-
-/* Links */
-html.light a {
-  color: inherit;
-}
-
-/* Header specific text */
-html.light header span,
-html.light header p {
-  color: #4b5563;
-}
-
-html.light header h1,
-html.light header h2 {
-  color: #111827;
-}
-
-/* Navbar links */
-html.light nav a,
-html.light nav button,
-html.light nav span {
-  color: #374151;
-}
-
-html.light nav a:hover,
-html.light nav button:hover {
-  color: #9333ea;
-}
-
-/* Card content */
-html.light .card h1,
-html.light .card h2,
-html.light .card h3,
-html.light .card h4,
-html.light .card-elevated h1,
-html.light .card-elevated h2,
-html.light .card-elevated h3,
-html.light .card-elevated h4,
-html.light .product-card h1,
-html.light .product-card h2,
-html.light .product-card h3,
-html.light .product-card h4 {
-  color: #111827;
-}
-
-html.light .card p,
-html.light .card span,
-html.light .card-elevated p,
-html.light .card-elevated span,
-html.light .product-card p,
-html.light .product-card span {
-  color: #4b5563;
-}
-
-/* Footer text */
-html.light footer h3,
-html.light footer h4 {
-  color: #111827;
-}
-
-html.light footer p,
-html.light footer span,
-html.light footer a {
-  color: #4b5563;
-}
-
-html.light footer a:hover {
-  color: #9333ea;
-}
-
-/* Order Tracking Timeline - Light Mode */
-html.light .text-green-500 {
-  color: #16a34a !important;
-}
-
-html.light .text-blue-500 {
-  color: #2563eb !important;
-}
-
-html.light .text-accent-500 {
-  color: #7c3aed !important;
-}
-
-html.light .text-silver-600 {
-  color: #4b5563 !important;
-}
-
-/* Make sure bg-dark-600 circles are visible */
-html.light .bg-dark-600 {
-  background-color: #e5e7eb !important;
-}
-
-/* Light mode cards */
-html.light .card,
-html.light .card-elevated,
-html.light .product-card {
-  @apply bg-white border-gray-200;
-}
-
-html.light .product-card:hover {
-  @apply border-primary-300 shadow-xl shadow-primary-500/10;
-}
-
-/* Light mode inputs */
-html.light .input-field {
-  @apply bg-white border-gray-300 text-gray-900 placeholder:text-gray-400;
-}
-
-/* Light mode buttons */
-html.light .btn-primary {
-  @apply bg-primary-600 text-white hover:bg-primary-700;
-}
-
-html.light .btn-secondary {
-  @apply border-primary-500 text-primary-600 hover:bg-primary-50;
-}
-
-html.light .btn-ghost {
-  @apply bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200;
-}
-
-/* Light mode sections */
-html.light .section-dark {
-  @apply bg-gray-50;
-}
-
-html.light .section-gradient {
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
-}
-
-html.light .hero-gradient {
-  background: radial-gradient(ellipse at top, #e0f2fe 0%, #f8fafc 70%);
-}
-
-/* Light mode scrollbar */
-html.light ::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-html.light ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
-
-html.light ::-webkit-scrollbar-thumb:hover {
-  background: #0ea5e9;
-}
-
-/* ============================================
-   COMPREHENSIVE LIGHT MODE OVERRIDES
-   These override bg-dark-*, text-*, border-* classes
-   ============================================ */
-
-/* Background Colors - Dark to Light */
-html.light .bg-dark-950 {
-  background-color: #f3f4f6;
-}
-
-html.light .bg-dark-900 {
-  background-color: #f9fafb;
-}
-
-html.light .bg-dark-800 {
-  background-color: #ffffff;
-}
-
-html.light .bg-dark-700 {
-  background-color: #f3f4f6;
-}
-
-html.light .bg-dark-600 {
-  background-color: #e5e7eb;
-}
-
-html.light .bg-dark-500 {
-  background-color: #d1d5db;
-}
-
-/* Hover Background Colors */
-html.light .hover\:bg-dark-700:hover {
-  background-color: #f3f4f6;
-}
-
-html.light .hover\:bg-dark-600:hover {
-  background-color: #e5e7eb;
-}
-
-html.light .hover\:bg-dark-800:hover {
-  background-color: #f9fafb;
-}
-
-/* Text Colors - Custom classes only (silver-*) */
-html.light .text-silver-50 {
-  color: #030712;
-}
-
-html.light .text-silver-100 {
-  color: #111827;
-}
-
-html.light .text-silver-200 {
-  color: #1f2937;
-}
-
-html.light .text-silver-300 {
-  color: #374151;
-}
-
-html.light .text-silver-400 {
-  color: #4b5563;
-}
-
-html.light .text-silver-500 {
-  color: #6b7280;
-}
-
-html.light .text-silver-600 {
-  color: #9ca3af;
-}
-
-/* Hover Text Colors */
-html.light .hover\:text-silver-200:hover {
-  color: #1f2937;
-}
-
-/* Light Mode - Make product card text dark */
-html.light .product-card h1,
-html.light .product-card h2,
-html.light .product-card h3,
-html.light .product-card h4,
-html.light .product-card h5 {
-  color: #111827 !important;
-}
-
-html.light .product-card span[class*="text-xl"],
-html.light .product-card span[class*="font-bold"] {
-  color: #111827 !important;
-}
-
-/* Light Mode - Section Headings */
-html.light section h1,
-html.light section h2,
-html.light section h3,
-html.light main h1,
-html.light main h2,
-html.light main h3 {
-  color: #111827 !important;
-}
-
-/* Text Dark -> Light in Light Mode */
-html.light .text-dark-500 {
-  color: #9ca3af;
-}
-
-html.light .text-dark-400 {
-  color: #6b7280;
-}
-
-/* Border Colors */
-html.light .border-dark-700 {
-  border-color: #e5e7eb;
-}
-
-html.light .border-dark-600 {
-  border-color: #d1d5db;
-}
-
-html.light .border-dark-500 {
-  border-color: #9ca3af;
-}
-
-/* Hover Border Colors */
-html.light .hover\:border-dark-600:hover {
-  border-color: #d1d5db;
-}
-
-html.light .hover\:border-dark-500:hover {
-  border-color: #9ca3af;
-}
-
-/* Accent colors adjustment for light mode */
-html.light .text-accent-500 {
-  color: #9333ea;
-}
-
-html.light .text-accent-400 {
-  color: #a855f7;
-}
-
-html.light .bg-accent-500 {
-  background-color: #9333ea;
-}
-
-html.light .bg-accent-500\/10 {
-  background-color: rgba(124, 58, 237, 0.1);
-}
-
-html.light .bg-accent-500\/20 {
-  background-color: rgba(124, 58, 237, 0.2);
-}
-
-html.light .border-accent-500 {
-  border-color: #9333ea;
-}
-
-html.light .border-accent-500\/30 {
-  border-color: rgba(124, 58, 237, 0.3);
-}
-
-html.light .border-accent-500\/50 {
-  border-color: rgba(124, 58, 237, 0.5);
-}
-
-html.light .hover\:text-accent-500:hover {
-  color: #9333ea;
-}
-
-html.light .hover\:border-accent-500:hover {
-  border-color: #9333ea;
-}
-
-/* Gradients */
-html.light .from-dark-800 {
-  --tw-gradient-from: #f9fafb;
-}
-
-html.light .via-dark-700 {
-  --tw-gradient-stops: var(--tw-gradient-from), #f3f4f6, var(--tw-gradient-to);
-}
-
-html.light .to-dark-800 {
-  --tw-gradient-to: #f9fafb;
-}
-
-/* Shadow adjustments */
-html.light .shadow-glow {
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
-}
-
-html.light .shadow-glow-sm {
-  box-shadow: 0 0 10px rgba(124, 58, 237, 0.15);
-}
-
-html.light .shadow-accent-500\/10 {
-  --tw-shadow-color: rgba(124, 58, 237, 0.1);
-}
-
-html.light .shadow-black\/20 {
-  --tw-shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-/* Ring colors */
-html.light .focus\:ring-accent-500\/20:focus {
-  --tw-ring-color: rgba(124, 58, 237, 0.2);
-}
-
-html.light .focus\:border-accent-500:focus {
-  border-color: #a855f7;
-}
-
-/* Placeholder colors */
-html.light .placeholder\:text-silver-500::placeholder {
-  color: #9ca3af;
-}
-
-/* Divide colors */
-html.light .divide-dark-700> :not([hidden])~ :not([hidden]) {
-  border-color: #e5e7eb;
-}
-
-html.light .divide-dark-600> :not([hidden])~ :not([hidden]) {
-  border-color: #d1d5db;
-}
-
-/* Status colors - keep consistent */
-html.light .bg-green-500\/20 {
-  background-color: rgba(34, 197, 94, 0.15);
-}
-
-html.light .bg-blue-500\/20 {
-  background-color: rgba(59, 130, 246, 0.15);
-}
-
-html.light .bg-red-500\/10 {
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-html.light .bg-red-500\/30 {
-  background-color: rgba(239, 68, 68, 0.15);
-}
-
-/* Footer specific */
-html.light footer {
-  background-color: #f3f4f6;
-  border-color: #e5e7eb;
-}
-
-/* Custom Scrollbar - Dark Theme */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #12121a;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2f2f52;
-  border-radius: 4px;
+  background: #d1d5db;
+  border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f5d4;
+  background: #9ca3af;
 }
 
 /* ============================================
-   VorionMart Design System Components
+   GLASSMORPHISM
    ============================================ */
-
-/* Glassmorphism - Dark */
 .glass {
-  background: rgba(18, 18, 26, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .glass-light {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-/* Gradient Text */
+/* ============================================
+   GRADIENT TEXT
+   ============================================ */
 .gradient-text {
   @apply bg-gradient-to-r from-accent-500 via-primary-500 to-accent-500 bg-clip-text text-transparent;
   background-size: 200% auto;
@@ -614,36 +102,37 @@ html.light footer {
 }
 
 /* ============================================
-   Button Styles - Premium Dark Theme
+   BUTTONS — Premium Design
    ============================================ */
-
 .btn-primary {
-  @apply relative bg-accent-500 text-dark-900 px-6 py-3 rounded-xl font-semibold hover:bg-accent-400 transition-all duration-300 shadow-glow active:scale-95 overflow-hidden;
+  @apply relative bg-accent-500 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 active:scale-[0.97] overflow-hidden;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.2), 0 4px 12px rgba(99, 102, 241, 0.12);
 }
 
-.btn-primary::before {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full hover:translate-x-full transition-transform duration-700;
+.btn-primary:hover {
+  @apply bg-accent-600;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3), 0 8px 24px rgba(99, 102, 241, 0.18);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  @apply bg-transparent text-accent-500 px-6 py-3 rounded-xl font-semibold border-2 border-accent-500/50 hover:border-accent-500 hover:bg-accent-500/10 transition-all duration-300 active:scale-95;
+  @apply bg-transparent text-accent-600 px-6 py-3 rounded-xl font-semibold border-2 border-accent-500/30 hover:border-accent-500 hover:bg-accent-50 transition-all duration-300 active:scale-[0.97];
 }
 
 .btn-ghost {
-  @apply bg-dark-700/50 text-silver-200 px-6 py-3 rounded-xl font-semibold border border-dark-600 hover:bg-dark-600 hover:text-white transition-all duration-300 active:scale-95;
+  @apply bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold border border-gray-200 hover:bg-gray-200 hover:text-gray-900 transition-all duration-300 active:scale-[0.97];
 }
 
 .btn-accent {
-  @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-500 hover:to-primary-600 transition-all duration-300 shadow-glow-purple active:scale-95;
+  @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-primary-500 hover:to-primary-600 transition-all duration-300 active:scale-[0.97];
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
 }
 
 /* ============================================
-   Input Styles - Dark Theme
+   INPUT FIELDS
    ============================================ */
-
 .input-field {
-  @apply w-full px-4 py-3 rounded-xl bg-dark-800 border border-dark-600 text-white placeholder:text-silver-500 focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 outline-none transition-all duration-200;
+  @apply w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-accent-500 focus:ring-2 focus:ring-accent-500/10 outline-none transition-all duration-200;
 }
 
 .input-field-error {
@@ -651,39 +140,54 @@ html.light footer {
 }
 
 /* ============================================
-   Card Styles - Premium Dark
+   CARDS — Premium System
    ============================================ */
-
 .card {
-  @apply bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden transition-all duration-300 hover:border-dark-500;
+  @apply bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300;
+}
+
+.card:hover {
+  @apply border-gray-200;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
 }
 
 .card-elevated {
-  @apply bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden shadow-lg shadow-black/20 transition-all duration-300 hover:shadow-xl hover:shadow-accent-500/10 hover:border-accent-500/30;
+  @apply bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
-.product-card {
-  @apply bg-dark-800 border border-dark-600 rounded-2xl overflow-hidden transition-all duration-300 ease-out;
-}
-
-.product-card:hover {
-  @apply -translate-y-2 shadow-xl shadow-accent-500/10 border-accent-500/30;
+.card-elevated:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 40px rgba(0, 0, 0, 0.08);
+  @apply border-gray-200;
 }
 
 /* ============================================
-   Badge Styles
+   PRODUCT CARD — Refined Premium
    ============================================ */
+.product-card {
+  @apply bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-500 ease-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
 
+.product-card:hover {
+  @apply border-gray-200;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-4px);
+}
+
+/* ============================================
+   BADGES
+   ============================================ */
 .badge {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide;
 }
 
 .badge-sale {
-  @apply bg-gradient-to-r from-red-500 to-pink-500 text-white;
+  @apply bg-red-500 text-white;
 }
 
 .badge-new {
-  @apply bg-gradient-to-r from-accent-500 to-accent-600 text-dark-900;
+  @apply bg-accent-500 text-white;
 }
 
 .badge-featured {
@@ -695,11 +199,10 @@ html.light footer {
 }
 
 /* ============================================
-   Trust Badges - COD First
+   TRUST BADGES
    ============================================ */
-
 .trust-badge {
-  @apply flex items-center gap-2 px-4 py-2 bg-dark-700/50 border border-dark-600 rounded-xl text-silver-300;
+  @apply flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-100 rounded-xl text-gray-600;
 }
 
 .trust-badge-icon {
@@ -707,28 +210,29 @@ html.light footer {
 }
 
 /* ============================================
-   Sticky Mobile CTA
+   STICKY MOBILE CTA
    ============================================ */
-
 .sticky-cta {
-  @apply fixed bottom-0 left-0 right-0 z-50 p-4 glass border-t border-dark-600 md:hidden animate-slide-up;
+  @apply fixed bottom-0 left-0 right-0 z-50 p-4 glass border-t border-gray-200 md:hidden animate-slide-up;
 }
 
 /* ============================================
-   Loading & Skeleton
+   LOADING & SKELETON
    ============================================ */
-
 .skeleton {
-  @apply animate-pulse bg-dark-700 rounded;
+  @apply animate-pulse bg-gray-200 rounded;
 }
 
 .shimmer {
   @apply relative overflow-hidden;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.03), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
 
+/* ============================================
+   PRICE REVEAL ANIMATION
+   ============================================ */
 .price-reveal__mrp,
 .price-reveal__sale,
 .price-reveal__badge {
@@ -774,38 +278,19 @@ html.light footer {
 }
 
 @keyframes price-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes price-strike-draw {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 @keyframes price-sale-pop {
-  0% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.96);
-  }
-  65% {
-    opacity: 1;
-    transform: translateY(-2px) scale(1.02);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  0%   { opacity: 0; transform: translateY(10px) scale(0.96); }
+  65%  { opacity: 1; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -816,7 +301,6 @@ html.light footer {
     transform: none;
     animation: none;
   }
-
   .price-reveal__mrp-value::after {
     transform: scaleX(1);
     animation: none;
@@ -824,27 +308,24 @@ html.light footer {
 }
 
 /* ============================================
-   Section Styles
+   SECTION STYLES
    ============================================ */
-
 .section-dark {
-  @apply bg-dark-900 py-16 md:py-24;
+  @apply bg-gray-50 py-16 md:py-24;
 }
 
 .section-gradient {
-  background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #0a0a0f 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f3f4f6 50%, #ffffff 100%);
   @apply py-16 md:py-24;
 }
 
-/* Hero specific */
 .hero-gradient {
-  background: radial-gradient(ellipse at top, #1a1a2e 0%, #0a0a0f 70%);
+  background: radial-gradient(ellipse at top, #f9fafb 0%, #ffffff 70%);
 }
 
 /* ============================================
-   Typography Utilities
+   TYPOGRAPHY
    ============================================ */
-
 .text-balance {
   text-wrap: balance;
 }
@@ -854,54 +335,335 @@ html.light footer {
 }
 
 /* ============================================
-   Glow Effects
+   GLOW EFFECTS
    ============================================ */
-
 .glow-accent {
-  box-shadow: 0 0 20px rgba(0, 245, 212, 0.4);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
 .glow-accent-hover:hover {
-  box-shadow: 0 0 30px rgba(0, 245, 212, 0.5);
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
 }
 
 .border-glow {
-  @apply border border-accent-500/50 shadow-glow-sm;
+  @apply border border-accent-500/30;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.shadow-glow-sm {
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+}
+
+.shadow-glow-purple {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.25);
 }
 
 /* ============================================
-   Responsive Container
+   CONTAINER
    ============================================ */
-
-
 .container {
   @apply max-w-7xl mx-auto;
 }
 
 /* ============================================
-   Form Autofill Fixes
+   DARK SECTION — Preserve dark in light mode
    ============================================ */
+.dark-section {
+  background-color: #1f2937 !important;
+}
+
+.dark-section h1,
+.dark-section h2,
+.dark-section h3,
+.dark-section h4,
+.dark-section h5,
+.dark-section h6 {
+  color: #ffffff !important;
+}
+
+.dark-section p,
+.dark-section span,
+.dark-section label {
+  color: #d1d5db !important;
+}
+
 /* ============================================
-   Form Autofill Fixes
+   ADMIN PANEL PROTECTION
    ============================================ */
-/* Default (Dark Mode) */
+html.light aside.bg-gray-900 {
+  background-color: #111827 !important;
+}
+
+html.light aside.bg-gray-900 * {
+  color: inherit !important;
+}
+
+html.light aside.bg-gray-900 button,
+html.light aside.bg-gray-900 a {
+  color: inherit !important;
+}
+
+/* ============================================
+   LIGHT MODE OVERRIDES
+   ============================================ */
+html.light body {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+html.light .glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+html.light .dark-section {
+  background: linear-gradient(to right, #374151, #4b5563, #374151) !important;
+}
+
+html.light .card,
+html.light .card-elevated,
+html.light .product-card {
+  @apply bg-white border-gray-100;
+}
+
+html.light .product-card:hover {
+  @apply border-gray-200;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+html.light .input-field {
+  @apply bg-white border-gray-200 text-gray-900 placeholder:text-gray-400;
+}
+
+html.light .btn-primary {
+  @apply bg-accent-500 text-white;
+}
+
+html.light .btn-secondary {
+  @apply border-accent-500/30 text-accent-600 hover:bg-accent-50;
+}
+
+/* Background Color Overrides */
+html.light .bg-dark-950 { background-color: #f3f4f6; }
+html.light .bg-dark-900 { background-color: #f9fafb; }
+html.light .bg-dark-800 { background-color: #ffffff; }
+html.light .bg-dark-700 { background-color: #f3f4f6; }
+html.light .bg-dark-600 { background-color: #e5e7eb; }
+html.light .bg-dark-500 { background-color: #d1d5db; }
+
+html.light .hover\:bg-dark-700:hover { background-color: #f3f4f6; }
+html.light .hover\:bg-dark-600:hover { background-color: #e5e7eb; }
+html.light .hover\:bg-dark-800:hover { background-color: #f9fafb; }
+
+/* Text Color Overrides */
+html.light .text-silver-50  { color: #030712; }
+html.light .text-silver-100 { color: #111827; }
+html.light .text-silver-200 { color: #1f2937; }
+html.light .text-silver-300 { color: #374151; }
+html.light .text-silver-400 { color: #4b5563; }
+html.light .text-silver-500 { color: #6b7280; }
+html.light .text-silver-600 { color: #9ca3af; }
+
+html.light .text-dark-500 { color: #9ca3af; }
+html.light .text-dark-400 { color: #6b7280; }
+
+/* Border Color Overrides */
+html.light .border-dark-700 { border-color: #e5e7eb; }
+html.light .border-dark-600 { border-color: #d1d5db; }
+html.light .border-dark-500 { border-color: #9ca3af; }
+
+/* Dividers */
+html.light .divide-dark-700 > :not([hidden]) ~ :not([hidden]) { border-color: #e5e7eb; }
+html.light .divide-dark-600 > :not([hidden]) ~ :not([hidden]) { border-color: #d1d5db; }
+
+/* Footer — Protect dark design in light mode */
+html.light footer.dark-section {
+  background-color: #111827 !important;
+  color: #d1d5db !important;
+  border-color: #1f2937 !important;
+}
+
+/* Gradient Overrides */
+html.light .from-dark-800 { --tw-gradient-from: #f9fafb; }
+html.light .via-dark-700 { --tw-gradient-stops: var(--tw-gradient-from), #f3f4f6, var(--tw-gradient-to); }
+html.light .to-dark-800 { --tw-gradient-to: #f9fafb; }
+
+/* Shadow Overrides */
+html.light .shadow-black\/20 { --tw-shadow-color: rgba(0, 0, 0, 0.08); }
+
+/* Status Colors */
+html.light .bg-green-500\/20 { background-color: rgba(34, 197, 94, 0.12); }
+html.light .bg-blue-500\/20 { background-color: rgba(59, 130, 246, 0.12); }
+html.light .bg-red-500\/10 { background-color: rgba(239, 68, 68, 0.08); }
+html.light .bg-red-500\/30 { background-color: rgba(239, 68, 68, 0.12); }
+
+/* ============================================
+   AUTOFILL FIXES
+   ============================================ */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important;
-  /* Matches dark-800 approx */
-  -webkit-text-fill-color: #ffffff !important;
-  transition: background-color 5000s ease-in-out 0s;
-  caret-color: white;
-}
-
-/* Light Mode Override */
-html.light input:-webkit-autofill,
-html.light input:-webkit-autofill:hover,
-html.light input:-webkit-autofill:focus,
-html.light input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px white inset !important;
   -webkit-text-fill-color: #111827 !important;
-  caret-color: black;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: #111827;
+}
+
+/* ============================================
+   SEARCH DROPDOWN SCROLLBAR
+   ============================================ */
+.navbar-search-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent;
+}
+
+.navbar-search-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.navbar-search-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.navbar-search-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #d1d5db 0%, #9ca3af 100%);
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+}
+
+.navbar-search-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%);
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR — Filters Sidebar
+   ============================================ */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 99px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
+/* ============================================
+   FILTER SIDEBAR — Premium Styles
+   ============================================ */
+.filter-sidebar {
+  @apply bg-white rounded-2xl border border-gray-100 overflow-hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.02);
+}
+
+.filter-section-title {
+  @apply text-[11px] font-bold uppercase tracking-[0.1em] text-gray-400 mb-3;
+}
+
+.filter-checkbox {
+  @apply appearance-none w-[18px] h-[18px] rounded-md border-2 border-gray-200 bg-white checked:bg-accent-500 checked:border-accent-500 transition-all cursor-pointer shrink-0;
+}
+
+.filter-checkbox:checked {
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* ============================================
+   SORT SELECT — Clean Appearance
+   ============================================ */
+.sort-select {
+  @apply appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-gray-700 cursor-pointer outline-none transition-all;
+}
+
+.sort-select:focus {
+  @apply border-accent-500 ring-2 ring-accent-500/10;
+}
+
+/* ============================================
+   PRODUCT GRID — Premium Hover States
+   ============================================ */
+.product-grid-card {
+  @apply relative bg-white border border-gray-100 rounded-2xl overflow-hidden transition-all duration-500 ease-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.product-grid-card:hover {
+  @apply border-gray-200;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  transform: translateY(-6px);
+}
+
+.product-grid-card .product-image {
+  @apply transition-transform duration-700 ease-out;
+}
+
+.product-grid-card:hover .product-image {
+  transform: scale(1.08);
+}
+
+.product-grid-card .product-action-overlay {
+  @apply opacity-0 translate-y-3 transition-all duration-300;
+}
+
+.product-grid-card:hover .product-action-overlay {
+  @apply opacity-100 translate-y-0;
+}
+
+/* ============================================
+   MOBILE FILTER DRAWER
+   ============================================ */
+.filter-drawer-overlay {
+  @apply fixed inset-0 bg-black/30 backdrop-blur-sm z-50 transition-opacity duration-300;
+}
+
+.filter-drawer {
+  @apply fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-y-auto transition-transform duration-300;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ============================================
+   PAGE HEADER — Products Page
+   ============================================ */
+.page-header {
+  @apply bg-white border-b border-gray-100;
+}
+
+.page-header-inner {
+  @apply w-full max-w-[1920px] mx-auto px-6 lg:px-12 py-8;
+}
+
+/* ============================================
+   TOOLBAR
+   ============================================ */
+.toolbar {
+  @apply bg-white border border-gray-100 rounded-xl p-3 flex items-center justify-between gap-4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+/* ============================================
+   ACTIVE FILTER TAG
+   ============================================ */
+.active-filter-tag {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-50 text-accent-600 rounded-lg text-xs font-semibold border border-accent-100 transition-all hover:bg-accent-100;
 }

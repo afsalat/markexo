@@ -57,9 +57,9 @@ export function AuthProvider({ children, storageKeyPrefix = 'admin' }: { childre
         setIsAuthenticated(false);
         setExpiryWarning(false);
 
-        if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+        if (pathname && pathname.startsWith('/admin') && pathname !== '/admin/login') {
             router.push('/admin/login');
-        } else if (pathname.startsWith('/partner') && pathname !== '/partner/login') {
+        } else if (pathname && pathname.startsWith('/partner') && pathname !== '/partner/login') {
             router.push('/partner/login');
         }
     }, [router, pathname, storageKeyPrefix]);

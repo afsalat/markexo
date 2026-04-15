@@ -1,44 +1,39 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { ShoppingCart, Search, Menu, X, User, ChevronDown, Truck, Shield, Sun, Moon } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Zap, Sparkles, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/lib/cart';
 import { useRouter } from 'next/navigation';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 
 export default function Header() {
     const router = useRouter();
+    const { totalItems } = useCart();
+    const { customer, isAuthenticated, logout } = useCustomerAuth();
+
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-    const searchRef = useRef<HTMLDivElement>(null);
-    const categoriesRef = useRef<HTMLLIElement>(null);
-    const { totalItems } = useCart();
-    const { customer, isAuthenticated, logout } = useCustomerAuth();
-    const { theme, toggleTheme } = useTheme();
     const [isScrolled, setIsScrolled] = useState(false);
     const [categories, setCategories] = useState<any[]>([]);
     const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-    const megaMenuTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
 
-    // Handle scroll for shrink effect
+    const searchRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
+            setIsScrolled(window.scrollY > 12);
         };
+
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Fetch categories for mega-menu
     useEffect(() => {
         const loadCategories = async () => {
             setIsLoadingCategories(true);
@@ -51,75 +46,78 @@ export default function Header() {
                 setIsLoadingCategories(false);
             }
         };
+
         loadCategories();
     }, []);
 
-    const handleMouseEnterCategories = () => {
-        if (megaMenuTimerRef.current) clearTimeout(megaMenuTimerRef.current);
-        setIsCategoriesOpen(true);
-    };
-
-    const handleMouseLeaveCategories = () => {
-        megaMenuTimerRef.current = setTimeout(() => {
-            setIsCategoriesOpen(false);
-        }, 300); // 300ms delay to give user time to move cursor to menu
-    };
-
-    // Debounce search suggestions
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (searchQuery.trim().length >= 2) {
-                setIsLoadingSuggestions(true);
-                try {
-                    const [productsData, categoriesData] = await Promise.all([
-                        fetchProducts({ search: searchQuery, page_size: '4' }),
-                        fetchCategories({ search: searchQuery })
-                    ]);
-
-                    const products = (productsData.results || []).map((p: any) => ({ ...p, type: 'product' }));
-                    const categories = (categoriesData.results || []).slice(0, 2).map((c: any) => ({ ...c, type: 'category' }));
-
-                    setSuggestions([...categories, ...products]);
-                    setShowSuggestions(true);
-                } catch (error) {
-                    console.error('Failed to fetch suggestions:', error);
-                    setSuggestions([]);
-                } finally {
-                    setIsLoadingSuggestions(false);
-                }
-            } else {
+            if (searchQuery.trim().length < 2) {
                 setSuggestions([]);
                 setShowSuggestions(false);
+                return;
+            }
+
+            setIsLoadingSuggestions(true);
+            try {
+                const [productsData, categoriesData] = await Promise.all([
+                    fetchProducts({ search: searchQuery, page_size: '4' }),
+                    fetchCategories({ search: searchQuery }),
+                ]);
+
+                const productMatches = (productsData.results || []).map((product: any) => ({
+                    ...product,
+                    type: 'product',
+                }));
+                const categoryMatches = (categoriesData.results || [])
+                    .slice(0, 3)
+                    .map((category: any) => ({
+                        ...category,
+                        type: 'category',
+                    }));
+
+                setSuggestions([...categoryMatches, ...productMatches]);
+                setShowSuggestions(true);
+            } catch (error) {
+                console.error('Failed to fetch suggestions:', error);
+                setSuggestions([]);
+            } finally {
+                setIsLoadingSuggestions(false);
             }
         }, 300);
 
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    // Close suggestions on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
                 setShowSuggestions(false);
             }
-            if (categoriesRef.current && !categoriesRef.current.contains(event.target as Node)) {
-                setIsCategoriesOpen(false);
-            }
         };
+
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleSearch = () => {
-        if (searchQuery.trim()) {
-            router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
-            setIsSearchOpen(false);
-            setShowSuggestions(false);
-        }
+    const closeMenus = () => {
+        setIsMenuOpen(false);
+        setIsSearchOpen(false);
+        setShowSuggestions(false);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
+    const handleSearch = () => {
+        if (!searchQuery.trim()) {
+            return;
+        }
+
+        router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+        setIsSearchOpen(false);
+        setShowSuggestions(false);
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent) => {
+        if (event.key === 'Enter') {
             handleSearch();
         }
     };
@@ -130,382 +128,353 @@ export default function Header() {
         } else {
             router.push(`/products/${slug}`);
         }
+
         setSearchQuery('');
         setShowSuggestions(false);
         setIsSearchOpen(false);
     };
 
-    return (
-        <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'shadow-xl bg-dark-900/95 backdrop-blur-md' : 'bg-dark-900'}`}>
-            {/* Top Bar - Trust Signals - Hide on scroll */}
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out bg-gradient-to-r from-dark-800 via-dark-700 to-dark-800 text-silver-300 text-sm border-b border-dark-600 ${isScrolled ? 'h-0 opacity-0 border-transparent' : 'h-[36px] opacity-100'}`}>
-                <div className="container mx-auto px-4 h-full flex justify-between items-center">
-                    <div className="flex items-center gap-6">
-                        <span className="flex items-center gap-2 text-accent-500 font-medium">
-                            <Truck size={16} />
-                            Cash on Delivery Available
-                        </span>
-                        <span className="hidden sm:flex items-center gap-2">
-                            <Shield size={16} className="text-accent-500" />
-                            Premium Quality Guaranteed
-                        </span>
-                    </div>
-                    <div className="hidden md:flex gap-4 text-silver-400">
-                        <Link href="/track-order" className="hover:text-accent-500 transition-colors">Track Order</Link>
-                        <Link href="/contact" className="hover:text-accent-500 transition-colors">Contact</Link>
-                    </div>
+    const mainNavLinks = [
+        { href: '/', label: 'Home' },
+        { href: '/products', label: 'Collection' },
+    ];
+
+    const specialNavLinks = [
+        { href: '/trending', label: 'Trending', icon: <Zap size={14} className="fill-current" /> },
+        { href: '/new-arrivals', label: 'New Arrivals', icon: <Sparkles size={14} /> },
+    ];
+
+    const suggestionDropdown =
+        showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) ? (
+            <div className="absolute left-0 right-0 top-full z-50 mt-4 mb-5 overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)]">
+                <div className="navbar-search-scroll max-h-[min(24rem,calc(100vh-8rem))] overflow-x-hidden overflow-y-auto overscroll-contain">
+                    {isLoadingSuggestions ? (
+                        <div className="px-5 py-4 text-sm text-gray-500">Searching...</div>
+                    ) : (
+                        <>
+                            {suggestions.map((item) => (
+                                <button
+                                    key={`${item.type}-${item.id}`}
+                                    onClick={() => handleSuggestionClick(item.slug, item.type)}
+                                    className="flex w-full items-center gap-3 border-b border-gray-100 px-5 py-3 text-left transition last:border-b-0 hover:bg-gray-50"
+                                >
+                                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
+                                        {item.image ? (
+                                            <img
+                                                src={item.image}
+                                                alt={item.name}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="text-sm font-semibold text-gray-500">
+                                                {item.name.charAt(0)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-gray-900">
+                                            {item.name}
+                                        </p>
+                                        <p className="mt-0.5 text-xs text-gray-500">
+                                            {item.type === 'product'
+                                                ? `\u20B9${(
+                                                      item.current_price ||
+                                                      item.price ||
+                                                      0
+                                                  ).toLocaleString()}`
+                                                : 'Category'}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
+                            <button
+                                onClick={handleSearch}
+                                className="w-full px-5 py-4 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                            >
+                                View all results for "{searchQuery}"
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
+        ) : null;
 
-            {/* Main Header */}
-            <div className={`container mx-auto px-4 transition-all duration-300 ${isScrolled ? 'py-2' : 'py-4'}`}>
-                <div className="flex items-center justify-between gap-4">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center group">
+    return (
+        <header
+            className={`sticky top-0 z-50 border-b border-gray-200 bg-white/95 transition-shadow duration-300 backdrop-blur ${
+                isScrolled ? 'shadow-[0_12px_40px_rgba(15,23,42,0.08)]' : 'shadow-none'
+            }`}
+        >
+            <div className="container mx-auto px-4">
+                <div className="flex min-h-[76px] items-center gap-3 lg:gap-6">
+                    <Link href="/" className="ml-2 mr-3 shrink-0 md:ml-4 md:mr-6" onClick={closeMenus}>
                         <img
-                            src="/logo-white-text.png"
+                            src="/logo-black-text.png"
                             alt="VorionMart"
-                            className="h-12 md:h-16 w-auto object-contain transition-all duration-300"
+                            className="h-10 w-auto object-contain md:h-12"
                         />
                     </Link>
 
-                    {/* Search Bar - Desktop */}
-                    <div className="hidden md:flex flex-1 max-w-xl mx-8" ref={searchRef}>
-                        <div className="relative w-full">
+                    <nav className="hidden items-center gap-7 lg:flex">
+                        {mainNavLinks.map((link) => (
+                            <Link
+                                key={link.label}
+                                href={link.href}
+                                className="text-sm font-medium text-gray-700 transition-colors hover:text-black"
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                        
+                        {/* Categories Dropdown */}
+                        <div 
+                            className="flex items-center h-full"
+                            onMouseEnter={() => setIsCategoryDropdownOpen(true)}
+                            onMouseLeave={() => setIsCategoryDropdownOpen(false)}
+                        >
+                            <button className="flex items-center gap-1 text-sm font-bold text-gray-800 transition-colors hover:text-accent-600 focus:outline-none py-6 px-1">
+                                Categories <ChevronDown size={14} className={`transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-accent-600' : 'text-gray-400'}`} />
+                            </button>
+                            
+                            {/* Mega Menu Overlay */}
+                            <div className={`fixed left-0 w-full top-[76px] transition-all duration-300 origin-top shadow-2xl z-[60] border-t border-gray-900 ${isCategoryDropdownOpen ? 'opacity-100 scale-y-100 visible pointer-events-auto' : 'opacity-0 scale-y-95 invisible pointer-events-none'}`}>
+                                <div className="bg-[#0a0a0a] w-full max-h-[calc(100vh-76px)] overflow-y-auto">
+                                    <div className="container mx-auto px-4 py-10 relative">
+                                        {isLoadingCategories ? (
+                                            <div className="text-sm text-gray-500 py-10 text-center">Loading categories...</div>
+                                        ) : (
+                                            <>
+                                                <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-6 gap-8">
+                                                    {categories.map((category) => (
+                                                        <div key={category.id} className="break-inside-avoid mb-8">
+                                                            <Link href={`/products?category=${category.slug}`} className="group inline-block mb-4">
+                                                                <h3 className="text-white text-[12px] font-bold uppercase tracking-wider relative inline-block pb-1">
+                                                                    {category.name}
+                                                                    <span className="absolute bottom-0 left-0 w-8 h-[2px] bg-[#00E5FF] transition-all group-hover:w-full"></span>
+                                                                </h3>
+                                                            </Link>
+                                                            
+                                                            {category.children && category.children.length > 0 && (
+                                                                <ul className="space-y-2.5">
+                                                                    {category.children.map((child: any) => (
+                                                                        <li key={child.id}>
+                                                                            <Link 
+                                                                                href={`/products?category=${child.slug}`}
+                                                                                className="text-gray-400 text-[13px] hover:text-white transition-colors"
+                                                                            >
+                                                                                {child.name}
+                                                                            </Link>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <div className="w-full h-1 bg-gradient-to-r from-transparent via-[#00E5FF]/20 to-transparent absolute bottom-0 left-0" />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="flex h-5 w-px bg-gray-200"></div>
+                        
+                        <div className="flex items-center gap-6 bg-gray-50/80 px-4 py-2 rounded-full border border-gray-100">
+                            {specialNavLinks.map((link) => (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    className="flex items-center gap-1.5 text-sm font-bold text-gray-800 transition-colors hover:text-accent-600"
+                                >
+                                    <span className="text-accent-500">{link.icon}</span>
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </div>
+                    </nav>
+
+                    <div className="hidden flex-1 md:block" ref={searchRef}>
+                        <div className="relative mx-auto max-w-xl">
                             <input
                                 type="text"
-                                placeholder="Search premium products..."
+                                placeholder="Search products"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(event) => setSearchQuery(event.target.value)}
                                 onKeyDown={handleKeyDown}
                                 onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
-                                className={`w-full pl-4 pr-12 rounded-xl bg-dark-800 border border-dark-700 text-white placeholder:text-silver-500 focus:border-accent-500 focus:ring-1 focus:ring-accent-500/20 outline-none transition-all ${isScrolled ? 'py-2' : 'py-3'}`}
+                                className="h-12 w-full rounded-full border border-gray-200 bg-gray-50 pl-5 pr-14 text-sm text-gray-900 outline-none transition focus:border-gray-400 focus:bg-white"
                             />
                             <button
                                 onClick={handleSearch}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-accent-500 text-dark-900 p-2 rounded-lg hover:bg-accent-400 transition-colors scale-90"
+                                className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-black text-white transition hover:bg-gray-800"
+                                aria-label="Search"
                             >
                                 <Search size={18} />
                             </button>
 
-                            {/* Search Suggestions Dropdown */}
-                            {showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-dark-800 border border-dark-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {isLoadingSuggestions ? (
-                                        <div className="px-4 py-3 text-silver-400 text-sm">Searching...</div>
-                                    ) : (
-                                        <>
-                                            {suggestions.map((item) => (
-                                                <button
-                                                    key={`${item.type}-${item.id}`}
-                                                    onClick={() => handleSuggestionClick(item.slug, item.type)}
-                                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-dark-700 transition-colors text-left"
-                                                >
-                                                    <img
-                                                        src={item.image || '/placeholder.png'}
-                                                        alt={item.name}
-                                                        className={`w-10 h-10 object-cover ${item.type === 'category' ? 'rounded-full' : 'rounded-lg'}`}
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-white text-sm font-medium truncate">{item.name}</p>
-                                                        {item.type === 'product' ? (
-                                                            <p className="text-accent-500 text-sm font-bold">₹{(item.current_price || item.price || 0).toLocaleString()}</p>
-                                                        ) : (
-                                                            <p className="text-silver-400 text-xs mt-0.5">Category</p>
-                                                        )}
-                                                    </div>
-                                                </button>
-                                            ))}
-                                            <button
-                                                onClick={handleSearch}
-                                                className="w-full px-4 py-3 text-accent-500 text-sm font-medium hover:bg-dark-700 transition-colors border-t border-dark-700"
-                                            >
-                                                View all results for "{searchQuery}"
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            )}
+                            {suggestionDropdown}
                         </div>
                     </div>
 
-                    {/* Right Actions */}
-                    <div className="flex items-center gap-3">
-                        {/* Mobile Search Toggle */}
+                    <div className="ml-auto flex items-center gap-2 md:gap-3">
                         <button
-                            onClick={() => setIsSearchOpen(!isSearchOpen)}
-                            className="md:hidden p-2 hover:bg-dark-700 rounded-lg transition-colors text-silver-300"
+                            onClick={() => setIsSearchOpen((open) => !open)}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-50 md:hidden"
+                            aria-label="Toggle search"
                         >
-                            <Search size={22} />
+                            <Search size={18} />
                         </button>
 
-
-                        {/* Cart */}
                         <Link
                             href="/cart"
-                            className="relative flex items-center gap-2 px-4 py-2 hover:bg-dark-700 rounded-xl transition-colors text-silver-200"
+                            className="relative flex h-11 items-center gap-2 rounded-full border border-gray-200 px-4 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
                         >
-                            <ShoppingCart size={22} />
+                            <ShoppingCart size={18} />
+                            <span className="hidden sm:inline">Cart</span>
                             {totalItems > 0 && (
-                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent-500 text-dark-900 text-xs font-bold rounded-full flex items-center justify-center">
+                                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-black px-1 text-[11px] font-semibold text-white">
                                     {totalItems}
                                 </span>
                             )}
-                            <span className="hidden sm:block font-medium">Cart</span>
                         </Link>
 
-                        {/* Account / Login */}
                         {isAuthenticated && customer ? (
                             <Link
                                 href="/profile"
-                                className="hidden sm:flex items-center gap-2 px-3 py-1.5 hover:bg-dark-700 rounded-xl transition-colors border border-transparent hover:border-dark-700"
+                                className="hidden h-11 items-center rounded-full border border-gray-200 px-5 text-sm font-medium text-gray-800 transition hover:bg-gray-50 sm:flex"
                             >
-                                <img
-                                    src={customer?.avatar || `https://ui-avatars.com/api/?name=${customer?.name}&background=00f5d4&color=0a0a0f`}
-                                    alt={customer?.name}
-                                    className="w-8 h-8 rounded-full border border-dark-700"
-                                />
-                                <div className="text-left hidden lg:block">
-                                    <p className="text-xs text-silver-500 font-medium leading-tight">Hello,</p>
-                                    <p className="text-sm font-bold text-white leading-tight">{customer?.name.split(' ')[0]}</p>
-                                </div>
+                                <span className="text-gray-500">Hi,</span>
+                                <span className="ml-1 font-semibold text-gray-900">
+                                    {customer?.name.split(' ')[0]}
+                                </span>
                             </Link>
                         ) : (
                             <Link
                                 href="/login"
-                                className="hidden sm:flex items-center gap-2 px-4 py-2 hover:bg-dark-700 rounded-xl transition-colors text-silver-200"
+                                className="hidden h-11 items-center rounded-full bg-black px-5 text-sm font-medium text-white transition hover:bg-gray-800 sm:flex"
                             >
-                                <User size={22} />
-                                <span className="font-medium">Login</span>
+                                Login
                             </Link>
                         )}
 
-                        {/* Mobile Menu Toggle */}
                         <button
-                            onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="md:hidden p-2 hover:bg-dark-700 rounded-lg transition-colors text-silver-300"
+                            onClick={() => setIsMenuOpen((open) => !open)}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-50 lg:hidden"
+                            aria-label="Toggle menu"
                         >
-                            {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                            {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
                         </button>
                     </div>
                 </div>
 
-                {/* Mobile Search */}
                 {isSearchOpen && (
-                    <div className="md:hidden mt-4 animate-in slide-in-from-top-4 duration-300">
-                        <div className="relative">
+                    <div className="border-t border-gray-200 py-4 md:hidden">
+                        <div className="relative" ref={searchRef}>
                             <input
                                 type="text"
-                                placeholder="Search premium products..."
+                                placeholder="Search products"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(event) => setSearchQuery(event.target.value)}
                                 onKeyDown={handleKeyDown}
-                                className="w-full pl-4 pr-12 py-3 rounded-xl bg-dark-800 border border-dark-700 text-white placeholder:text-silver-500 focus:border-accent-500 outline-none"
+                                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
+                                className="h-12 w-full rounded-full border border-gray-200 bg-gray-50 pl-5 pr-14 text-sm text-gray-900 outline-none focus:border-gray-400 focus:bg-white"
                             />
                             <button
                                 onClick={handleSearch}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-accent-500 text-dark-900 p-2 rounded-lg"
+                                className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-black text-white"
+                                aria-label="Search"
                             >
                                 <Search size={18} />
                             </button>
+                            {suggestionDropdown}
+                        </div>
+                    </div>
+                )}
+
+                {isMenuOpen && (
+                    <div className="border-t border-gray-200 py-5 lg:hidden">
+                        <div className="space-y-3">
+                            {mainNavLinks.map((link) => (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    className="block rounded-2xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
+                                    onClick={closeMenus}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+
+                            <div className="grid grid-cols-2 gap-3 mt-2">
+                                {specialNavLinks.map((link) => (
+                                    <Link
+                                        key={link.label}
+                                        href={link.href}
+                                        className="flex items-center justify-center gap-2 rounded-2xl bg-gray-50 border border-gray-100 px-4 py-3 text-sm font-bold text-gray-800 transition hover:bg-gray-100 hover:text-accent-600"
+                                        onClick={closeMenus}
+                                    >
+                                        <span className="text-accent-500">{link.icon}</span>
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </div>
+
+                            <div className="rounded-[24px] border border-gray-200 p-4">
+                                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                                    Categories
+                                </p>
+                                {isLoadingCategories ? (
+                                    <p className="text-sm text-gray-500">Loading categories...</p>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {categories.slice(0, 8).map((category) => (
+                                            <Link
+                                                key={category.id}
+                                                href={`/products?category=${category.slug}`}
+                                                className="rounded-2xl bg-gray-50 px-3 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+                                                onClick={closeMenus}
+                                            >
+                                                {category.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {isAuthenticated && customer ? (
+                                <div className="grid grid-cols-2 gap-3 pt-2">
+                                    <Link
+                                        href="/profile"
+                                        className="rounded-2xl border border-gray-200 px-4 py-3 text-center text-sm font-medium text-gray-800"
+                                        onClick={closeMenus}
+                                    >
+                                        My Account
+                                    </Link>
+                                    <button
+                                        onClick={() => {
+                                            logout();
+                                            closeMenus();
+                                        }}
+                                        className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    className="block rounded-2xl bg-black px-4 py-3 text-center text-sm font-medium text-white"
+                                    onClick={closeMenus}
+                                >
+                                    Login
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )}
             </div>
-
-            {/* Category Navigation */}
-            <nav className="hidden md:block border-t border-dark-700">
-                <div className="container mx-auto px-4">
-                    <ul className="flex items-center justify-center gap-8 py-3">
-                        <li>
-                            <Link href="/" className="font-medium text-silver-300 hover:text-accent-500 transition-colors">
-                                Home
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/products" className="font-medium text-silver-300 hover:text-accent-500 transition-colors">
-                                All Collection
-                            </Link>
-                        </li>
-                        <li
-                            ref={categoriesRef}
-                            className="static group"
-                            onMouseEnter={handleMouseEnterCategories}
-                            onMouseLeave={handleMouseLeaveCategories}
-                        >
-                            <button
-                                onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                                className={`flex items-center gap-1 font-medium transition-colors ${isCategoriesOpen ? 'text-accent-500' : 'text-silver-300 hover:text-accent-500'}`}
-                            >
-                                Categories <ChevronDown size={16} className={`transition-transform duration-200 ${isCategoriesOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/* Mega Menu Dropdown */}
-                            {isCategoriesOpen && (
-                                <div
-                                    className="absolute left-0 right-0 top-full bg-dark-900 border-y border-dark-700 shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 duration-300"
-                                    onMouseEnter={handleMouseEnterCategories}
-                                    onMouseLeave={handleMouseLeaveCategories}
-                                >
-                                    <div className="container mx-auto px-4 py-8">
-                                        {isLoadingCategories ? (
-                                            <div className="flex items-center justify-center py-12">
-                                                <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin"></div>
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-6 gap-y-10">
-                                                {categories.map((category) => (
-                                                    <div key={category.id} className="space-y-4">
-                                                        <Link
-                                                            href={`/products?category=${category.slug}`}
-                                                            onClick={() => setIsCategoriesOpen(false)}
-                                                            className="block group/title"
-                                                        >
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                {category.image && (
-                                                                    <img
-                                                                        src={category.image}
-                                                                        alt={category.name}
-                                                                        className="w-8 h-8 rounded-lg object-cover border border-dark-700 group-hover/title:border-accent-500 transition-colors"
-                                                                    />
-                                                                )}
-                                                                <h3 className="font-bold text-white group-hover/title:text-accent-500 transition-colors uppercase tracking-wider text-xs">
-                                                                    {category.name}
-                                                                </h3>
-                                                            </div>
-                                                            <div className="h-0.5 w-6 bg-accent-500 rounded-full group-hover/title:w-full transition-all duration-300"></div>
-                                                        </Link>
-
-                                                        {category.children && category.children.length > 0 && (
-                                                            <ul className="space-y-1.5 pl-1 border-l border-dark-700/50 ml-1">
-                                                                {category.children.map((child: any) => (
-                                                                    <li key={child.id}>
-                                                                        <Link
-                                                                            href={`/products?category=${child.slug}`}
-                                                                            onClick={() => setIsCategoriesOpen(false)}
-                                                                            className="text-silver-400 hover:text-accent-500 text-[12px] transition-colors flex items-center gap-2 group/link pl-2"
-                                                                        >
-                                                                            {child.name}
-                                                                        </Link>
-                                                                    </li>
-                                                                ))}
-                                                            </ul>
-                                                        )}
-                                                    </div>
-                                                ))}
-
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Bottom Decorative Bar */}
-                                    <div className="h-1 bg-gradient-to-r from-transparent via-accent-500/20 to-transparent"></div>
-                                </div>
-                            )}
-                        </li>
-                        <li>
-                            <Link href="/products?featured=true" className="font-medium text-silver-300 hover:text-accent-500 transition-colors">
-                                Trending Now
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/products?sort=newest" className="font-medium text-silver-300 hover:text-accent-500 transition-colors">
-                                New Arrivals
-                            </Link>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div className="md:hidden fixed inset-0 top-[100px] z-[100] bg-dark-900 overflow-y-auto pt-4 pb-20 px-4 animate-in slide-in-from-bottom duration-300">
-                    <ul className="space-y-4">
-                        <li>
-                            <Link href="/" className="block py-3 px-4 rounded-xl bg-dark-800 font-medium text-silver-200 border border-dark-700" onClick={() => setIsMenuOpen(false)}>Home</Link>
-                        </li>
-                        <li>
-                            <Link href="/products" className="block py-3 px-4 rounded-xl bg-dark-800 font-medium text-silver-200 border border-dark-700" onClick={() => setIsMenuOpen(false)}>All Collection</Link>
-                        </li>
-                        <li className="space-y-4">
-                            <p className="px-4 text-[10px] font-bold text-silver-500 uppercase tracking-widest">Shop by Categories</p>
-                            <div className="space-y-1.5">
-                                {categories.map((category) => (
-                                    <div key={category.id} className="space-y-1.5">
-                                        <Link
-                                            href={`/products?category=${category.slug}`}
-                                            className="flex items-center justify-between py-2 px-3 rounded-lg bg-dark-800 border border-dark-700 text-white font-bold text-sm"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                {category.image && (
-                                                    <img src={category.image} alt={category.name} className="w-6 h-6 rounded object-cover" />
-                                                )}
-                                                <span>{category.name}</span>
-                                            </div>
-                                            <ChevronDown size={14} className="-rotate-90 text-silver-500" />
-                                        </Link>
-
-                                        {category.children && category.children.length > 0 && (
-                                            <div className="grid grid-cols-2 gap-1.5 px-1.5">
-                                                {category.children.map((child: any) => (
-                                                    <Link
-                                                        key={child.id}
-                                                        href={`/products?category=${child.slug}`}
-                                                        className="py-1.5 px-2 rounded-md bg-dark-800/40 border border-dark-700/50 text-silver-400 text-[11px] font-medium"
-                                                        onClick={() => setIsMenuOpen(false)}
-                                                    >
-                                                        {child.name}
-                                                    </Link>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                <Link
-                                    href="/categories"
-                                    className="block w-full py-3 mt-1 rounded-lg bg-accent-500/10 border border-accent-500/30 text-accent-500 text-xs font-bold text-center"
-                                    onClick={() => setIsMenuOpen(false)}
-                                >
-                                    Browse All Categories
-                                </Link>
-                            </div>
-                        </li>
-                        <li className="pt-4 border-t border-dark-700">
-                            <Link href="/track-order" className="flex items-center gap-3 py-3 px-4 text-silver-300" onClick={() => setIsMenuOpen(false)}>
-                                <Truck size={18} />
-                                <span>Track Order</span>
-                            </Link>
-                        </li>
-
-                        {isAuthenticated && customer ? (
-                            <>
-                                <li className="pt-4 mt-4 border-t border-dark-700">
-                                    <div className="flex items-center gap-4 px-4 py-2">
-                                        <img
-                                            src={customer?.avatar || `https://ui-avatars.com/api/?name=${customer?.name}&background=00f5d4&color=0a0a0f`}
-                                            alt={customer?.name}
-                                            className="w-12 h-12 rounded-full border-2 border-accent-500"
-                                        />
-                                        <div>
-                                            <p className="font-bold text-white text-lg leading-tight">{customer?.name}</p>
-                                            <p className="text-sm text-silver-500">{customer?.email}</p>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li className="grid grid-cols-2 gap-2 px-4 pt-2">
-                                    <Link href="/profile" className="py-3 bg-dark-800 rounded-xl text-center font-bold text-accent-500 border border-dark-700" onClick={() => setIsMenuOpen(false)}>My Account</Link>
-                                    <button onClick={logout} className="py-3 bg-red-500/10 rounded-xl text-center font-bold text-red-500 border border-red-500/30">Logout</button>
-                                </li>
-                            </>
-                        ) : (
-                            <li className="px-4 pt-4">
-                                <Link href="/login" className="block w-full py-4 bg-accent-500 text-dark-900 rounded-xl text-center font-bold text-lg shadow-lg shadow-accent-500/20" onClick={() => setIsMenuOpen(false)}>Login / Register</Link>
-                            </li>
-                        )}
-                    </ul>
-                </div>
-            )}
         </header>
     );
 }
