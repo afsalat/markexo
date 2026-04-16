@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import Header from './Header';
 import Footer from './Footer';
+import BottomNav from './BottomNav';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
@@ -27,10 +28,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col pb-16 lg:pb-0">
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            <BottomNav />
         </div>
     );
 }

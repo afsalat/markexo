@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { User, Package, Heart, MapPin, Settings, LogOut, CheckCircle, Truck, Clock, XCircle, Trash2, Plus, Edit2, RotateCcw } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { API_BASE_URL } from '@/config/apiConfig';
@@ -27,8 +27,10 @@ const formatDate = (dateString: string) => {
 export default function ProfilePage() {
     const { customer, isAuthenticated, isLoading, logout, orders, wishlist, addresses, removeFromWishlist, deleteAddress, addAddress, refreshOrders } = useCustomerAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const initialTab = searchParams ? (searchParams.get('tab') || 'overview') : 'overview';
     const { addItem } = useCart();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(initialTab);
 
     const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
     const [selectedOrderForReturn, setSelectedOrderForReturn] = useState<any>(null);

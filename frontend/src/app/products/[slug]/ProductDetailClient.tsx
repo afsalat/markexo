@@ -718,7 +718,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                         {/* Trust Features Grid */}
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                { icon: Truck, title: 'Free Delivery', detail: 'On orders above ₹500' },
+                                { icon: Truck, title: 'Free Delivery', detail: 'Free Delivery on Every Order' },
                                 { icon: Shield, title: 'Secure Checkout', detail: '100% protected' },
                                 { icon: RotateCcw, title: '7 Days Return', detail: 'Easy returns' },
                                 { icon: Package, title: 'Quality Assured', detail: 'Verified seller' }
@@ -1046,54 +1046,54 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
                 {/* Related Products */}
                 {relatedProducts.length > 0 && (
-                <div data-aos="fade-up" data-aos-delay="400" className="mt-16">
-                    <div className="flex items-center justify-between mb-8">
-                        <h2 className="font-display text-2xl font-bold text-gray-900 px-1 border-l-4 border-accent-500 pl-4">You May Also Like</h2>
-                        <Link href="/products" className="text-accent-600 font-bold hover:text-accent-700 flex items-center gap-1 transition-colors">
-                            View All <ChevronRight size={18} />
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
-                        {relatedProducts.map((product) => (
-                            <Link key={product.id} href={`/products/${product.slug}`} className="group">
-                                <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                    <div className="aspect-square bg-gray-50 overflow-hidden relative">
-                                        <img
-                                            src={product.image}
-                                            alt={product.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                        />
-                                        <div className="absolute top-3 right-3">
-                                            <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm text-gray-400 group-hover:text-accent-500 transition-colors">
-                                                <Star size={14} className="fill-current" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="p-5">
-                                        <h3 className="font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-accent-600 transition-colors h-12">
-                                            {product.name}
-                                        </h3>
-                                        <div className="flex items-center gap-1 mb-3">
-                                            <div className="flex items-center text-amber-400">
-                                                <Star size={14} className="fill-current" />
-                                            </div>
-                                            <span className="text-xs font-bold text-gray-500">{product.rating}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-2 mt-auto">
-                                            <div className="flex flex-col">
-                                                <span className="text-lg font-bold text-gray-900 border-b-2 border-accent-500/20">₹{product.sale_price.toLocaleString()}</span>
-                                                <span className="text-xs text-gray-400 line-through">₹{product.price.toLocaleString()}</span>
-                                            </div>
-                                            <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-accent-500 group-hover:text-white transition-all">
-                                                <ShoppingCart size={18} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <div data-aos="fade-up" data-aos-delay="400" className="mt-16">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="font-display text-2xl font-bold text-gray-900 px-1 border-l-4 border-accent-500 pl-4">You May Also Like</h2>
+                            <Link href="/products" className="text-accent-600 font-bold hover:text-accent-700 flex items-center gap-1 transition-colors">
+                                View All <ChevronRight size={18} />
                             </Link>
-                        ))}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {relatedProducts.map((product) => (
+                                <Link key={product.id} href={`/products/${product.slug}`} className="group">
+                                    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                        <div className="aspect-square bg-gray-50 overflow-hidden relative">
+                                            <img
+                                                src={product.image}
+                                                alt={product.name}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            />
+                                            <div className="absolute top-3 right-3">
+                                                <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm text-gray-400 group-hover:text-accent-500 transition-colors">
+                                                    <Star size={14} className="fill-current" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-5">
+                                            <h3 className="font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-accent-600 transition-colors h-12">
+                                                {product.name}
+                                            </h3>
+                                            <div className="flex items-center gap-1 mb-3">
+                                                <div className="flex items-center text-amber-400">
+                                                    <Star size={14} className="fill-current" />
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-500">{product.rating}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between gap-2 mt-auto">
+                                                <div className="flex flex-col">
+                                                    <span className="text-lg font-bold text-gray-900 border-b-2 border-accent-500/20">₹{product.sale_price.toLocaleString()}</span>
+                                                    <span className="text-xs text-gray-400 line-through">₹{product.price.toLocaleString()}</span>
+                                                </div>
+                                                <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-accent-500 group-hover:text-white transition-all">
+                                                    <ShoppingCart size={18} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
-                </div>
                 )}
             </div>
 

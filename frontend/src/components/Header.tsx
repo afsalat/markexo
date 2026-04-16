@@ -13,7 +13,6 @@ export default function Header() {
     const { totalItems } = useCart();
     const { customer, isAuthenticated, logout } = useCustomerAuth();
 
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -101,7 +100,6 @@ export default function Header() {
     }, []);
 
     const closeMenus = () => {
-        setIsMenuOpen(false);
         setIsSearchOpen(false);
         setShowSuggestions(false);
     };
@@ -206,12 +204,12 @@ export default function Header() {
             }`}
         >
             <div className="container mx-auto px-4">
-                <div className="flex min-h-[76px] items-center gap-3 lg:gap-6">
+                <div className="flex min-h-[60px] md:min-h-[72px] items-center gap-3 lg:gap-6">
                     <Link href="/" className="ml-2 mr-3 shrink-0 md:ml-4 md:mr-6" onClick={closeMenus}>
                         <img
                             src="/logo-black-text.png"
                             alt="VorionMart"
-                            className="h-10 w-auto object-contain md:h-12"
+                            className="h-8 w-auto object-contain md:h-10"
                         />
                     </Link>
 
@@ -232,12 +230,12 @@ export default function Header() {
                             onMouseEnter={() => setIsCategoryDropdownOpen(true)}
                             onMouseLeave={() => setIsCategoryDropdownOpen(false)}
                         >
-                            <button className="flex items-center gap-1 text-sm font-bold text-gray-800 transition-colors hover:text-accent-600 focus:outline-none py-6 px-1">
-                                Categories <ChevronDown size={14} className={`transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-accent-600' : 'text-gray-400'}`} />
+                            <button className="flex items-center gap-1 text-sm font-bold text-gray-800 transition-colors hover:text-accent-600 focus:outline-none py-4 px-1">
+                                Categories <ChevronDown size={12} className={`transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-accent-600' : 'text-gray-400'}`} />
                             </button>
                             
                             {/* Mega Menu Overlay */}
-                            <div className={`fixed left-0 w-full top-[76px] transition-all duration-300 origin-top shadow-2xl z-[60] border-t border-gray-900 ${isCategoryDropdownOpen ? 'opacity-100 scale-y-100 visible pointer-events-auto' : 'opacity-0 scale-y-95 invisible pointer-events-none'}`}>
+                            <div className={`fixed left-0 w-full top-[60px] md:top-[72px] transition-all duration-300 origin-top shadow-2xl z-[60] border-t border-gray-900 ${isCategoryDropdownOpen ? 'opacity-100 scale-y-100 visible pointer-events-auto' : 'opacity-0 scale-y-95 invisible pointer-events-none'}`}>
                                 <div className="bg-[#0a0a0a] w-full max-h-[calc(100vh-76px)] overflow-y-auto">
                                     <div className="container mx-auto px-4 py-10 relative">
                                         {isLoadingCategories ? (
@@ -319,13 +317,7 @@ export default function Header() {
                     </div>
 
                     <div className="ml-auto flex items-center gap-2 md:gap-3">
-                        <button
-                            onClick={() => setIsSearchOpen((open) => !open)}
-                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-50 md:hidden"
-                            aria-label="Toggle search"
-                        >
-                            <Search size={18} />
-                        </button>
+                        {/* Search Icon Removed for Mobile as it's now on homepage */}
 
                         <Link
                             href="/cart"
@@ -358,122 +350,10 @@ export default function Header() {
                                 Login
                             </Link>
                         )}
-
-                        <button
-                            onClick={() => setIsMenuOpen((open) => !open)}
-                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 text-gray-700 transition hover:bg-gray-50 lg:hidden"
-                            aria-label="Toggle menu"
-                        >
-                            {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
-                        </button>
                     </div>
                 </div>
 
-                {isSearchOpen && (
-                    <div className="border-t border-gray-200 py-4 md:hidden">
-                        <div className="relative" ref={searchRef}>
-                            <input
-                                type="text"
-                                placeholder="Search products"
-                                value={searchQuery}
-                                onChange={(event) => setSearchQuery(event.target.value)}
-                                onKeyDown={handleKeyDown}
-                                onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
-                                className="h-12 w-full rounded-full border border-gray-200 bg-gray-50 pl-5 pr-14 text-sm text-gray-900 outline-none focus:border-gray-400 focus:bg-white"
-                            />
-                            <button
-                                onClick={handleSearch}
-                                className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-black text-white"
-                                aria-label="Search"
-                            >
-                                <Search size={18} />
-                            </button>
-                            {suggestionDropdown}
-                        </div>
-                    </div>
-                )}
-
-                {isMenuOpen && (
-                    <div className="border-t border-gray-200 py-5 lg:hidden">
-                        <div className="space-y-3">
-                            {mainNavLinks.map((link) => (
-                                <Link
-                                    key={link.label}
-                                    href={link.href}
-                                    className="block rounded-2xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
-                                    onClick={closeMenus}
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-
-                            <div className="grid grid-cols-2 gap-3 mt-2">
-                                {specialNavLinks.map((link) => (
-                                    <Link
-                                        key={link.label}
-                                        href={link.href}
-                                        className="flex items-center justify-center gap-2 rounded-2xl bg-gray-50 border border-gray-100 px-4 py-3 text-sm font-bold text-gray-800 transition hover:bg-gray-100 hover:text-accent-600"
-                                        onClick={closeMenus}
-                                    >
-                                        <span className="text-accent-500">{link.icon}</span>
-                                        {link.label}
-                                    </Link>
-                                ))}
-                            </div>
-
-                            <div className="rounded-[24px] border border-gray-200 p-4">
-                                <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
-                                    Categories
-                                </p>
-                                {isLoadingCategories ? (
-                                    <p className="text-sm text-gray-500">Loading categories...</p>
-                                ) : (
-                                    <div className="grid grid-cols-2 gap-2">
-                                        {categories.slice(0, 8).map((category) => (
-                                            <Link
-                                                key={category.id}
-                                                href={`/products?category=${category.slug}`}
-                                                className="rounded-2xl bg-gray-50 px-3 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
-                                                onClick={closeMenus}
-                                            >
-                                                {category.name}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {isAuthenticated && customer ? (
-                                <div className="grid grid-cols-2 gap-3 pt-2">
-                                    <Link
-                                        href="/profile"
-                                        className="rounded-2xl border border-gray-200 px-4 py-3 text-center text-sm font-medium text-gray-800"
-                                        onClick={closeMenus}
-                                    >
-                                        My Account
-                                    </Link>
-                                    <button
-                                        onClick={() => {
-                                            logout();
-                                            closeMenus();
-                                        }}
-                                        className="rounded-2xl bg-black px-4 py-3 text-sm font-medium text-white"
-                                    >
-                                        Logout
-                                    </button>
-                                </div>
-                            ) : (
-                                <Link
-                                    href="/login"
-                                    className="block rounded-2xl bg-black px-4 py-3 text-center text-sm font-medium text-white"
-                                    onClick={closeMenus}
-                                >
-                                    Login
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                )}
+                {/* Mobile Search Input Removed - Moved to homepage first view */}
             </div>
         </header>
     );

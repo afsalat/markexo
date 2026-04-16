@@ -80,6 +80,7 @@ function ProductsPageContent({
     const categoryParam = searchParams?.get('category');
     const featuredParam = searchParams?.get('featured') || searchParams?.get('trending');
     const sortParam = searchParams?.get('sort');
+    const isVisualSearch = searchParams?.get('visual') === 'true';
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [showFilters, setShowFilters] = useState(false);
@@ -117,7 +118,7 @@ function ProductsPageContent({
             try {
                 setLoading(true);
                 const [productsResponse, categoriesData] = await Promise.all([
-                    fetchProducts(),
+                    fetchProducts(searchQuery ? { search: searchQuery } : undefined),
                     fetchCategories()
                 ]);
                 const productsData = Array.isArray(productsResponse) ? productsResponse : (productsResponse.results || []);
@@ -137,7 +138,7 @@ function ProductsPageContent({
             }
         };
         loadData();
-    }, [categoryParam]);
+    }, [categoryParam, searchQuery]);
 
     const toggleCategory = (category: string) => {
         setSelectedCategories((prev) =>
@@ -183,6 +184,7 @@ function ProductsPageContent({
     // Determine page title based on filters
     const getPageTitle = () => {
         if (customPageTitle) return customPageTitle;
+        if (isVisualSearch) return 'Visual Search Results';
         if (searchQuery) return `Search Results for "${searchQuery}"`;
         if (showFeaturedOnly) return 'Trending Now';
         if (sortParam === 'newest') return 'New Arrivals';
@@ -210,7 +212,9 @@ function ProductsPageContent({
                             <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
                                 {getPageTitle()}
                             </h1>
-                            <p className="text-gray-500 text-sm mt-1">{filteredProducts.length} products found</p>
+                            <p className="text-gray-500 text-sm mt-1">
+                                {isVisualSearch ? 'Found products matching your image' : `${filteredProducts.length} products found`}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -393,7 +397,7 @@ function ProductsPageContent({
 
                         {/* Loading State */}
                         {loading ? (
-                            <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden animate-pulse">
                                         <div className="aspect-[4/5] bg-gray-100" />
@@ -412,7 +416,7 @@ function ProductsPageContent({
                         ) : (
                             <>
                                 {/* Products Grid */}
-                                <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+                                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
                                     {filteredProducts.map((product, index) => (
                                         <div
                                             key={product.id}

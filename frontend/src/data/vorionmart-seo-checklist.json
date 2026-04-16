@@ -367,7 +367,7 @@
         {
           "id": "cs-005",
           "title": "Add category-specific meta titles and descriptions",
-          "description": "Each category page: Title = 'Buy {Category} Online at Best Price | COD Available | VorionMart'. Description = 'Shop {category} at VorionMart. {product count}+ products available. Cash on Delivery. Free shipping on orders above ₹499.'",
+          "description": "Each category page: Title = 'Buy {Category} Online at Best Price | COD Available | VorionMart'. Description = 'Shop {category} at VorionMart. {product count}+ products available. Cash on Delivery. Free Delivery on Every Order.'",
           "category": "category-seo",
           "priority": "High",
           "status": "Not Started",
@@ -889,54 +889,309 @@
     }
   ],
   "keywords": [
-    { "keyword": "buy earphones online cash on delivery", "search_volume": "8,100/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
-    { "keyword": "online shopping COD India", "search_volume": "12,000/mo", "difficulty": "Medium", "intent": "Transactional", "priority": "Critical" },
-    { "keyword": "best smartwatch under 1000", "search_volume": "22,000/mo", "difficulty": "Medium", "intent": "Informational + Transactional", "priority": "High" },
-    { "keyword": "wireless earbuds under 500", "search_volume": "18,000/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
-    { "keyword": "cash on delivery shopping website", "search_volume": "6,600/mo", "difficulty": "Low", "intent": "Navigational", "priority": "High" },
-    { "keyword": "buy kitchen items online India", "search_volume": "4,400/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
-    { "keyword": "affordable home decor online", "search_volume": "5,400/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
-    { "keyword": "phone accessories online COD", "search_volume": "3,600/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
-    { "keyword": "best bluetooth speaker under 500", "search_volume": "14,800/mo", "difficulty": "Medium", "intent": "Informational", "priority": "High" },
-    { "keyword": "online store with free delivery India", "search_volume": "5,200/mo", "difficulty": "Low", "intent": "Navigational", "priority": "High" },
-    { "keyword": "gifts under 300 rupees online", "search_volume": "9,900/mo", "difficulty": "Low", "intent": "Transactional", "priority": "Critical" },
-    { "keyword": "buy electronics online Tier 2 city", "search_volume": "2,400/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
-    { "keyword": "sasta online shopping India", "search_volume": "7,200/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
-    { "keyword": "WhatsApp se order kaise kare", "search_volume": "3,100/mo", "difficulty": "Low", "intent": "Informational", "priority": "Medium" },
-    { "keyword": "pay on delivery electronics India", "search_volume": "4,100/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" },
-    { "keyword": "best earphones under 300", "search_volume": "12,500/mo", "difficulty": "Medium", "intent": "Transactional", "priority": "Critical" },
-    { "keyword": "online shopping offers today India", "search_volume": "8,800/mo", "difficulty": "High", "intent": "Transactional", "priority": "Medium" },
-    { "keyword": "trusted online store India COD", "search_volume": "2,900/mo", "difficulty": "Low", "intent": "Navigational", "priority": "High" },
-    { "keyword": "smart home gadgets India", "search_volume": "6,100/mo", "difficulty": "Medium", "intent": "Informational", "priority": "Medium" },
-    { "keyword": "cheapest gadgets online delivery India", "search_volume": "3,800/mo", "difficulty": "Low", "intent": "Transactional", "priority": "High" }
+    {
+      "keyword": "buy earphones online cash on delivery",
+      "search_volume": "8,100/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "Critical"
+    },
+    {
+      "keyword": "online shopping COD India",
+      "search_volume": "12,000/mo",
+      "difficulty": "Medium",
+      "intent": "Transactional",
+      "priority": "Critical"
+    },
+    {
+      "keyword": "best smartwatch under 1000",
+      "search_volume": "22,000/mo",
+      "difficulty": "Medium",
+      "intent": "Informational + Transactional",
+      "priority": "High"
+    },
+    {
+      "keyword": "wireless earbuds under 500",
+      "search_volume": "18,000/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "Critical"
+    },
+    {
+      "keyword": "cash on delivery shopping website",
+      "search_volume": "6,600/mo",
+      "difficulty": "Low",
+      "intent": "Navigational",
+      "priority": "High"
+    },
+    {
+      "keyword": "buy kitchen items online India",
+      "search_volume": "4,400/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "High"
+    },
+    {
+      "keyword": "affordable home decor online",
+      "search_volume": "5,400/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "High"
+    },
+    {
+      "keyword": "phone accessories online COD",
+      "search_volume": "3,600/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "Critical"
+    },
+    {
+      "keyword": "best bluetooth speaker under 500",
+      "search_volume": "14,800/mo",
+      "difficulty": "Medium",
+      "intent": "Informational",
+      "priority": "High"
+    },
+    {
+      "keyword": "online store with free delivery India",
+      "search_volume": "5,200/mo",
+      "difficulty": "Low",
+      "intent": "Navigational",
+      "priority": "High"
+    },
+    {
+      "keyword": "gifts under 300 rupees online",
+      "search_volume": "9,900/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "Critical"
+    },
+    {
+      "keyword": "buy electronics online Tier 2 city",
+      "search_volume": "2,400/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "High"
+    },
+    {
+      "keyword": "sasta online shopping India",
+      "search_volume": "7,200/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "High"
+    },
+    {
+      "keyword": "WhatsApp se order kaise kare",
+      "search_volume": "3,100/mo",
+      "difficulty": "Low",
+      "intent": "Informational",
+      "priority": "Medium"
+    },
+    {
+      "keyword": "pay on delivery electronics India",
+      "search_volume": "4,100/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "High"
+    },
+    {
+      "keyword": "best earphones under 300",
+      "search_volume": "12,500/mo",
+      "difficulty": "Medium",
+      "intent": "Transactional",
+      "priority": "Critical"
+    },
+    {
+      "keyword": "online shopping offers today India",
+      "search_volume": "8,800/mo",
+      "difficulty": "High",
+      "intent": "Transactional",
+      "priority": "Medium"
+    },
+    {
+      "keyword": "trusted online store India COD",
+      "search_volume": "2,900/mo",
+      "difficulty": "Low",
+      "intent": "Navigational",
+      "priority": "High"
+    },
+    {
+      "keyword": "smart home gadgets India",
+      "search_volume": "6,100/mo",
+      "difficulty": "Medium",
+      "intent": "Informational",
+      "priority": "Medium"
+    },
+    {
+      "keyword": "cheapest gadgets online delivery India",
+      "search_volume": "3,800/mo",
+      "difficulty": "Low",
+      "intent": "Transactional",
+      "priority": "High"
+    }
   ],
   "blogIdeas": [
-    { "title": "Is Cash on Delivery Safe? Complete Guide for Indian Online Shoppers", "type": "Informational", "target_keyword": "is COD safe online shopping", "estimated_traffic": "3,000+/mo" },
-    { "title": "How to Track Your Online Order – Step by Step Guide", "type": "Informational", "target_keyword": "how to track online order India", "estimated_traffic": "5,000+/mo" },
-    { "title": "10 Tips to Avoid Online Shopping Scams in India (2026)", "type": "Informational", "target_keyword": "avoid online shopping scams India", "estimated_traffic": "4,200+/mo" },
-    { "title": "What is Cash on Delivery? Everything You Need to Know", "type": "Informational", "target_keyword": "what is cash on delivery", "estimated_traffic": "6,000+/mo" },
-    { "title": "Online Shopping Rights: Return and Refund Rules in India", "type": "Informational", "target_keyword": "online shopping return policy India", "estimated_traffic": "2,800+/mo" },
-    { "title": "Best Wireless Earbuds Under ₹500 in India (2026) – Buy with COD", "type": "Transactional", "target_keyword": "best earbuds under 500", "estimated_traffic": "12,000+/mo" },
-    { "title": "Top 10 Kitchen Gadgets Under ₹1000 You Can Buy Online Now", "type": "Transactional", "target_keyword": "kitchen gadgets under 1000", "estimated_traffic": "4,500+/mo" },
-    { "title": "Best Budget Smartwatches for Students in India (Under ₹2000)", "type": "Transactional", "target_keyword": "budget smartwatch for students India", "estimated_traffic": "7,000+/mo" },
-    { "title": "Unique Gift Ideas Under ₹300 – Perfect for Any Occasion", "type": "Transactional", "target_keyword": "gifts under 300 India", "estimated_traffic": "8,000+/mo" },
-    { "title": "Home Office Essentials Under ₹500 – Work From Home Setup", "type": "Transactional", "target_keyword": "home office essentials under 500", "estimated_traffic": "3,500+/mo" },
-    { "title": "boAt vs Noise Earbuds – Which Brand is Better in 2026?", "type": "Comparison", "target_keyword": "boat vs noise earbuds comparison", "estimated_traffic": "9,000+/mo" },
-    { "title": "Amazon vs Meesho vs VorionMart – Where to Get Best COD Deals?", "type": "Comparison", "target_keyword": "best COD shopping site India", "estimated_traffic": "5,500+/mo" },
-    { "title": "Realme vs Fire-Boltt Smartwatch – Complete Comparison Guide", "type": "Comparison", "target_keyword": "realme vs fire boltt smartwatch", "estimated_traffic": "6,200+/mo" },
-    { "title": "Wired vs Wireless Earphones – Which Should You Buy Under ₹500?", "type": "Comparison", "target_keyword": "wired vs wireless earphones India", "estimated_traffic": "4,800+/mo" },
-    { "title": "Flipkart vs VorionMart – COD Experience and Delivery Compared", "type": "Comparison", "target_keyword": "flipkart alternative COD India", "estimated_traffic": "3,000+/mo" }
+    {
+      "title": "Is Cash on Delivery Safe? Complete Guide for Indian Online Shoppers",
+      "type": "Informational",
+      "target_keyword": "is COD safe online shopping",
+      "estimated_traffic": "3,000+/mo"
+    },
+    {
+      "title": "How to Track Your Online Order – Step by Step Guide",
+      "type": "Informational",
+      "target_keyword": "how to track online order India",
+      "estimated_traffic": "5,000+/mo"
+    },
+    {
+      "title": "10 Tips to Avoid Online Shopping Scams in India (2026)",
+      "type": "Informational",
+      "target_keyword": "avoid online shopping scams India",
+      "estimated_traffic": "4,200+/mo"
+    },
+    {
+      "title": "What is Cash on Delivery? Everything You Need to Know",
+      "type": "Informational",
+      "target_keyword": "what is cash on delivery",
+      "estimated_traffic": "6,000+/mo"
+    },
+    {
+      "title": "Online Shopping Rights: Return and Refund Rules in India",
+      "type": "Informational",
+      "target_keyword": "online shopping return policy India",
+      "estimated_traffic": "2,800+/mo"
+    },
+    {
+      "title": "Best Wireless Earbuds Under ₹500 in India (2026) – Buy with COD",
+      "type": "Transactional",
+      "target_keyword": "best earbuds under 500",
+      "estimated_traffic": "12,000+/mo"
+    },
+    {
+      "title": "Top 10 Kitchen Gadgets Under ₹1000 You Can Buy Online Now",
+      "type": "Transactional",
+      "target_keyword": "kitchen gadgets under 1000",
+      "estimated_traffic": "4,500+/mo"
+    },
+    {
+      "title": "Best Budget Smartwatches for Students in India (Under ₹2000)",
+      "type": "Transactional",
+      "target_keyword": "budget smartwatch for students India",
+      "estimated_traffic": "7,000+/mo"
+    },
+    {
+      "title": "Unique Gift Ideas Under ₹300 – Perfect for Any Occasion",
+      "type": "Transactional",
+      "target_keyword": "gifts under 300 India",
+      "estimated_traffic": "8,000+/mo"
+    },
+    {
+      "title": "Home Office Essentials Under ₹500 – Work From Home Setup",
+      "type": "Transactional",
+      "target_keyword": "home office essentials under 500",
+      "estimated_traffic": "3,500+/mo"
+    },
+    {
+      "title": "boAt vs Noise Earbuds – Which Brand is Better in 2026?",
+      "type": "Comparison",
+      "target_keyword": "boat vs noise earbuds comparison",
+      "estimated_traffic": "9,000+/mo"
+    },
+    {
+      "title": "Amazon vs Meesho vs VorionMart – Where to Get Best COD Deals?",
+      "type": "Comparison",
+      "target_keyword": "best COD shopping site India",
+      "estimated_traffic": "5,500+/mo"
+    },
+    {
+      "title": "Realme vs Fire-Boltt Smartwatch – Complete Comparison Guide",
+      "type": "Comparison",
+      "target_keyword": "realme vs fire boltt smartwatch",
+      "estimated_traffic": "6,200+/mo"
+    },
+    {
+      "title": "Wired vs Wireless Earphones – Which Should You Buy Under ₹500?",
+      "type": "Comparison",
+      "target_keyword": "wired vs wireless earphones India",
+      "estimated_traffic": "4,800+/mo"
+    },
+    {
+      "title": "Flipkart vs VorionMart – COD Experience and Delivery Compared",
+      "type": "Comparison",
+      "target_keyword": "flipkart alternative COD India",
+      "estimated_traffic": "3,000+/mo"
+    }
   ],
   "quickWins": [
-    { "id": 1, "task": "Submit XML sitemap to Google Search Console and request indexing for all product pages", "impact": "Indexing - Get 100% of product pages discovered by Google within 48-72 hours", "time_estimate": "30 minutes", "category": "Indexing" },
-    { "id": 2, "task": "Add 'Cash on Delivery Available' badge and alt text to all product page hero images", "impact": "Conversion + Image SEO - Improve image search visibility and buyer confidence", "time_estimate": "2 hours", "category": "Product SEO" },
-    { "id": 3, "task": "Rewrite title tags for top 20 products with buying keywords and price", "impact": "Traffic - 15-30% CTR improvement on search results within 2 weeks", "time_estimate": "3 hours", "category": "On-Page SEO" },
-    { "id": 4, "task": "Add Product JSON-LD schema to all PDP pages using existing product data", "impact": "Rich Results - Prices, ratings, and availability shown directly in Google search", "time_estimate": "4 hours", "category": "Product SEO" },
-    { "id": 5, "task": "Update robots.txt to block cart, checkout, login, and admin routes from crawling", "impact": "Crawl Budget - Stop wasting Google's crawl budget on non-indexable pages", "time_estimate": "15 minutes", "category": "Technical SEO" },
-    { "id": 6, "task": "Create Google Business Profile with complete business info and product photos", "impact": "Local SEO - Appear in Google Maps and 'near me' searches for online stores", "time_estimate": "1 hour", "category": "Off-Page SEO" },
-    { "id": 7, "task": "Add WhatsApp floating button on all product pages with pre-filled product info", "impact": "Conversion - 10-20% increase in customer inquiries from hesitant buyers", "time_estimate": "2 hours", "category": "Conversion SEO" },
-    { "id": 8, "task": "Write unique meta descriptions for homepage and top 10 category pages", "impact": "CTR - 10-25% improvement in organic click-through rates from SERPs", "time_estimate": "2 hours", "category": "On-Page SEO" },
-    { "id": 9, "task": "Implement breadcrumb navigation with BreadcrumbList schema on product pages", "impact": "Rich Results + UX - Breadcrumbs appear in Google search and improve navigation", "time_estimate": "3 hours", "category": "Technical SEO" },
-    { "id": 10, "task": "Optimize top 20 product images: WebP format, proper alt text, and size < 100KB each", "impact": "Page Speed + Image SEO - 30-50% faster image loading and Google Image search visibility", "time_estimate": "4 hours", "category": "Product SEO" }
+    {
+      "id": 1,
+      "task": "Submit XML sitemap to Google Search Console and request indexing for all product pages",
+      "impact": "Indexing - Get 100% of product pages discovered by Google within 48-72 hours",
+      "time_estimate": "30 minutes",
+      "category": "Indexing"
+    },
+    {
+      "id": 2,
+      "task": "Add 'Cash on Delivery Available' badge and alt text to all product page hero images",
+      "impact": "Conversion + Image SEO - Improve image search visibility and buyer confidence",
+      "time_estimate": "2 hours",
+      "category": "Product SEO"
+    },
+    {
+      "id": 3,
+      "task": "Rewrite title tags for top 20 products with buying keywords and price",
+      "impact": "Traffic - 15-30% CTR improvement on search results within 2 weeks",
+      "time_estimate": "3 hours",
+      "category": "On-Page SEO"
+    },
+    {
+      "id": 4,
+      "task": "Add Product JSON-LD schema to all PDP pages using existing product data",
+      "impact": "Rich Results - Prices, ratings, and availability shown directly in Google search",
+      "time_estimate": "4 hours",
+      "category": "Product SEO"
+    },
+    {
+      "id": 5,
+      "task": "Update robots.txt to block cart, checkout, login, and admin routes from crawling",
+      "impact": "Crawl Budget - Stop wasting Google's crawl budget on non-indexable pages",
+      "time_estimate": "15 minutes",
+      "category": "Technical SEO"
+    },
+    {
+      "id": 6,
+      "task": "Create Google Business Profile with complete business info and product photos",
+      "impact": "Local SEO - Appear in Google Maps and 'near me' searches for online stores",
+      "time_estimate": "1 hour",
+      "category": "Off-Page SEO"
+    },
+    {
+      "id": 7,
+      "task": "Add WhatsApp floating button on all product pages with pre-filled product info",
+      "impact": "Conversion - 10-20% increase in customer inquiries from hesitant buyers",
+      "time_estimate": "2 hours",
+      "category": "Conversion SEO"
+    },
+    {
+      "id": 8,
+      "task": "Write unique meta descriptions for homepage and top 10 category pages",
+      "impact": "CTR - 10-25% improvement in organic click-through rates from SERPs",
+      "time_estimate": "2 hours",
+      "category": "On-Page SEO"
+    },
+    {
+      "id": 9,
+      "task": "Implement breadcrumb navigation with BreadcrumbList schema on product pages",
+      "impact": "Rich Results + UX - Breadcrumbs appear in Google search and improve navigation",
+      "time_estimate": "3 hours",
+      "category": "Technical SEO"
+    },
+    {
+      "id": 10,
+      "task": "Optimize top 20 product images: WebP format, proper alt text, and size < 100KB each",
+      "impact": "Page Speed + Image SEO - 30-50% faster image loading and Google Image search visibility",
+      "time_estimate": "4 hours",
+      "category": "Product SEO"
+    }
   ]
 }

@@ -11,11 +11,11 @@ export default function Footer() {
         >
             {/* Trust Badges Strip */}
             <div style={{ borderBottom: '1px solid #1f2937' }}>
-                <div className="max-w-7xl mx-auto px-6 lg:px-12 py-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {[
                             { icon: <CreditCard size={22} />, title: 'Cash on Delivery', desc: 'Pay when you receive' },
-                            { icon: <Truck size={22} />, title: 'Free Shipping', desc: 'On orders above ₹500' },
+                            { icon: <Truck size={22} />, title: 'Free Shipping', desc: 'Free Delivery on Every Order' },
                             { icon: <Shield size={22} />, title: 'Secure Checkout', desc: '100% protected' },
                             { icon: <Headphones size={22} />, title: '24/7 Support', desc: 'Always here to help' },
                         ].map((item) => (
@@ -37,8 +37,8 @@ export default function Footer() {
             </div>
 
             {/* Main Footer Content */}
-            <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
+            <div className="max-w-7xl mx-auto px-4 md:px-12 py-10 md:py-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-8">
                     {/* Brand Column */}
                     <div className="lg:col-span-4">
                         <Link href="/" className="inline-flex items-center group mb-6">

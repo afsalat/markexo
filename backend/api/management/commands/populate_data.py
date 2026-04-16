@@ -272,7 +272,7 @@ class Command(BaseCommand):
         banner_data = [
             {'title': 'New Year Sale', 'subtitle': 'Up to 50% off on all electronics!', 'link': '/products?category=electronics'},
             {'title': 'Fashion Week', 'subtitle': 'Latest trends at unbeatable prices', 'link': '/products?category=fashion'},
-            {'title': 'Free Shipping', 'subtitle': 'On orders above ₹999', 'link': '/products'},
+            {'title': 'Free Shipping', 'subtitle': 'Free Delivery on Every Order', 'link': '/products'},
         ]
         
         for i, data in enumerate(banner_data):
