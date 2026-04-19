@@ -1,27 +1,34 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { ShoppingCart, Heart, Star, Plus } from 'lucide-react';
+import { ShoppingCart, Heart, Star } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { Product } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { useCustomerAuth } from '@/context/CustomerAuthContext';
 
 interface ProductCardProps {
     product: Product;
 }
 
-import { useCustomerAuth } from '@/context/CustomerAuthContext';
-
 export default function ProductCard({ product }: ProductCardProps) {
     const { addItem } = useCart();
+    const router = useRouter();
     const { addToWishlist, removeFromWishlist, isWishlisted } = useCustomerAuth();
+    
     const displayRating = Number(product.rating) > 0 ? Number(product.rating) : 4.6;
-    const displayReviewCount = (product.review_count || 0) > 0 ? product.review_count : 128;
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         addItem(product);
+    };
+
+    const handleBuyNow = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        addItem(product);
+        router.push('/checkout');
     };
 
     const handleWishlist = (e: React.MouseEvent) => {
@@ -35,16 +42,15 @@ export default function ProductCard({ product }: ProductCardProps) {
     };
 
     return (
-        <div className="product-grid-card group cursor-pointer">
+        <div className="product-grid-card group cursor-pointer bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
             <Link href={`/products/${product.slug}`} className="block h-full">
                 {/* Image Container */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
                     {product.image ? (
-                        <Image
+                        <img
                             src={product.image}
                             alt={product.name}
-                            fill
-                            className="object-cover product-image"
+                            className="object-contain w-full h-full p-2 product-image transition-transform duration-700 group-hover:scale-105"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-200">
@@ -74,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                         onClick={handleWishlist}
                         className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100 z-10 ${isWishlisted(product.id)
                             ? 'bg-red-500 text-white opacity-100'
-                            : 'bg-white/95 backdrop-blur-sm text-gray-400 hover:text-red-500'
+                            : 'bg-white/90 backdrop-blur-sm text-gray-400 hover:text-red-500'
                             }`}
                     >
                         <Heart
@@ -85,14 +91,14 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </div>
 
                 {/* Content */}
-                <div className="p-4">
+                <div className="p-3">
                     {/* Category */}
                     <span className="text-[10px] font-bold tracking-widest text-accent-500 uppercase mb-1.5 block">
                         {product.category?.name || 'Curated'}
                     </span>
 
                     {/* Title */}
-                    <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2.5rem] mb-1">
+                    <h3 className="font-bold text-gray-900 text-xs leading-snug line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2.5rem] mb-1">
                         {product.name}
                     </h3>
 
@@ -102,33 +108,41 @@ export default function ProductCard({ product }: ProductCardProps) {
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <Star
                                     key={star}
-                                    size={11}
+                                    size={10}
                                     className={star <= Math.round(displayRating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 fill-gray-200'}
                                 />
                             ))}
                         </div>
-                        <span className="text-[10px] text-gray-400 ml-0.5">
-                            {displayRating.toFixed(1)} ({displayReviewCount})
+                        <span className="text-[10px] text-gray-400 font-medium ml-0.5">
+                            {displayRating.toFixed(1)}
                         </span>
                     </div>
 
-                    {/* Price & Action */}
-                    <div className="flex items-end justify-between pt-3 border-t border-gray-50">
-                        <div className="flex flex-col">
-                            <span className="text-base font-bold text-gray-900 tracking-tight">
-                                ₹{product.current_price.toLocaleString()}
+                    {/* Price */}
+                    <div className="flex items-baseline gap-1.5 mb-4">
+                        <span className="text-sm font-bold text-gray-900">
+                            ₹{product.current_price.toLocaleString()}
+                        </span>
+                        {product.price > product.current_price && (
+                            <span className="text-[10px] text-gray-400 line-through">
+                                ₹{product.price.toLocaleString()}
                             </span>
-                            {product.sale_price && (
-                                <span className="text-[11px] text-gray-400 line-through">
-                                    ₹{product.price.toLocaleString()}
-                                </span>
-                            )}
-                        </div>
+                        )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 gap-2 mt-auto">
                         <button
                             onClick={handleAddToCart}
-                            className="h-9 w-9 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-accent-500 hover:text-white hover:border-accent-500 hover:scale-105 active:scale-95 transition-all"
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-50 border border-gray-100 text-gray-600 rounded-xl font-bold text-[10px] hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all w-full"
                         >
-                            <Plus size={16} />
+                            <ShoppingCart size={12} /> Add to Cart
+                        </button>
+                        <button
+                            onClick={handleBuyNow}
+                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-accent-500 text-white rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all w-full shadow-sm shadow-accent-500/20"
+                        >
+                            Buy Now
                         </button>
                     </div>
                 </div>

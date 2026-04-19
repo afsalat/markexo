@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { API_BASE_URL, BASE_URL } from '@/config/apiConfig';
 import { fetchProducts, fetchCategories, fetchBanners } from '@/lib/api';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
+import ProductCard from '@/components/ProductCard';
+import { useCart } from '@/lib/cart';
 
 // Category icons mapping
 const categoryIcons: Record<string, string> = {
@@ -65,6 +67,10 @@ export default function HomePage() {
     const [loading, setLoading] = useState(true);
     const { addToWishlist, removeFromWishlist, isWishlisted } = useCustomerAuth();
     const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [dragOffset, setDragOffset] = useState(0);
+    const [showScrollDown, setShowScrollDown] = useState(true);
 
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -136,6 +142,16 @@ export default function HomePage() {
     const handleCameraClick = () => {
         fileInputRef.current?.click();
     };
+
+    useEffect(() => {
+        const handleScroll = () => {
+            const scrollPos = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
+            setShowScrollDown(scrollPos < 10);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -248,25 +264,43 @@ export default function HomePage() {
             id: 'local-banner-1',
             image: '/banner1.png',
             link: '/products',
-            title: 'Banner 1',
+            title: '',
         },
         {
             id: 'local-banner-2',
             image: '/banner2.png',
             link: '/products',
-            title: 'Banner 2',
+            title: '',
         },
         {
             id: 'local-banner-3',
             image: '/banner3.png',
             link: '/products',
-            title: 'Banner 3',
+            title: '',
         },
         {
             id: 'local-banner-4',
             image: '/banner4.png',
             link: '/products',
-            title: 'Banner 4',
+            title: '',
+        },
+        {
+            id: 'local-banner-5',
+            image: '/banner5.png',
+            link: '/products',
+            title: '',
+        },
+        {
+            id: 'local-banner-6',
+            image: '/banner6.png',
+            link: '/products',
+            title: '',
+        },
+        {
+            id: 'local-banner-7',
+            image: '/banner7.png',
+            link: '/products',
+            title: '',
         },
         ...homeOfferBanners.slice(0, 4),
     ];
@@ -303,6 +337,33 @@ export default function HomePage() {
         );
     };
 
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+        setIsDragging(true);
+        const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        setStartX(x);
+    };
+
+    const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDragging) return;
+        const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const offset = x - startX;
+        setDragOffset(offset);
+    };
+
+    const handleDragEnd = () => {
+        if (!isDragging) return;
+
+        const threshold = 50; // pixels to trigger slide change
+        if (dragOffset < -threshold) {
+            showNextOffer();
+        } else if (dragOffset > threshold) {
+            showPreviousOffer();
+        }
+
+        setIsDragging(false);
+        setDragOffset(0);
+    };
+
     return (
         <div className="min-h-screen bg-white">
             {/* ========================================
@@ -331,7 +392,7 @@ export default function HomePage() {
                         />
                         <div className="absolute inset-y-0 right-3 flex items-center gap-2">
                             {searchQuery && (
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setSearchQuery('')}
                                     className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
@@ -339,20 +400,20 @@ export default function HomePage() {
                                     <X size={16} />
                                 </button>
                             )}
-                            <button 
+                            <button
                                 type="button"
                                 onClick={handleCameraClick}
                                 className="p-1.5 hover:bg-slate-200 rounded-full transition-colors text-accent-500"
                             >
                                 <Camera size={18} />
                             </button>
-                            <input 
-                                type="file" 
-                                ref={fileInputRef} 
-                                onChange={handleFileChange} 
-                                accept="image/*" 
-                                capture="environment" 
-                                className="hidden" 
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                accept="image/*"
+                                capture="environment"
+                                className="hidden"
                             />
                         </div>
                     </form>
@@ -511,64 +572,79 @@ export default function HomePage() {
                         className="relative overflow-hidden"
                     >
                         <div
-                            className="flex transition-transform duration-700 ease-in-out"
-                            style={{ transform: `translateX(-${currentOfferIndex * 100}%)` }}
+                            className={`flex ${isDragging ? '' : 'transition-transform duration-700 ease-in-out'} cursor-grab active:cursor-grabbing`}
+                            style={{ transform: `translateX(calc(-${currentOfferIndex * 100}% + ${dragOffset}px))` }}
+                            onMouseDown={handleDragStart}
+                            onMouseMove={handleDragMove}
+                            onMouseUp={handleDragEnd}
+                            onMouseLeave={handleDragEnd}
+                            onTouchStart={handleDragStart}
+                            onTouchMove={handleDragMove}
+                            onTouchEnd={handleDragEnd}
                         >
                             {heroCarouselOffers.map((banner, index) => (
                                 <Link
                                     key={banner.id || index}
                                     href={banner.link || '/products'}
-                                    className="group relative block min-w-full w-full flex-shrink-0 overflow-hidden bg-slate-50 lg:h-[calc(100vh-76px)]"
+                                    className="group relative block min-w-full w-full flex-shrink-0 overflow-hidden bg-black h-[105px] sm:h-[150px] md:h-[280px] lg:h-[450px]"
                                 >
                                     <div className="absolute inset-0 z-10 bg-black/5 group-hover:bg-black/0 transition-colors duration-500" />
                                     <img
                                         src={banner.image || ''}
                                         alt={banner.title || 'Special Offer'}
-                                        className="w-full h-auto lg:h-full lg:object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
                                         loading={index === 0 ? "eager" : "lazy"}
+                                        draggable={false}
                                     />
                                     {/* Desktop Only Caption Overlay */}
-                                    <div className="hidden lg:flex absolute bottom-12 left-12 z-20 flex-col gap-4 max-w-lg">
-                                        <h2 className="text-5xl font-bold text-white drop-shadow-lg">{banner.title}</h2>
-                                        <span className="inline-block px-6 py-3 bg-white text-slate-900 rounded-full font-bold text-lg w-max">Shop Now</span>
-                                    </div>
+                                    {banner.title && (
+                                        <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 z-20 flex flex-col gap-3 md:gap-4 max-w-lg">
+                                            <h2 className="text-xl md:text-5xl font-bold text-white drop-shadow-lg">{banner.title}</h2>
+                                        </div>
+                                    )}
                                 </Link>
                             ))}
                         </div>
 
                         {/* Pagination Progress Bar (Mobile App Style) */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                             {heroCarouselOffers.map((_, i) => (
                                 <div
                                     key={i}
-                                    className={`h-1 rounded-full transition-all duration-300 ${
-                                        i === currentOfferIndex ? 'w-6 bg-accent-500' : 'w-2 bg-white/50'
-                                    }`}
+                                    className={`h-1 rounded-full transition-all duration-300 ${i === currentOfferIndex ? 'w-6 bg-accent-500' : 'w-2 bg-white/50'
+                                        }`}
                                 />
                             ))}
                         </div>
-
-                        <div className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white/35 to-transparent md:w-28" />
-                        <div className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-white/35 to-transparent md:w-28" />
                     </div>
                 </div>
-            </section>
+            {/* Scroll Down Indicator - Fixed centering with full width container */}
+            <div className={`fixed inset-x-0 bottom-[90px] md:bottom-10 z-[40] flex justify-center animate-bounce transition-all duration-500 ${showScrollDown ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div className="bg-gray-900/80 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full shadow-2xl flex flex-col items-center gap-1">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/90">Scroll Down</span>
+                    <ChevronDown size={14} className="text-accent-400" />
+                </div>
+            </div>
+        </section>
 
-            <section className="bg-white py-4 md:py-6 border-b border-gray-100">
-                <div className="container mx-auto px-4">
+
+            <section className="bg-white pt-6 pb-2 md:pt-8 md:pb-4 border-b border-gray-100">
+                <div className="container mx-auto px-8 md:px-12">
                     {/* Hide scrollbar but allow horizontal scroll */}
                     <div className="overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
-                        <div className="flex min-w-max items-start justify-start gap-4 lg:gap-8">
+                        <div className="flex min-w-max items-start justify-center mx-auto gap-4 lg:gap-8">
                             {/* "All" Story Circle */}
                             <Link href="/products" className="group flex w-[64px] md:w-[90px] flex-col items-center gap-2">
                                 <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-primary-400 to-accent-500 animate-gradient-xy">
-                                    <div className="flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm">
-                                        <div className="flex h-full w-full items-center justify-center bg-accent-500 text-white font-bold text-xs uppercase tracking-tighter">
-                                            All
-                                        </div>
+                                    <div className="flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
+                                        <img
+                                            src="/all-categories.png"
+                                            alt="All Categories"
+                                            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                                        />
                                     </div>
                                 </div>
-                                <span className="text-center text-[9px] md:text-xs font-bold text-slate-800 tracking-tight">View All</span>
+                                <span className="text-center text-xs md:text-sm font-bold text-slate-800 tracking-tight">View All</span>
                             </Link>
 
                             {categories.slice(0, 10).map((category, index) => (
@@ -597,7 +673,7 @@ export default function HomePage() {
                                     </div>
 
                                     {/* Text Content */}
-                                    <span className="text-center text-[9px] md:text-xs font-semibold text-slate-700 group-hover:text-accent-600 transition-colors truncate w-full px-1">
+                                    <span className="text-center text-xs md:text-sm font-semibold text-slate-700 group-hover:text-accent-600 transition-colors truncate w-full px-1">
                                         {category.name}
                                     </span>
                                 </Link>
@@ -606,7 +682,8 @@ export default function HomePage() {
                     </div>
                 </div>
 
-                <style dangerouslySetInnerHTML={{__html: `
+                <style dangerouslySetInnerHTML={{
+                    __html: `
                     .hide-scrollbar::-webkit-scrollbar {
                         display: none;
                     }
@@ -628,7 +705,7 @@ export default function HomePage() {
             {/* ========================================
                 TRENDING PRODUCTS
             ======================================== */}
-            <section className="relative overflow-hidden bg-white py-8 md:py-16 border-b border-gray-100">
+            <section className="relative overflow-hidden bg-white pt-4 pb-8 md:pt-8 md:pb-16 border-b border-gray-100">
                 <div className="container mx-auto px-4 lg:px-8">
                     <div className="relative z-10 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4" data-aos="fade-up">
                         <div className="max-w-xl">
@@ -645,64 +722,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                        {trendingProducts.map((product, index) => (
-                            <Link
-                                key={product.id}
-                                href={`/products/${product.slug}`}
-                                data-aos="fade-up"
-                                data-aos-delay={index * 50}
-                                className="product-card group relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-xl hover:border-accent-500/20"
-                            >
-                                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="h-full w-full object-contain p-2 transition-transform duration-700 group-hover:scale-105" />
-                                    ) : (
-                                        <div className="flex h-full w-full items-center justify-center text-gray-200">
-                                            <ShoppingCart size={32} />
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            isWishlisted(product.id) ? removeFromWishlist(product.id) : addToWishlist(product);
-                                        }}
-                                        className={`absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all scale-90 group-hover:scale-100 ${isWishlisted(product.id) ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-accent-500 hover:bg-white border border-gray-100'}`}
-                                    >
-                                        <Heart size={14} className={isWishlisted(product.id) ? 'fill-current' : ''} />
-                                    </button>
-                                </div>
-                                
-                                <div className="p-3">
-                                    <div className="mb-2 flex items-center justify-between gap-1">
-                                        <span className="text-[9px] font-bold tracking-widest text-accent-500 uppercase bg-accent-500/5 px-2 py-0.5 rounded-full border border-accent-500/10">
-                                            {product.category?.name || 'Exclusive'}
-                                        </span>
-                                        <div className="flex items-center gap-1">
-                                            <Star size={10} className="fill-amber-400 text-amber-400" />
-                                            <span className="text-[10px] font-bold text-gray-900">4.8</span>
-                                        </div>
-                                    </div>
-                                    <h3 className="mb-2 line-clamp-2 text-xs font-bold text-gray-900 group-hover:text-accent-500 transition-colors leading-tight min-h-[2rem]">
-                                        {product.name}
-                                    </h3>
-                                    <div className="flex items-baseline justify-between gap-2 pt-2 border-t border-gray-50">
-                                        <div className="flex flex-col">
-                                            <div className="flex items-baseline gap-1.5">
-                                                <span className="text-sm font-bold text-gray-900">₹{product.current_price.toLocaleString()}</span>
-                                                {product.price > product.current_price && (
-                                                    <span className="text-[10px] text-gray-400 line-through">₹{product.price.toLocaleString()}</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="h-7 w-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-accent-500 group-hover:text-white transition-all">
-                                            <Plus size={14} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
+                        {trendingProducts.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </div>
@@ -713,8 +734,8 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-12 md:py-20 bg-gray-50/50">
                 <div className="container mx-auto px-4 lg:px-8">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4" data-aos="fade-up">
-                        <div className="text-center md:text-left">
+                    <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4" data-aos="fade-up">
+                        <div className="text-left">
                             <h2 className="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-1">Editor's <span className="text-accent-500">Choice</span></h2>
                             <p className="text-gray-500 text-sm">Handpicked premium products for your lifestyle.</p>
                         </div>
@@ -724,50 +745,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                        {featuredProducts.map((product, index) => (
-                            <Link key={product.id} href={`/products/${product.slug}`} className="product-card group relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-1.5" data-aos="fade-up" data-aos-delay={index * 50}>
-                                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-200">
-                                            <ShoppingCart size={32} />
-                                        </div>
-                                    )}
-                                    <div className="absolute top-2 left-2">
-                                        <span className="rounded-full bg-gray-900/90 backdrop-blur-md px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white">Featured</span>
-                                    </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            isWishlisted(product.id) ? removeFromWishlist(product.id) : addToWishlist(product);
-                                        }}
-                                        className={`absolute right-2 top-2 w-8 h-8 rounded-full flex items-center justify-center shadow-lg transition-all scale-90 group-hover:scale-100 ${isWishlisted(product.id) ? 'bg-red-500 text-white' : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500'}`}>
-                                        <Heart size={14} className={isWishlisted(product.id) ? 'fill-current' : ''} />
-                                    </button>
-                                </div>
-                                <div className="p-3">
-                                    <span className="text-[9px] font-bold tracking-widest text-accent-500 uppercase mb-1.5 block">
-                                        {product.category?.name || 'Exclusive'}
-                                    </span>
-                                    <h3 className="font-bold text-gray-900 text-xs leading-tight mb-3 line-clamp-2 min-h-[2rem]">
-                                        {product.name}
-                                    </h3>
-                                    <div className="flex items-center justify-between border-t border-gray-50 pt-3">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-gray-900">₹{product.current_price.toLocaleString()}</span>
-                                            {product.price > product.current_price && (
-                                                <span className="text-[9px] text-gray-400 line-through">₹{product.price.toLocaleString()}</span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-[9px] font-bold text-amber-500">
-                                            <Star size={9} className="fill-current" />
-                                            <span>4.9</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
+                        {featuredProducts.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </div>
@@ -794,41 +773,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                        {bestSellers.map((product, index) => (
-                            <Link key={product.id} href={`/products/${product.slug}`} className="product-card group relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-1.5" data-aos="fade-up" data-aos-delay={index * 50}>
-                                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-200">
-                                            <ShoppingCart size={32} />
-                                        </div>
-                                    )}
-                                    {product.discount_percent > 0 && (
-                                        <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-[9px] font-bold shadow-lg">
-                                            -{product.discount_percent}%
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-3">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-[9px] font-bold text-accent-500 uppercase tracking-widest">{product.category?.name || 'Essentials'}</span>
-                                        <div className="flex items-center gap-1">
-                                            <Star size={9} className="fill-amber-400 text-amber-400" />
-                                            <span className="text-[9px] font-bold text-gray-600">4.9</span>
-                                        </div>
-                                    </div>
-                                    <h3 className="font-bold text-gray-900 text-xs leading-snug line-clamp-2 transition-colors group-hover:text-accent-500 mb-3 min-h-[2rem]">
-                                        {product.name}
-                                    </h3>
-                                    <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-                                        <span className="text-base font-bold text-gray-900">₹{product.current_price.toLocaleString()}</span>
-                                        <div className="h-7 w-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 scale-90 group-hover:scale-100 group-hover:bg-accent-500 group-hover:text-white transition-all">
-                                            <Plus size={14} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
+                        {bestSellers.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </div>
@@ -853,38 +799,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {newArrivals.map((product, index) => (
-                            <div key={product.id} className="product-card group relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-1" data-aos="fade-up" data-aos-delay={index * 50}>
-                                <Link href={`/products/${product.slug}`} className="block">
-                                    <div className="relative aspect-square overflow-hidden bg-slate-50">
-                                        {product.image ? (
-                                            <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-200">
-                                                <ShoppingCart size={32} />
-                                            </div>
-                                        )}
-                                        <span className="absolute top-2 left-2 bg-black text-white px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest">NEW</span>
-                                        {product.discount_percent > 0 && (
-                                            <span className="absolute top-2 right-2 bg-red-500 text-white px-1.5 py-0.5 rounded text-[8px] font-bold shadow-md">-{product.discount_percent}%</span>
-                                        )}
-                                    </div>
-                                    <div className="p-3">
-                                        <span className="text-[9px] font-bold tracking-widest text-accent-500 uppercase mb-1 block">
-                                            {product.category?.name || 'Latest'}
-                                        </span>
-                                        <h3 className="font-bold text-gray-900 text-xs leading-tight mb-3 line-clamp-2 min-h-[2rem]">
-                                            {product.name}
-                                        </h3>
-                                        <div className="flex items-center justify-between border-t border-gray-50 pt-2.5">
-                                            <span className="text-sm font-bold text-gray-900">₹{product.current_price.toLocaleString()}</span>
-                                            <div className="h-7 w-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-accent-500 group-hover:text-white transition-all scale-90 group-hover:scale-100">
-                                                <Plus size={14} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            </div>
+                        {newArrivals.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </div>
@@ -898,8 +814,8 @@ export default function HomePage() {
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/5 rounded-full blur-[80px] -ml-32 -mb-32" />
 
                 <div className="container mx-auto px-4 lg:px-8 relative z-10">
-                    <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-6" data-aos="fade-up">
-                        <div className="text-center md:text-left">
+                    <div className="flex flex-col md:flex-row justify-between items-start mb-10 gap-6" data-aos="fade-up">
+                        <div className="text-left">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/10 rounded-full text-red-600 text-[9px] font-bold uppercase tracking-widest mb-4 animate-pulse">
                                 <Clock size={12} />
                                 Flash Sale Ending Soon
@@ -932,39 +848,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {dealsOfTheDay.map((product, index) => (
-                            <Link key={product.id} href={`/products/${product.slug}`} className="product-card group relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl" data-aos="fade-up" data-aos-delay={index * 50}>
-                                <div className="absolute top-2 left-2 z-20 bg-red-600 text-white px-2 py-0.5 rounded text-[8px] font-bold shadow-lg">
-                                    -{product.discount_percent || 50}%
-                                </div>
-                                <div className="relative aspect-square overflow-hidden bg-gray-50">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-200">
-                                            <ShoppingCart size={32} />
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-3">
-                                    <h3 className="font-bold text-gray-900 text-[11px] leading-tight line-clamp-2 min-h-[2.2rem] mb-3 group-hover:text-red-600 transition-colors">
-                                        {product.name}
-                                    </h3>
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-base font-bold text-red-600">₹{product.current_price.toLocaleString()}</span>
-                                        {product.price > product.current_price && (
-                                            <span className="text-[10px] text-gray-400 line-through font-medium">₹{product.price.toLocaleString()}</span>
-                                        )}
-                                    </div>
-                                    <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-                                        <div className="h-full bg-red-500 w-[75%]" />
-                                    </div>
-                                    <div className="flex justify-between mt-1.5 px-0.5">
-                                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">Limited Stock</span>
-                                        <span className="text-[8px] font-bold text-red-500 uppercase tracking-widest">Ending Soon</span>
-                                    </div>
-                                </div>
-                            </Link>
+                        {dealsOfTheDay.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </div>
@@ -986,32 +871,8 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {suggestedProducts.map((product, index) => (
-                            <Link key={product.id} href={`/products/${product.slug}`} className="product-card group relative bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl" data-aos="fade-up" data-aos-delay={index * 50}>
-                                <div className="relative aspect-square overflow-hidden bg-gray-50">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-200">
-                                            <ShoppingCart size={32} />
-                                        </div>
-                                    )}
-                                    {product.discount_percent > 0 && (
-                                        <span className="absolute top-2 left-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-md">-{product.discount_percent}%</span>
-                                    )}
-                                </div>
-                                <div className="p-3">
-                                    <h3 className="font-bold text-gray-900 text-[11px] leading-tight mb-3 line-clamp-2 min-h-[2.2rem] group-hover:text-accent-500 transition-colors">
-                                        {product.name}
-                                    </h3>
-                                    <div className="flex items-center justify-between border-t border-gray-50 pt-3">
-                                        <span className="text-base font-bold text-gray-900">₹{product.current_price.toLocaleString()}</span>
-                                        <div className="h-7 w-7 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 scale-90 group-hover:scale-100 group-hover:bg-accent-500 group-hover:text-white transition-all">
-                                            <ShoppingCart size={14} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
+                        {suggestedProducts.map((product) => (
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 </div>
@@ -1022,7 +883,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-10 md:py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-8" data-aos="fade-up">
+                    <div className="text-left mb-8" data-aos="fade-up">
                         <h2 className="font-display text-xl md:text-3xl font-bold text-slate-900 mb-1">What Our Customers Say</h2>
                         <p className="text-slate-500 text-xs">Real experiences from real people</p>
                     </div>
@@ -1130,7 +991,7 @@ export default function HomePage() {
             ======================================== */}
             <section className="py-10 md:py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-8" data-aos="fade-up">
+                    <div className="text-left mb-8" data-aos="fade-up">
                         <h2 className="font-display text-xl md:text-3xl font-bold text-slate-900 mb-1">Why Choose VorionMart?</h2>
                         <p className="text-slate-500 text-xs">Your trusted premium marketplace</p>
                     </div>
