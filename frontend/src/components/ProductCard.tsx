@@ -97,8 +97,16 @@ export default function ProductCard({ product }: ProductCardProps) {
                         {product.category?.name || 'Curated'}
                     </span>
 
-                    {/* Title */}
-                    <h3 className="font-bold text-gray-900 text-xs leading-snug line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2.5rem] mb-1">
+                    {/* Title - Strict 2-line limit */}
+                    <h3 
+                        className="font-bold text-gray-900 text-sm leading-snug group-hover:text-accent-600 transition-colors h-[40px] mb-1 overflow-hidden"
+                        style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                        }}
+                    >
                         {product.name}
                     </h3>
 
@@ -130,8 +138,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                         )}
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-1 gap-2 mt-auto">
+                    {/* Action Buttons - Stacked on Mobile, Side-by-Side on Tablet/Desktop */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-auto">
                         <button
                             onClick={handleAddToCart}
                             className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-50 border border-gray-100 text-gray-600 rounded-xl font-bold text-[10px] hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all w-full"
