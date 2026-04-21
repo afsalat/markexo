@@ -43,9 +43,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BlogPage() {
-    // Fetch blog posts on server side
-    const blogResponse = await fetchBlogPosts({ is_published: 'true', limit: '20' });
-    const blogPosts = Array.isArray(blogResponse) ? blogResponse : (blogResponse.results || []);
+    let blogPosts = [];
+    try {
+        const blogResponse = await fetchBlogPosts({ is_published: 'true', limit: '20' });
+        blogPosts = Array.isArray(blogResponse) ? blogResponse : (blogResponse.results || []);
+    } catch {
+        // Fail gracefully during static generation when API is unreachable
+    }
 
     // Pass data to client component
     return <BlogClient blogPosts={blogPosts} />;

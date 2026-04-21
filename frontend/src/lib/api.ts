@@ -50,6 +50,7 @@ export interface Product {
     features?: string[];
     specifications?: Record<string, string | number | boolean | null>;
     benefits?: string[];
+    faq?: Array<{ question: string; answer: string }>;
 }
 
 export interface Banner {

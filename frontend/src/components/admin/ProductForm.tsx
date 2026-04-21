@@ -243,6 +243,8 @@ export default function ProductForm({
     const [openDropdown, setOpenDropdown] = useState<SearchDropdown>(null);
     const [quickFillInput, setQuickFillInput] = useState('');
     const [quickFillMessage, setQuickFillMessage] = useState<QuickFillMessage | null>(null);
+    const [blogPost, setBlogPost] = useState<BlogPost>({ title: '', content: '', products: [], tags: [] });
+    const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([{ question: '', answer: '' }]);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -1020,7 +1022,7 @@ Savings Goal: 11000 Rupees`}
                                                     <button
                                                         key={shop.id}
                                                         type="button"
-                                                        onClick={() => selectSearchOption('shop_id', shop, setShopSearch, 'shop')}
+                                                        onClick={() => selectSearchOption('shop_id', shop, setShopSearch)}
                                                         className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-dark-900 ${
                                                             formData.shop_id === shop.id ? 'bg-dark-900 text-white' : 'text-silver-300'
                                                         }`}

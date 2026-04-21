@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { fetchBlogPost, fetchProduct, BlogPost } from '@/lib/api';
-import BlogPostClient from './BlogPostClient';
+import BlogPostClient from '../BlogPostClient';
 
 type Props = {
     params: { slug: string };
