@@ -17,6 +17,21 @@ interface ProductFormProps {
     categoriesCreateEndpoint?: string;
 }
 
+interface FAQ {
+    question: string;
+    answer: string;
+}
+
+interface BlogPost {
+    title: string;
+    content: string;
+    products: string[];
+    category?: string;
+    tags?: string[];
+    meta_title?: string;
+    meta_description?: string;
+}
+
 type QuickAddPanel = 'shop' | 'category' | null;
 type SearchDropdown = 'shop' | 'category' | null;
 type SearchOption = {
@@ -209,6 +224,8 @@ export default function ProductForm({
     const shopSearchRef = useRef<HTMLDivElement>(null);
     const categorySearchRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [shops, setShops] = useState<Shop[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(null);
@@ -895,7 +912,7 @@ export default function ProductForm({
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onBack}
-                        className="p-2 text-silver-500 hover:text-white hover:bg-dark-700 rounded-xl transition-all"
+                        className="p-2 text-silver-400 hover:text-white hover:bg-dark-700 rounded-xl transition-all"
                     >
                         <ArrowLeft size={20} />
                     </button>
@@ -911,8 +928,8 @@ export default function ProductForm({
                         <div className="mb-3 flex items-center justify-between gap-3">
                             <div>
                                 <h2 className="text-sm font-semibold text-white">Quick Fill</h2>
-                                <p className="mt-1 text-xs text-silver-500">
-                                    Paste one formatted block and fill the product fields automatically.
+                                <p className="mt-1 text-xs text-silver-400">
+                                    Paste one formatted block and fill product fields automatically.
                                 </p>
                             </div>
                             <button
@@ -1003,9 +1020,9 @@ Savings Goal: 11000 Rupees`}
                                                     <button
                                                         key={shop.id}
                                                         type="button"
-                                                        onClick={() => selectSearchOption('shop_id', shop, setShopSearch)}
-                                                        className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-dark-700 ${
-                                                            formData.shop_id === shop.id ? 'bg-dark-700 text-white' : 'text-silver-300'
+                                                        onClick={() => selectSearchOption('shop_id', shop, setShopSearch, 'shop')}
+                                                        className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-dark-900 ${
+                                                            formData.shop_id === shop.id ? 'bg-dark-900 text-white' : 'text-silver-300'
                                                         }`}
                                                     >
                                                         <span className="truncate">{shop.label}</span>
@@ -1182,44 +1199,55 @@ Savings Goal: 11000 Rupees`}
                             </div>
 
                             {quickAddPanel === 'category' && (
-                                <div className="rounded-xl border border-dark-700 bg-dark-900/50 p-4">
+                                <div className="rounded-xl border border-dark-700 bg-dark-900/50 p-5 mt-6">
                                     <div className="mb-4">
-                                        <h3 className="text-sm font-semibold text-white">Quick Add Category</h3>
-                                        <p className="text-xs text-silver-500 mt-1">Create a category without leaving the product form.</p>
+                                        <div>
+                                            <h2 className="text-sm font-semibold text-white">Quick Add Category</h2>
+                                            <p className="text-xs text-silver-500 mt-1">Create a category without leaving the product form.</p>
+                                        </div>
                                     </div>
-
+                                    
                                     <div className="space-y-3">
-                                        <input
-                                            type="text"
-                                            value={categoryForm.name}
-                                            onChange={(e) => setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
-                                            className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700 placeholder-silver-600"
-                                            placeholder="Category name"
-                                        />
-
-                                        <select
-                                            value={categoryForm.parent}
-                                            onChange={(e) => setCategoryForm((prev) => ({ ...prev, parent: e.target.value }))}
-                                            className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700"
-                                        >
-                                            <option value="">No parent</option>
-                                            {categoryOptions.map((category) => (
-                                                <option key={category.id} value={category.id}>
-                                                    {`${'— '.repeat(category.depth)}${category.label}`}
-                                                </option>
-                                            ))}
-                                        </select>
-
-                                        <textarea
-                                            rows={3}
-                                            value={categoryForm.description}
-                                            onChange={(e) => setCategoryForm((prev) => ({ ...prev, description: e.target.value }))}
-                                            className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none resize-none text-white bg-dark-700 placeholder-silver-600"
-                                            placeholder="Description"
-                                        />
-
+                                        <div>
+                                            <label className="block text-sm font-medium text-silver-300 mb-1">Category Name</label>
+                                            <input
+                                                type="text"
+                                                value={categoryForm.name}
+                                                onChange={(e) => setCategoryForm((prev) => ({ ...prev, name: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700 placeholder-silver-600"
+                                                placeholder="Category name"
+                                            />
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-silver-300 mb-1">Parent Category</label>
+                                            <select
+                                                value={categoryForm.parent}
+                                                onChange={(e) => setCategoryForm((prev) => ({ ...prev, parent: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700"
+                                            >
+                                                <option value="">No parent</option>
+                                                {categoryOptions.map((category) => (
+                                                    <option key={category.id} value={category.id}>
+                                                        {`${'— '.repeat(category.depth)}${category.label}`}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label className="block text-sm font-medium text-silver-300 mb-1">Description</label>
+                                            <textarea
+                                                rows={3}
+                                                value={categoryForm.description}
+                                                onChange={(e) => setCategoryForm((prev) => ({ ...prev, description: e.target.value }))}
+                                                className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none resize-none text-white bg-dark-700 placeholder-silver-600"
+                                                placeholder="Description"
+                                            />
+                                        </div>
+                                        
                                         {categoryError && <p className="text-sm text-red-400">{categoryError}</p>}
-
+                                        
                                         <div className="flex justify-end gap-3">
                                             <button
                                                 type="button"
@@ -1227,7 +1255,7 @@ Savings Goal: 11000 Rupees`}
                                                     resetQuickAdd('category');
                                                     setQuickAddPanel(null);
                                                 }}
-                                                className="px-4 py-2 text-silver-400 hover:text-white"
+                                                className="px-4 py-2 text-silver-400 hover:text-white hover:bg-dark-700 transition-colors"
                                             >
                                                 Cancel
                                             </button>
@@ -1327,7 +1355,7 @@ Savings Goal: 11000 Rupees`}
                                 min="0"
                                 value={formData.stock}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700"
+                                className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700 placeholder-silver-600"
                             />
                         </div>
                         <div>
@@ -1509,6 +1537,117 @@ Country of Origin: India`}
                         <label htmlFor="is_featured" className="text-sm font-medium text-silver-300">
                             Mark as Featured Product
                         </label>
+                    </div>
+
+                    {/* Blog Creation Section */}
+                    <div className="rounded-xl border border-dark-700 bg-dark-900/50 p-5 mt-6">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-sm font-semibold text-white">Blog Post (Optional)</h2>
+                                <p className="mt-1 text-xs text-silver-500">
+                                    Create a blog post to promote this product and boost SEO
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-silver-300 mb-1">Blog Title</label>
+                                <input
+                                    type="text"
+                                    value={blogPost.title}
+                                    onChange={(e) => setBlogPost(prev => ({ ...prev, title: e.target.value }))}
+                                    className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700 placeholder-silver-600"
+                                    placeholder="e.g., Best Shaker Bottles for Gym in India (2026)"
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-silver-300 mb-1">Blog Content</label>
+                                <textarea
+                                    rows={8}
+                                    value={blogPost.content}
+                                    onChange={(e) => setBlogPost(prev => ({ ...prev, content: e.target.value }))}
+                                    className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none resize-none text-white bg-dark-700 placeholder-silver-600"
+                                    placeholder="Write about this product, its benefits, and why customers should buy it..."
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-medium text-silver-300 mb-1">Blog Tags (comma-separated)</label>
+                                <input
+                                    type="text"
+                                    value={blogPost.tags?.join(', ') || ''}
+                                    onChange={(e) => setBlogPost(prev => ({ 
+                                        ...prev, 
+                                        tags: e.target.value.split(',').map(tag => tag.trim()).filter(Boolean)
+                                    }))}
+                                    className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700 placeholder-silver-600"
+                                    placeholder="gym, fitness, protein, workout"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* FAQ Section */}
+                    <div className="rounded-xl border border-dark-700 bg-dark-900/50 p-5 mt-6">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                                <h2 className="text-sm font-semibold text-white">FAQ Section (Optional)</h2>
+                                <p className="mt-1 text-xs text-silver-500">
+                                    Add frequently asked questions to improve customer experience
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            {faqs.map((faq, index) => (
+                                <div key={index} className="space-y-3 p-4 border border-dark-600 rounded-lg">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <input
+                                            type="text"
+                                            value={faq.question}
+                                            onChange={(e) => {
+                                                const newFaqs = [...faqs];
+                                                newFaqs[index].question = e.target.value;
+                                                setFaqs(newFaqs);
+                                            }}
+                                            className="flex-1 px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700 placeholder-silver-600"
+                                            placeholder="Enter question..."
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newFaqs = faqs.filter((_, i) => i !== index);
+                                                setFaqs(newFaqs.length > 0 ? newFaqs : [{ question: '', answer: '' }]);
+                                            }}
+                                            className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        rows={3}
+                                        value={faq.answer}
+                                        onChange={(e) => {
+                                            const newFaqs = [...faqs];
+                                            newFaqs[index].answer = e.target.value;
+                                            setFaqs(newFaqs);
+                                        }}
+                                        className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none resize-none text-white bg-dark-700 placeholder-silver-600"
+                                        placeholder="Enter answer..."
+                                    />
+                                </div>
+                            ))}
+                            
+                            <button
+                                type="button"
+                                onClick={() => setFaqs(prev => [...prev, { question: '', answer: '' }])}
+                                className="w-full px-4 py-2 border border-dashed border-dark-600 rounded-lg text-silver-400 hover:text-white hover:border-solid transition-colors"
+                            >
+                                + Add FAQ
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-dark-700">

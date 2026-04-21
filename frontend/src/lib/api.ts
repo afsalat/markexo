@@ -49,6 +49,7 @@ export interface Product {
     sold_count?: number;
     features?: string[];
     specifications?: Record<string, string | number | boolean | null>;
+    benefits?: string[];
 }
 
 export interface Banner {
@@ -82,6 +83,25 @@ export interface Review {
     images: { id: number; image: string }[];
     name?: string; // For backward compatibility
     date?: string; // For backward compatibility
+}
+
+export interface BlogPost {
+    id: number;
+    title: string;
+    slug: string;
+    content: string;
+    excerpt?: string;
+    featured_image?: string;
+    author: string;
+    published_at: string;
+    updated_at: string;
+    is_published: boolean;
+    meta_title?: string;
+    meta_description?: string;
+    products: string[]; // Array of product slugs
+    category?: string;
+    tags?: string[];
+    read_time?: number;
 }
 
 export interface Order {
@@ -598,5 +618,86 @@ export async function registerPartner(partnerData: any) {
         throw new Error(errorMessage);
     }
     return res.json();
+}
+
+// Blog API functions
+export async function fetchBlogPosts(params?: Record<string, string>) {
+    const searchParams = new URLSearchParams(params);
+    const res = await fetch(`${API_URL}/blog/?${searchParams}`);
+    if (!res.ok) throw new Error('Failed to fetch blog posts');
+    return res.json();
+}
+
+export async function fetchBlogPost(slug: string) {
+    const res = await fetch(`${API_URL}/blog/${slug}/`);
+    if (!res.ok) throw new Error('Failed to fetch blog post');
+    return res.json();
+}
+
+export async function createBlogPost(blogData: {
+    title: string;
+    content: string;
+    excerpt?: string;
+    meta_title?: string;
+    meta_description?: string;
+    products?: string[];
+    category?: string;
+    tags?: string[];
+    is_published?: boolean;
+}) {
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(`${API_URL}/blog/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(blogData),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (err.detail) throw new Error(err.detail);
+        throw new Error(JSON.stringify(err) || 'Failed to create blog post');
+    }
+    return res.json();
+}
+
+export async function updateBlogPost(id: number, blogData: Partial<{
+    title: string;
+    content: string;
+    excerpt?: string;
+    meta_title?: string;
+    meta_description?: string;
+    products?: string[];
+    category?: string;
+    tags?: string[];
+    is_published?: boolean;
+}>) {
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(`${API_URL}/blog/${id}/`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(blogData),
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (err.detail) throw new Error(err.detail);
+        throw new Error(JSON.stringify(err) || 'Failed to update blog post');
+    }
+    return res.json();
+}
+
+export async function deleteBlogPost(id: number) {
+    const token = localStorage.getItem('access_token');
+    const res = await fetch(`${API_URL}/blog/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    if (!res.ok) throw new Error('Failed to delete blog post');
 }
 

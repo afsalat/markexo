@@ -536,7 +536,7 @@ export default function HomePage() {
                         {/* CTA Buttons */}
                         <div data-aos="fade-up" data-aos-delay="400" className="flex flex-wrap justify-center gap-4">
                             <Link href="/products" className="btn-primary flex items-center gap-2 text-lg px-8 py-4">
-                                Shop Now <ArrowRight size={20} />
+                                Shop Premium Products <ArrowRight size={20} />
                             </Link>
                             <Link href="/categories" className="btn-secondary flex items-center gap-2 text-lg px-8 py-4">
                                 Browse Categories
@@ -618,14 +618,7 @@ export default function HomePage() {
                         </div>
                     </div>
                 </div>
-            {/* Scroll Down Indicator - Fixed centering with full width container */}
-            <div className={`fixed inset-x-0 bottom-[90px] md:bottom-10 z-[40] flex justify-center animate-bounce transition-all duration-500 ${showScrollDown ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                <div className="bg-gray-900/80 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full shadow-2xl flex flex-col items-center gap-1">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/90">Scroll Down</span>
-                    <ChevronDown size={14} className="text-accent-400" />
-                </div>
-            </div>
-        </section>
+                    </section>
 
 
             <section className="bg-white pt-6 pb-2 md:pt-8 md:pb-4 border-b border-gray-100">
@@ -768,7 +761,7 @@ export default function HomePage() {
                             <p className="text-gray-500 text-sm">Top-rated products that our community loves.</p>
                         </div>
                         <Link href="/products?sort=bestsellers" className="group flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-xl font-bold text-xs hover:bg-gray-800 transition-all">
-                            See Top Rated <ChevronRight size={16} />
+                            Explore Best Sellers <ChevronRight size={16} />
                         </Link>
                     </div>
 
@@ -973,8 +966,8 @@ export default function HomePage() {
                             </p>
 
                             <div className="flex flex-wrap gap-3 md:gap-4">
-                                <Link href="/products" className="px-5 py-2.5 bg-accent-500 text-white rounded-xl font-bold text-xs md:text-base inline-flex items-center gap-2">
-                                    Start Shopping <ArrowRight size={16} />
+                                <Link href="/products" className="px-5 py-2.5 bg-gray-900 text-white rounded-xl font-bold text-xs md:text-base inline-flex items-center gap-2">
+                                    Shop All Products <ArrowRight size={16} />
                                 </Link>
                                 <Link href="/contact" className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-xs md:text-base hover:bg-slate-50 transition-colors">
                                     Contact Us

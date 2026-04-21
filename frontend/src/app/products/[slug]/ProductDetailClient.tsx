@@ -10,6 +10,8 @@ import {
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { fetchProduct, fetchProducts, fetchReviews, createReview, Product, Review } from '@/lib/api';
+import ProductSchema from '@/components/ProductSchema';
+import ProductBenefits from '@/components/ProductBenefits';
 
 type RelatedProductCard = {
     id: number;
@@ -483,11 +485,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
             return variants[0];
         }
 
-        return variants[(Number(productData?.id ?? 0) + reviews.length) % variants.length];
-    };
-
     return (
         <div className="min-h-screen bg-white">
+            {/* Product Schema for SEO */}
+            <ProductSchema 
+                product={productData} 
+                faqs={productData.faq || []} 
+            />
+
             {/* Breadcrumb */}
             <div className="bg-gray-50 border-b border-gray-100" data-aos="fade-down" data-aos-delay="0">
                 <div className="container mx-auto px-4 py-4">
@@ -802,6 +807,13 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                             )}
                         </div>
                     </div>
+
+                    {/* Benefits Section */}
+                    {productData.benefits && productData.benefits.length > 0 && (
+                        <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
+                            <ProductBenefits benefits={productData.benefits} className="p-6 sm:p-8" />
+                        </div>
+                    )}
 
                     {/* Specifications Section */}
                     <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">

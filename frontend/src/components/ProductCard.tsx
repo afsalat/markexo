@@ -44,6 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     return (
         <div className="product-grid-card group cursor-pointer bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500">
             <Link href={`/products/${product.slug}`} className="block h-full">
+                <span className="sr-only">View {product.name} - Premium Quality Product</span>
                 {/* Image Container */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
                     {product.image ? (
