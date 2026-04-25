@@ -47,7 +47,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
+        <html lang="en" className="light">
             <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-[#f8f9fb] text-gray-900`}>
                 <ThemeProvider>
                     <CustomerAuthProvider>

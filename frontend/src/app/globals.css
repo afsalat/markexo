@@ -481,12 +481,7 @@ html.light .border-dark-500 { border-color: #9ca3af; }
 html.light .divide-dark-700 > :not([hidden]) ~ :not([hidden]) { border-color: #e5e7eb; }
 html.light .divide-dark-600 > :not([hidden]) ~ :not([hidden]) { border-color: #d1d5db; }
 
-/* Footer — Protect dark design in light mode */
-html.light footer.dark-section {
-  background-color: #111827 !important;
-  color: #d1d5db !important;
-  border-color: #1f2937 !important;
-}
+/* Footer styles now handled directly in component for light theme */
 
 /* Gradient Overrides */
 html.light .from-dark-800 { --tw-gradient-from: #f9fafb; }

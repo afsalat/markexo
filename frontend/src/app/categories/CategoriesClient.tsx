@@ -39,7 +39,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
         || banners.find((banner) => banner.is_active);
 
     return (
-        <div className="min-h-screen bg-white dark:bg-dark-900">
+        <div className="min-h-screen bg-white">
             {/* ========================================
                 HERO SECTION
             ======================================== */}
@@ -53,15 +53,14 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                 alt="Hero"
                                 className="w-full h-full object-cover opacity-30"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-dark-950 dark:via-dark-950/80 dark:to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent" />
                         </>
                     ) : (
-                        <div className="absolute inset-0 bg-gray-50 dark:bg-dark-950">
-                            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,#6366f1_0%,transparent_50%)] opacity-20 dark:block hidden" />
-                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:hidden" />
+                        <div className="absolute inset-0 bg-gray-50">
+                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
                         </div>
                     )}
-                    <div className="absolute bottom-0 left-0 w-full h-px bg-gray-200 dark:bg-dark-700" />
+                    <div className="absolute bottom-0 left-0 w-full h-px bg-gray-200" />
                 </div>
 
                 <div className="container mx-auto px-4 relative z-10">
@@ -166,7 +165,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
             {/* ========================================
                 ALL CATEGORIES GRID
             ======================================== */}
-            <section className="py-12 bg-gray-50 dark:bg-dark-800">
+            <section className="py-12 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">

@@ -25,19 +25,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         setMounted(true);
-        // Load saved theme or default to light
-        try {
-            const savedTheme = localStorage.getItem('VorionMart-theme') as Theme;
-            if (savedTheme === 'light' || savedTheme === 'dark') {
-                setThemeState(savedTheme);
-                updateDocumentClass(savedTheme);
-            } else {
-                // Default to light
-                updateDocumentClass('light');
-            }
-        } catch (e) {
-            updateDocumentClass('light');
-        }
+        // Force light theme for storefront
+        setThemeState('light');
+        updateDocumentClass('light');
     }, []);
 
     const updateDocumentClass = (newTheme: Theme) => {
@@ -66,7 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider value={{ theme: 'light', toggleTheme, setTheme }}>
             {children}
         </ThemeContext.Provider>
     );
