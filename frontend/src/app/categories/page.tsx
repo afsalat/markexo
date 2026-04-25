@@ -43,12 +43,23 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CategoriesPage() {
-    // Fetch data on server side
-    const categoriesResponse = await fetchCategories({ flat: 'true' });
-    const bannersResponse = await fetchBanners();
+    let categoriesList: any[] = [];
+    let bannersList: any[] = [];
 
-    const categoriesList = Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse.results || []);
-    const bannersList = Array.isArray(bannersResponse) ? bannersResponse : (bannersResponse.results || []);
+    try {
+        // Fetch data on server side
+        const categoriesResponse = await fetchCategories({ flat: 'true' });
+        categoriesList = Array.isArray(categoriesResponse) ? categoriesResponse : (categoriesResponse.results || []);
+    } catch (error) {
+        console.error('Failed to fetch categories:', error);
+    }
+
+    try {
+        const bannersResponse = await fetchBanners();
+        bannersList = Array.isArray(bannersResponse) ? bannersResponse : (bannersResponse.results || []);
+    } catch (error) {
+        console.error('Failed to fetch banners:', error);
+    }
 
     // Pass data to client component
     return <CategoriesClient categories={categoriesList} banners={bannersList} />;
