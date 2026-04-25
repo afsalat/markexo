@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, fetchCustomerOrders, Product } from '@/lib/api';
+import { loginUser, fetchCustomerOrders, Product, socialLogin } from '@/lib/api';
+import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 export interface Customer {
     id: string;
@@ -16,7 +18,7 @@ export interface Order {
     id: string;
     date: string;
     total: number;
-    status: string; // Changed from hardcoded union to string to support all statuses
+    status: string;
     items: number;
 }
 
@@ -36,6 +38,7 @@ interface CustomerAuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
+    loginWithGoogle: () => Promise<void>;
     logout: () => void;
     updateProfile: (data: Partial<Customer>) => void;
     // Wishlist
@@ -96,9 +99,7 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
         if (storedWishlist) {
             try {
                 const parsed = JSON.parse(storedWishlist);
-                // Check if it's the old format (array of numbers)
                 if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'number') {
-                    // Clear legacy data
                     setWishlist([]);
                     localStorage.removeItem('customer_wishlist');
                 } else {
@@ -122,31 +123,49 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
         }
     }, [customer?.email]);
 
+    const handleLoginSuccess = (data: any) => {
+        const { access, refresh, user } = data;
+
+        const newCustomer: Customer = {
+            id: user.id.toString(),
+            name: user.name || user.email.split('@')[0],
+            email: user.email,
+            phone: user.phone || '',
+            avatar: user.avatar || `https://ui-avatars.com/api/?name=${(user.name || 'User').replace(' ', '+')}&background=random`
+        };
+
+        setCustomer(newCustomer);
+        setIsAuthenticated(true);
+
+        localStorage.setItem('customer_user', JSON.stringify(newCustomer));
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+    };
+
     const login = async (email: string, password: string) => {
         setIsLoading(true);
         try {
             const data = await loginUser({ email, password });
-
-            // Backend returns: { refresh, access, user: { id, email, name, is_staff } }
-            const { access, refresh, user } = data;
-
-            const newCustomer: Customer = {
-                id: user.id.toString(),
-                name: user.name || user.email.split('@')[0],
-                email: user.email,
-                phone: user.phone || '',
-                avatar: `https://ui-avatars.com/api/?name=${(user.name || 'User').replace(' ', '+')}&background=random`
-            };
-
-            setCustomer(newCustomer);
-            setIsAuthenticated(true);
-
-            localStorage.setItem('customer_user', JSON.stringify(newCustomer));
-            localStorage.setItem('access_token', access);
-            localStorage.setItem('refresh_token', refresh);
-
+            handleLoginSuccess(data);
         } catch (error) {
             console.error('Login failed:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const loginWithGoogle = async () => {
+        setIsLoading(true);
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const idToken = await result.user.getIdToken();
+            
+            // Send token to backend
+            const data = await socialLogin('google', idToken);
+            handleLoginSuccess(data);
+        } catch (error) {
+            console.error('Google login failed:', error);
             throw error;
         } finally {
             setIsLoading(false);
@@ -191,7 +210,6 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
         const newAddress = { ...address, id: Math.random().toString(36).substr(2, 9) };
         let updated = [...addresses, newAddress];
 
-        // If new address is default, unset others
         if (address.isDefault) {
             updated = updated.map(a => a.id === newAddress.id ? a : { ...a, isDefault: false });
         }
@@ -203,7 +221,6 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
     const updateAddress = (id: string, address: Omit<Address, 'id'>) => {
         let updated = addresses.map(a => a.id === id ? { ...address, id } : a);
 
-        // If updated address is default, unset others
         if (address.isDefault) {
             updated = updated.map(a => a.id === id ? a : { ...a, isDefault: false });
         }
@@ -220,7 +237,7 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
 
     return (
         <CustomerAuthContext.Provider value={{
-            customer, isAuthenticated, isLoading, login, logout, updateProfile,
+            customer, isAuthenticated, isLoading, login, loginWithGoogle, logout, updateProfile,
             wishlist, addToWishlist, removeFromWishlist, isWishlisted,
             addresses, addAddress, updateAddress, deleteAddress, orders, refreshOrders
         }}>

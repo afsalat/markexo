@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Filter, Grid, List, ChevronDown, X, ShoppingCart, Star, Heart, SlidersHorizontal, Search, Plus, LayoutGrid, ArrowUpDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCart } from '@/lib/cart';
 import { fetchProducts, fetchCategories, type Category } from '@/lib/api';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
@@ -76,6 +77,7 @@ function ProductsPageContent({
     customPageTitle?: string
 }) {
     const searchParams = useSearchParams();
+    const router = useRouter();
     const searchQuery = searchParams?.get('search') || '';
     const categoryParam = searchParams?.get('category');
     const featuredParam = searchParams?.get('featured') || searchParams?.get('trending');
@@ -510,29 +512,44 @@ function ProductsPageContent({
                                                         <span className="text-[10px] text-gray-400 ml-0.5">({product.review_count || 128})</span>
                                                     </div>
 
-                                                    {/* Price & Cart */}
-                                                    <div className="mt-auto flex items-end justify-between pt-3 border-t border-gray-50">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-base font-bold text-gray-900 tracking-tight">
-                                                                ₹{product.current_price.toLocaleString()}
-                                                            </span>
-                                                            {product.price > product.current_price && (
-                                                                <span className="text-[11px] text-gray-400 line-through">
-                                                                    ₹{product.price.toLocaleString()}
+                                                    {/* Price & Cart Actions */}
+                                                    <div className="mt-auto flex flex-col pt-3 border-t border-gray-50">
+                                                        <div className="flex items-end justify-between mb-3">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-base font-bold text-gray-900 tracking-tight">
+                                                                    ₹{product.current_price.toLocaleString()}
                                                                 </span>
-                                                            )}
+                                                                {product.price > product.current_price && (
+                                                                    <span className="text-[11px] text-gray-400 line-through">
+                                                                        ₹{product.price.toLocaleString()}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
 
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                e.preventDefault();
-                                                                addItem(product as any);
-                                                            }}
-                                                            className="h-9 w-9 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:bg-accent-500 hover:text-white hover:border-accent-500 hover:scale-105 active:scale-95 transition-all"
-                                                        >
-                                                            <Plus size={16} />
-                                                        </button>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    addItem(product as any);
+                                                                }}
+                                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 bg-gray-50 border border-gray-100 text-gray-600 rounded-xl font-bold text-[10px] hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all"
+                                                            >
+                                                                <ShoppingCart size={12} /> Add
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    e.preventDefault();
+                                                                    addItem(product as any);
+                                                                    router.push('/checkout');
+                                                                }}
+                                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 bg-accent-500 text-white rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all shadow-sm shadow-accent-500/20"
+                                                            >
+                                                                Buy Now
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </Link>

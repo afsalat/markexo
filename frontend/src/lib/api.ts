@@ -396,6 +396,19 @@ export async function clearCart(customerId: string) {
 }
 
 // Auth API functions
+export async function socialLogin(provider: string, token: string) {
+    const res = await fetch(`${API_URL}/auth/social-login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, token }),
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.message || 'Social login failed');
+    }
+    return res.json();
+}
+
 export async function loginUser(credentials: any) {
     const res = await fetch(`${API_URL}/auth/login/`, {
         method: 'POST',

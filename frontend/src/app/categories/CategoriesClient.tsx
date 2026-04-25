@@ -213,11 +213,11 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                 )}
                                             </div>
                                             <div>
-                                                <h3 className="text-xl font-bold text-gray-900 dark:text-silver-500 leading-tight">{cat.name}</h3>
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">{cat.name}</h3>
                                                 <div className="flex items-center gap-3 mt-1">
                                                     <span className="text-[11px] text-gray-500 dark:text-silver-500 font-mono italic">/{cat.slug}</span>
                                                     {cat.children && cat.children.length > 0 && (
-                                                        <span className="bg-dark-700/50 text-[10px] text-silver-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                                        <span className="bg-gray-100 dark:bg-dark-700/50 text-[10px] text-gray-600 dark:text-silver-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                                                             {cat.children.length} Sub-categories
                                                         </span>
                                                     )}
@@ -226,7 +226,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                         </div>
                                         <Link
                                             href={`/products?category=${cat.slug}`}
-                                            className="p-2 hover:bg-accent-500/10 rounded-lg text-silver-500 hover:text-accent-500 transition-all"
+                                            className="p-2 hover:bg-accent-500/10 rounded-lg text-gray-400 dark:text-silver-500 hover:text-accent-500 transition-all"
                                         >
                                             <ChevronRight size={20} className="-rotate-90" />
                                         </Link>
@@ -235,7 +235,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                     {cat.children && cat.children.length > 0 && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pl-8 md:pl-16 relative">
                                             {/* Decorative connecting line */}
-                                            <div className="absolute left-4 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-dark-700 to-transparent" />
+                                            <div className="absolute left-4 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-gray-200 dark:from-dark-700 to-transparent" />
 
                                             {cat.children.map((child: Category) => (
                                                 <Link
@@ -243,9 +243,9 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                     href={`/products?category=${child.slug}`}
                                                     className="group flex items-center gap-4 p-3 rounded-xl bg-gray-50/50 dark:bg-dark-800/40 border border-gray-200 dark:border-dark-700/50 hover:border-accent-500 transition-all hover:shadow-lg relative"
                                                 >
-                                                    <div className="absolute -left-4 md:-left-8 top-1/2 -translate-y-1/2 w-4 md:w-8 h-px bg-dark-700" />
+                                                    <div className="absolute -left-4 md:-left-8 top-1/2 -translate-y-1/2 w-4 md:w-8 h-px bg-gray-200 dark:bg-dark-700" />
 
-                                                    <div className="w-10 h-10 bg-dark-700/50 rounded-lg flex items-center justify-center group-hover:bg-accent-500/10 transition-colors">
+                                                    <div className="w-10 h-10 bg-gray-100 dark:bg-dark-700/50 rounded-lg flex items-center justify-center group-hover:bg-accent-500/10 transition-colors">
                                                         {child.image ? (
                                                             <img src={child.image} alt={child.name} className="w-7 h-7 object-cover rounded shadow-sm" />
                                                         ) : (

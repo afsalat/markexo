@@ -204,12 +204,12 @@ export default function Header() {
             }`}
         >
             <div className="container mx-auto px-4">
-                <div className="flex min-h-[60px] md:min-h-[72px] items-center gap-3 lg:gap-6">
+                <div className="flex min-h-[64px] md:min-h-[80px] items-center gap-3 lg:gap-6">
                     <Link href="/" className="ml-2 mr-3 shrink-0 md:ml-4 md:mr-6" onClick={closeMenus}>
                         <img
                             src="/logo-black-text.png"
                             alt="VorionMart"
-                            className="h-8 w-auto object-contain md:h-10"
+                            className="h-12 w-auto object-contain md:h-16"
                         />
                     </Link>
 
@@ -239,8 +239,8 @@ export default function Header() {
                             </button>
                             
                             {/* Mega Menu Overlay */}
-                            <div className={`fixed left-0 w-full top-[60px] md:top-[72px] transition-all duration-300 origin-top shadow-2xl z-[60] border-t border-gray-900 ${isCategoryDropdownOpen ? 'opacity-100 scale-y-100 visible pointer-events-auto' : 'opacity-0 scale-y-95 invisible pointer-events-none'}`}>
-                                <div className="bg-[#0a0a0a] w-full max-h-[calc(100vh-76px)] overflow-y-auto">
+                            <div className={`fixed left-0 w-full top-[64px] md:top-[80px] transition-all duration-300 origin-top shadow-2xl z-[60] border-t border-gray-100 dark:border-gray-900 ${isCategoryDropdownOpen ? 'opacity-100 scale-y-100 visible pointer-events-auto' : 'opacity-0 scale-y-95 invisible pointer-events-none'}`}>
+                                <div className="bg-white dark:bg-[#0a0a0a] w-full max-h-[calc(100vh-84px)] overflow-y-auto">
                                     <div className="container mx-auto px-4 py-10 relative">
                                         {isLoadingCategories ? (
                                             <div className="text-sm text-gray-500 py-10 text-center">Loading categories...</div>
@@ -250,9 +250,9 @@ export default function Header() {
                                                     {categories.map((category) => (
                                                         <div key={category.id} className="break-inside-avoid mb-8">
                                                             <Link href={`/products?category=${category.slug}`} className="group inline-block mb-4">
-                                                                <h3 className="text-white text-[12px] font-bold uppercase tracking-wider relative inline-block pb-1">
+                                                                <h3 className="text-gray-900 dark:text-white text-[12px] font-bold uppercase tracking-wider relative inline-block pb-1">
                                                                     {category.name}
-                                                                    <span className="absolute bottom-0 left-0 w-8 h-[2px] bg-[#00E5FF] transition-all group-hover:w-full"></span>
+                                                                    <span className="absolute bottom-0 left-0 w-8 h-[2px] bg-accent-500 transition-all group-hover:w-full"></span>
                                                                 </h3>
                                                             </Link>
                                                             
@@ -262,7 +262,7 @@ export default function Header() {
                                                                         <li key={child.id}>
                                                                             <Link 
                                                                                 href={`/products?category=${child.slug}`}
-                                                                                className="text-gray-400 text-[13px] hover:text-white transition-colors"
+                                                                                className="text-gray-600 dark:text-gray-400 text-[13px] hover:text-accent-600 dark:hover:text-white transition-colors"
                                                                             >
                                                                                 {child.name}
                                                                             </Link>

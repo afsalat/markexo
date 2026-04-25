@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Search, Package, CheckCircle, Clock, MapPin, AlertCircle, Truck, User } from 'lucide-react';
+import { ChevronRight, Search, Package, CheckCircle, Clock, MapPin, AlertCircle, Truck, User, ShoppingBag } from 'lucide-react';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 
@@ -32,11 +32,9 @@ function TrackOrderContent() {
         setStatus('searching');
         try {
             const apiUrl = `${API_BASE_URL}/orders/${id}/`;
-            console.log('Fetching order from:', apiUrl); // Debug log
             const response = await fetch(apiUrl);
 
             if (!response.ok) {
-                console.error('API Response:', response.status, response.statusText);
                 throw new Error('Order not found');
             }
 
@@ -57,13 +55,6 @@ function TrackOrderContent() {
 
     // Helper function to determine step status based on order status
     const getStepStatus = (orderStatus: string, step: number) => {
-        // Map backend status to progress steps (5 steps like admin panel)
-        // Step 1: Pending
-        // Step 2: Confirmed  
-        // Step 3: Processing
-        // Step 4: Shipped
-        // Step 5: Delivered
-
         const statusMap: { [key: string]: number } = {
             'pending_verification': 1,
             'pending': 1,
@@ -110,9 +101,9 @@ function TrackOrderContent() {
     };
 
     return (
-        <div className="min-h-screen bg-dark-900">
+        <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
             {/* Breadcrumb */}
-            <div className="bg-dark-800 border-b border-dark-700">
+            <div className="bg-white dark:bg-dark-800 border-b border-gray-100 dark:border-dark-700">
                 <div className="container mx-auto px-4 py-4">
                     <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-silver-500">
                         <Link href="/" className="hover:text-primary-600 dark:hover:text-accent-500">Home</Link>
@@ -132,11 +123,11 @@ function TrackOrderContent() {
                         </div>
 
                         {/* Order Status Card */}
-                        <div className="bg-white dark:bg-gradient-to-br dark:from-dark-800 dark:to-dark-900 border border-gray-200 dark:border-dark-700 rounded-3xl overflow-hidden animate-fade-in shadow-xl dark:shadow-2xl">
+                        <div className="bg-white dark:bg-gradient-to-br dark:from-dark-800 dark:to-dark-900 border border-gray-100 dark:border-dark-700 rounded-3xl overflow-hidden animate-fade-in shadow-xl dark:shadow-2xl">
                             {/* Header with Order ID and Status */}
-                            <div className="bg-gray-50 dark:bg-gradient-to-r dark:from-dark-700 dark:to-dark-800 px-8 py-6 flex flex-wrap justify-between items-center gap-4 border-b border-gray-200 dark:border-dark-600">
+                            <div className="bg-gray-50 dark:bg-gradient-to-r dark:from-dark-700 dark:to-dark-800 px-8 py-6 flex flex-wrap justify-between items-center gap-4 border-b border-gray-100 dark:border-dark-600">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-accent-500/20 flex items-center justify-center">
+                                    <div className="w-12 h-12 rounded-2xl bg-white dark:bg-accent-500/20 flex items-center justify-center shadow-sm">
                                         <Package className="text-primary-600 dark:text-accent-500" size={24} />
                                     </div>
                                     <div>
@@ -149,12 +140,12 @@ function TrackOrderContent() {
                                     <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-bold mt-1 ${orderData.status?.toLowerCase() === 'delivered' || orderData.status?.toLowerCase() === 'completed'
                                         ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
                                         : orderData.status?.toLowerCase() === 'shipped'
-                                            ? 'bg-primary-100 dark:bg-accent-500/20 text-primary-600 dark:text-accent-400'
+                                            ? 'bg-blue-100 dark:bg-accent-500/20 text-blue-600 dark:text-accent-400'
                                             : orderData.status?.toLowerCase().includes('return') || orderData.status?.toLowerCase() === 'rto'
                                                 ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
                                                 : orderData.status?.toLowerCase() === 'cancelled'
                                                     ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
-                                                    : 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
+                                                    : 'bg-primary-100 dark:bg-blue-500/20 text-primary-600 dark:text-blue-400'
                                         }`}>
                                         {orderData.status_display || orderData.status}
                                     </span>
@@ -169,10 +160,10 @@ function TrackOrderContent() {
                                     <div className="px-8 py-10">
                                         <div className="flex items-start justify-between relative">
                                             {/* Progress Line Background */}
-                                            <div className="absolute left-8 right-8 top-6 h-1 bg-gray-200 dark:bg-dark-600 rounded-full" />
+                                            <div className="absolute left-8 right-8 top-6 h-1 bg-gray-100 dark:bg-dark-600 rounded-full" />
                                             {/* Progress Line Filled with Gradient */}
                                             <div
-                                                className="absolute left-8 top-6 h-1 bg-gradient-to-r from-green-500 via-accent-500 to-green-400 rounded-full transition-all duration-700"
+                                                className="absolute left-8 top-6 h-1 bg-gradient-to-r from-green-500 via-primary-500 dark:via-accent-500 to-green-400 rounded-full transition-all duration-700"
                                                 style={{
                                                     width: (() => {
                                                         const statusMap: { [key: string]: number } = {
@@ -195,84 +186,66 @@ function TrackOrderContent() {
                                             <div className="flex flex-col items-center z-10 group">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${getStepStatus(orderData.status, 1) === 'completed'
                                                     ? 'bg-green-500 border-green-600 shadow-lg shadow-green-500/30'
-                                                    : 'bg-dark-700 border-dark-500'
+                                                    : 'bg-white dark:bg-dark-700 border-gray-100 dark:border-dark-500 shadow-sm'
                                                     }`}>
-                                                    <Clock className={getStepStatus(orderData.status, 1) === 'completed' ? 'text-white' : 'text-silver-500'} size={20} />
+                                                    <Clock className={getStepStatus(orderData.status, 1) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={20} />
                                                 </div>
-                                                <p className={`text-xs mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 1) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Pending</p>
-                                                {orderData.created_at && getStepStatus(orderData.status, 1) === 'completed' && (
-                                                    <p className="text-[10px] text-gray-500 dark:text-silver-500 mt-1">{new Date(orderData.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                )}
+                                                <p className={`text-[10px] mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 1) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Pending</p>
                                             </div>
 
                                             {/* Step 2: Confirmed */}
                                             <div className="flex flex-col items-center z-10 group">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${getStepStatus(orderData.status, 2) === 'completed'
                                                     ? 'bg-green-500 border-green-600 shadow-lg shadow-green-500/30'
-                                                    : 'bg-dark-700 border-dark-500'
+                                                    : 'bg-white dark:bg-dark-700 border-gray-100 dark:border-dark-500 shadow-sm'
                                                     }`}>
-                                                    <CheckCircle className={getStepStatus(orderData.status, 2) === 'completed' ? 'text-white' : 'text-silver-500'} size={20} />
+                                                    <CheckCircle className={getStepStatus(orderData.status, 2) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={20} />
                                                 </div>
-                                                <p className={`text-xs mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 2) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Confirmed</p>
-                                                {getStepTimestamp(orderData.status_history, 2) && getStepStatus(orderData.status, 2) === 'completed' && (
-                                                    <p className="text-[10px] text-gray-500 dark:text-silver-500 mt-1">{new Date(getStepTimestamp(orderData.status_history, 2)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                )}
+                                                <p className={`text-[10px] mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 2) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Confirmed</p>
                                             </div>
 
                                             {/* Step 3: Processing */}
                                             <div className="flex flex-col items-center z-10 group">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${getStepStatus(orderData.status, 3) === 'completed'
                                                     ? 'bg-green-500 border-green-600 shadow-lg shadow-green-500/30'
-                                                    : 'bg-dark-700 border-dark-500'
+                                                    : 'bg-white dark:bg-dark-700 border-gray-100 dark:border-dark-500 shadow-sm'
                                                     }`}>
-                                                    <Package className={getStepStatus(orderData.status, 3) === 'completed' ? 'text-white' : 'text-silver-500'} size={20} />
+                                                    <Package className={getStepStatus(orderData.status, 3) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={20} />
                                                 </div>
-                                                <p className={`text-xs mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 3) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Processing</p>
-                                                {getStepTimestamp(orderData.status_history, 3) && getStepStatus(orderData.status, 3) === 'completed' && (
-                                                    <p className="text-[10px] text-gray-500 dark:text-silver-500 mt-1">{new Date(getStepTimestamp(orderData.status_history, 3)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                )}
+                                                <p className={`text-[10px] mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 3) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Processing</p>
                                             </div>
 
                                             {/* Step 4: Shipped */}
                                             <div className="flex flex-col items-center z-10 group">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${getStepStatus(orderData.status, 4) === 'completed'
-                                                    ? 'bg-accent-500 border-accent-600 shadow-lg shadow-accent-500/30'
-                                                    : 'bg-dark-700 border-dark-500'
+                                                    ? 'bg-primary-500 border-primary-600 shadow-lg shadow-primary-500/30'
+                                                    : 'bg-white dark:bg-dark-700 border-gray-100 dark:border-dark-500 shadow-sm'
                                                     }`}>
-                                                    <Truck className={getStepStatus(orderData.status, 4) === 'completed' ? 'text-dark-900' : 'text-silver-500'} size={20} />
+                                                    <Truck className={getStepStatus(orderData.status, 4) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={20} />
                                                 </div>
-                                                <p className={`text-xs mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 4) === 'completed' ? 'text-accent-500' : 'text-gray-400 dark:text-silver-600'}`}>Shipped</p>
-                                                {getStepTimestamp(orderData.status_history, 4) && getStepStatus(orderData.status, 4) === 'completed' && (
-                                                    <p className="text-[10px] text-gray-500 dark:text-silver-500 mt-1">{new Date(getStepTimestamp(orderData.status_history, 4)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                )}
+                                                <p className={`text-[10px] mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 4) === 'completed' ? 'text-primary-600 dark:text-accent-500' : 'text-gray-400'}`}>Shipped</p>
                                             </div>
 
                                             {/* Step 5: Out for Delivery */}
                                             <div className="flex flex-col items-center z-10 group">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${getStepStatus(orderData.status, 5) === 'completed'
-                                                    ? 'bg-accent-500 border-accent-600 shadow-lg shadow-accent-500/30'
-                                                    : 'bg-dark-700 border-dark-500'
+                                                    ? 'bg-primary-500 border-primary-600 shadow-lg shadow-primary-500/30'
+                                                    : 'bg-white dark:bg-dark-700 border-gray-100 dark:border-dark-500 shadow-sm'
                                                     }`}>
-                                                    <Truck className={getStepStatus(orderData.status, 5) === 'completed' ? 'text-dark-900' : 'text-silver-500'} size={20} />
+                                                    <Truck className={getStepStatus(orderData.status, 5) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={20} />
                                                 </div>
-                                                <p className={`text-xs mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 5) === 'completed' ? 'text-accent-500' : 'text-gray-400 dark:text-silver-600'}`}>Out for Delivery</p>
-                                                {getStepTimestamp(orderData.status_history, 5) && getStepStatus(orderData.status, 5) === 'completed' && (
-                                                    <p className="text-[10px] text-gray-500 dark:text-silver-500 mt-1">{new Date(getStepTimestamp(orderData.status_history, 5)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                )}
+                                                <p className={`text-[10px] mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 5) === 'completed' ? 'text-primary-600 dark:text-accent-500' : 'text-gray-400'}`}>Out for Delivery</p>
                                             </div>
 
                                             {/* Step 6: Delivered */}
                                             <div className="flex flex-col items-center z-10 group">
                                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 ${getStepStatus(orderData.status, 6) === 'completed'
                                                     ? 'bg-green-500 border-green-600 shadow-lg shadow-green-500/30'
-                                                    : 'bg-dark-700 border-dark-500'
+                                                    : 'bg-white dark:bg-dark-700 border-gray-100 dark:border-dark-500 shadow-sm'
                                                     }`}>
-                                                    <MapPin className={getStepStatus(orderData.status, 6) === 'completed' ? 'text-white' : 'text-silver-500'} size={20} />
+                                                    <MapPin className={getStepStatus(orderData.status, 6) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={20} />
                                                 </div>
-                                                <p className={`text-xs mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 6) === 'completed' ? 'text-green-500' : 'text-gray-400 dark:text-silver-600'}`}>Delivered</p>
-                                                {getStepTimestamp(orderData.status_history, 6) && getStepStatus(orderData.status, 6) === 'completed' && (
-                                                    <p className="text-[10px] text-gray-500 dark:text-silver-500 mt-1">{new Date(getStepTimestamp(orderData.status_history, 6)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                                                )}
+                                                <p className={`text-[10px] mt-3 font-bold uppercase tracking-wide ${getStepStatus(orderData.status, 6) === 'completed' ? 'text-green-500' : 'text-gray-400'}`}>Delivered</p>
                                             </div>
                                         </div>
                                     </div>
@@ -282,8 +255,8 @@ function TrackOrderContent() {
                             {(orderData.status?.toLowerCase().includes('return') || orderData.status?.toLowerCase() === 'rto' || orderData.status?.toLowerCase() === 'cancelled') && (
                                 <div className="px-8 py-8">
                                     <div className={`${(orderData.refund_status === 'refunded' || orderData.payment_status === 'refunded')
-                                        ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/30'
-                                        : 'bg-orange-50 dark:bg-orange-500/10 border-orange-200 dark:border-orange-500/30'
+                                        ? 'bg-green-50 dark:bg-green-500/10 border-green-100 dark:border-green-500/30'
+                                        : 'bg-orange-50 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/30'
                                         } border rounded-2xl p-6`}>
                                         <div className="flex items-start gap-4">
                                             <div className={`w-12 h-12 ${(orderData.refund_status === 'refunded' || orderData.payment_status === 'refunded')
@@ -340,7 +313,7 @@ function TrackOrderContent() {
                             )}
 
                             {/* Order Details Grid */}
-                            <div className="grid md:grid-cols-2 gap-6 p-8 border-t border-gray-200 dark:border-dark-700">
+                            <div className="grid md:grid-cols-2 gap-6 p-8 border-t border-gray-100 dark:border-dark-700">
                                 {/* Order Items */}
                                 <div className="bg-gray-50 dark:bg-dark-700/50 rounded-2xl p-6">
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -355,7 +328,7 @@ function TrackOrderContent() {
                                                         {item.product_image ? (
                                                             <img src={item.product_image} alt={item.product_name} className="w-12 h-12 rounded-lg object-cover" />
                                                         ) : (
-                                                            <div className="w-12 h-12 bg-gray-100 dark:bg-dark-600 rounded-lg flex items-center justify-center">
+                                                            <div className="w-12 h-12 bg-gray-50 dark:bg-dark-600 rounded-lg flex items-center justify-center">
                                                                 <Package size={20} className="text-gray-400 dark:text-silver-600" />
                                                             </div>
                                                         )}
@@ -372,7 +345,7 @@ function TrackOrderContent() {
                                         )}
                                     </div>
                                     {/* Total */}
-                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-600 flex justify-between items-center">
+                                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-dark-600 flex justify-between items-center">
                                         <span className="text-gray-500 dark:text-silver-400 font-medium">Total Amount</span>
                                         <span className="text-2xl font-bold text-gray-900 dark:text-white">₹{parseFloat(orderData.total_amount).toLocaleString()}</span>
                                     </div>
@@ -428,8 +401,8 @@ function TrackOrderContent() {
                         </div>
 
                         {/* User Info Banner */}
-                        <div className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-sm">
-                            <div className="w-12 h-12 bg-primary-100 dark:bg-accent-500/20 rounded-full flex items-center justify-center">
+                        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl p-4 mb-6 flex items-center gap-4 shadow-sm">
+                            <div className="w-12 h-12 bg-primary-50 dark:bg-accent-500/20 rounded-full flex items-center justify-center">
                                 <User className="text-primary-600 dark:text-accent-500" size={24} />
                             </div>
                             <div>
@@ -441,7 +414,7 @@ function TrackOrderContent() {
                         {/* Orders List with Tracking */}
                         <div className="space-y-6">
                             {orders.map((order) => (
-                                <div key={order.id} className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-2xl overflow-hidden animate-fade-in shadow-sm">
+                                <div key={order.id} className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl overflow-hidden animate-fade-in shadow-sm">
                                     {/* Order Header */}
                                     <div className="bg-gray-50 dark:bg-dark-700 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
                                         <div className="flex flex-wrap gap-4 md:gap-8">
@@ -494,7 +467,7 @@ function TrackOrderContent() {
                                         <div className="hidden md:block">
                                             <div className="flex items-center justify-between relative">
                                                 {/* Progress Line Background */}
-                                                <div className="absolute left-8 right-8 top-8 h-1 bg-gray-200 dark:bg-dark-600 rounded-full" />
+                                                <div className="absolute left-8 right-8 top-8 h-1 bg-gray-100 dark:bg-dark-600 rounded-full" />
                                                 {/* Progress Line Filled */}
                                                 <div
                                                     className="absolute left-8 top-8 h-1 bg-gradient-to-r from-green-500 to-primary-500 dark:to-accent-500 rounded-full transition-all duration-500"
@@ -513,50 +486,50 @@ function TrackOrderContent() {
 
                                                 {/* Step 1: Pending */}
                                                 <div className="flex flex-col items-center z-10">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 1) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-dark-600'}`}>
-                                                        <Clock className={getStepStatus(order.status, 1) === 'completed' ? 'text-white' : 'text-silver-500'} size={24} />
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 1) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-white dark:bg-dark-600 shadow-sm border border-gray-100 dark:border-dark-700'}`}>
+                                                        <Clock className={getStepStatus(order.status, 1) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={24} />
                                                     </div>
-                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 1) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Pending</p>
+                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 1) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Pending</p>
                                                 </div>
 
                                                 {/* Step 2: Confirmed */}
                                                 <div className="flex flex-col items-center z-10">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 2) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-dark-600'}`}>
-                                                        <CheckCircle className={getStepStatus(order.status, 2) === 'completed' ? 'text-white' : 'text-silver-500'} size={24} />
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 2) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-white dark:bg-dark-600 shadow-sm border border-gray-100 dark:border-dark-700'}`}>
+                                                        <CheckCircle className={getStepStatus(order.status, 2) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={24} />
                                                     </div>
-                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 2) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Confirmed</p>
+                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 2) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Confirmed</p>
                                                 </div>
 
                                                 {/* Step 3: Processing */}
                                                 <div className="flex flex-col items-center z-10">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 3) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-dark-600'}`}>
-                                                        <Package className={getStepStatus(order.status, 3) === 'completed' ? 'text-white' : 'text-silver-500'} size={24} />
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 3) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-white dark:bg-dark-600 shadow-sm border border-gray-100 dark:border-dark-700'}`}>
+                                                        <Package className={getStepStatus(order.status, 3) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={24} />
                                                     </div>
-                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 3) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Processing</p>
+                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 3) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Processing</p>
                                                 </div>
 
                                                 {/* Step 4: Shipped */}
                                                 <div className="flex flex-col items-center z-10">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 4) === 'completed' ? 'bg-accent-500 shadow-lg shadow-accent-500/30' : 'bg-dark-600'}`}>
-                                                        <Truck className={getStepStatus(order.status, 4) === 'completed' ? 'text-dark-900' : 'text-silver-500'} size={24} />
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 4) === 'completed' ? 'bg-primary-500 shadow-lg shadow-primary-500/30' : 'bg-white dark:bg-dark-600 shadow-sm border border-gray-100 dark:border-dark-700'}`}>
+                                                        <Truck className={getStepStatus(order.status, 4) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={24} />
                                                     </div>
-                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 4) === 'completed' ? 'text-accent-500' : 'text-gray-400 dark:text-silver-600'}`}>Shipped</p>
+                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 4) === 'completed' ? 'text-primary-600 dark:text-accent-500' : 'text-gray-400'}`}>Shipped</p>
                                                 </div>
 
                                                 {/* Step 5: Out for Delivery */}
                                                 <div className="flex flex-col items-center z-10">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 5) === 'completed' ? 'bg-accent-500 shadow-lg shadow-accent-500/30' : 'bg-dark-600'}`}>
-                                                        <Truck className={getStepStatus(order.status, 5) === 'completed' ? 'text-dark-900' : 'text-silver-500'} size={24} />
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 5) === 'completed' ? 'bg-primary-500 shadow-lg shadow-primary-500/30' : 'bg-white dark:bg-dark-600 shadow-sm border border-gray-100 dark:border-dark-700'}`}>
+                                                        <Truck className={getStepStatus(order.status, 5) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={24} />
                                                     </div>
-                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 5) === 'completed' ? 'text-accent-500' : 'text-gray-400 dark:text-silver-600'}`}>Out for Delivery</p>
+                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 5) === 'completed' ? 'text-primary-600 dark:text-accent-500' : 'text-gray-400'}`}>Out for Delivery</p>
                                                 </div>
 
                                                 {/* Step 6: Delivered */}
                                                 <div className="flex flex-col items-center z-10">
-                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 6) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-dark-600'}`}>
-                                                        <MapPin className={getStepStatus(order.status, 6) === 'completed' ? 'text-white' : 'text-silver-500'} size={24} />
+                                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${getStepStatus(order.status, 6) === 'completed' ? 'bg-green-500 shadow-lg shadow-green-500/30' : 'bg-white dark:bg-dark-600 shadow-sm border border-gray-100 dark:border-dark-700'}`}>
+                                                        <MapPin className={getStepStatus(order.status, 6) === 'completed' ? 'text-white' : 'text-gray-400 dark:text-silver-500'} size={24} />
                                                     </div>
-                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 6) === 'completed' ? 'text-green-500' : 'text-gray-400 dark:text-silver-600'}`}>Delivered</p>
+                                                    <p className={`text-sm mt-3 font-medium ${getStepStatus(order.status, 6) === 'completed' ? 'text-green-500' : 'text-gray-400'}`}>Delivered</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -564,66 +537,66 @@ function TrackOrderContent() {
                                         {/* Vertical Timeline for Mobile */}
                                         <div className="md:hidden">
                                             <div className="relative">
-                                                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-dark-600" />
+                                                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-100 dark:bg-dark-600" />
                                                 <div className="space-y-6">
                                                     {/* Step 1: Pending */}
                                                     <div className="relative flex gap-4 items-start">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 1) === 'completed' ? 'bg-green-500' : 'bg-dark-600'}`}>
-                                                            <Clock className={getStepStatus(order.status, 1) === 'completed' ? 'text-white' : 'text-silver-500'} size={16} />
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 1) === 'completed' ? 'bg-green-500 shadow-sm' : 'bg-white dark:bg-dark-600 border border-gray-100 dark:border-dark-700'}`}>
+                                                            <Clock className={getStepStatus(order.status, 1) === 'completed' ? 'text-white' : 'text-gray-400'} size={16} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 1) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Pending</h4>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500">Order placed successfully</p>
+                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 1) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Pending</h4>
+                                                            <p className="text-xs text-gray-500">Order placed successfully</p>
                                                         </div>
                                                     </div>
                                                     {/* Step 2: Confirmed */}
                                                     <div className="relative flex gap-4 items-start">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 2) === 'completed' ? 'bg-green-500' : 'bg-dark-600'}`}>
-                                                            <CheckCircle className={getStepStatus(order.status, 2) === 'completed' ? 'text-white' : 'text-silver-500'} size={16} />
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 2) === 'completed' ? 'bg-green-500 shadow-sm' : 'bg-white dark:bg-dark-600 border border-gray-100 dark:border-dark-700'}`}>
+                                                            <CheckCircle className={getStepStatus(order.status, 2) === 'completed' ? 'text-white' : 'text-gray-400'} size={16} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 2) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Confirmed</h4>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500">Order verified and confirmed</p>
+                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 2) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Confirmed</h4>
+                                                            <p className="text-xs text-gray-500">Order verified and confirmed</p>
                                                         </div>
                                                     </div>
                                                     {/* Step 3: Processing */}
                                                     <div className="relative flex gap-4 items-start">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 3) === 'completed' ? 'bg-green-500' : 'bg-dark-600'}`}>
-                                                            <Package className={getStepStatus(order.status, 3) === 'completed' ? 'text-white' : 'text-silver-500'} size={16} />
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 3) === 'completed' ? 'bg-green-500 shadow-sm' : 'bg-white dark:bg-dark-600 border border-gray-100 dark:border-dark-700'}`}>
+                                                            <Package className={getStepStatus(order.status, 3) === 'completed' ? 'text-white' : 'text-gray-400'} size={16} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 3) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-silver-600'}`}>Processing</h4>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500">Order is being processed</p>
+                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 3) === 'completed' ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`}>Processing</h4>
+                                                            <p className="text-xs text-gray-500">Order is being processed</p>
                                                         </div>
                                                     </div>
                                                     {/* Step 4: Shipped */}
                                                     <div className="relative flex gap-4 items-start">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 4) === 'completed' ? 'bg-accent-500' : 'bg-dark-600'}`}>
-                                                            <Truck className={getStepStatus(order.status, 4) === 'completed' ? 'text-dark-900' : 'text-silver-500'} size={16} />
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 4) === 'completed' ? 'bg-primary-500 shadow-sm' : 'bg-white dark:bg-dark-600 border border-gray-100 dark:border-dark-700'}`}>
+                                                            <Truck className={getStepStatus(order.status, 4) === 'completed' ? 'text-white' : 'text-gray-400'} size={16} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 4) === 'completed' ? 'text-accent-500' : 'text-gray-400 dark:text-silver-600'}`}>Shipped</h4>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500">Your order is on the way</p>
+                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 4) === 'completed' ? 'text-primary-600 dark:text-accent-500' : 'text-gray-400'}`}>Shipped</h4>
+                                                            <p className="text-xs text-gray-500">Your order is on the way</p>
                                                         </div>
                                                     </div>
                                                     {/* Step 5: Out for Delivery */}
                                                     <div className="relative flex gap-4 items-start">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 5) === 'completed' ? 'bg-accent-500' : 'bg-dark-600'}`}>
-                                                            <Truck className={getStepStatus(order.status, 5) === 'completed' ? 'text-dark-900' : 'text-silver-500'} size={16} />
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 5) === 'completed' ? 'bg-primary-500 shadow-sm' : 'bg-white dark:bg-dark-600 border border-gray-100 dark:border-dark-700'}`}>
+                                                            <Truck className={getStepStatus(order.status, 5) === 'completed' ? 'text-white' : 'text-gray-400'} size={16} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 5) === 'completed' ? 'text-accent-500' : 'text-gray-400 dark:text-silver-600'}`}>Out for Delivery</h4>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500">Your order is out for delivery</p>
+                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 5) === 'completed' ? 'text-primary-600 dark:text-accent-500' : 'text-gray-400'}`}>Out for Delivery</h4>
+                                                            <p className="text-xs text-gray-500">Your order is out for delivery</p>
                                                         </div>
                                                     </div>
                                                     {/* Step 6: Delivered */}
                                                     <div className="relative flex gap-4 items-start">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 6) === 'completed' ? 'bg-green-500' : 'bg-dark-600'}`}>
-                                                            <MapPin className={getStepStatus(order.status, 6) === 'completed' ? 'text-white' : 'text-silver-500'} size={16} />
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepStatus(order.status, 6) === 'completed' ? 'bg-green-500 shadow-sm' : 'bg-white dark:bg-dark-600 border border-gray-100 dark:border-dark-700'}`}>
+                                                            <MapPin className={getStepStatus(order.status, 6) === 'completed' ? 'text-white' : 'text-gray-400'} size={16} />
                                                         </div>
                                                         <div>
-                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 6) === 'completed' ? 'text-green-500' : 'text-gray-400 dark:text-silver-600'}`}>Delivered</h4>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500">Package delivered to your address</p>
+                                                            <h4 className={`font-semibold text-sm ${getStepStatus(order.status, 6) === 'completed' ? 'text-green-500' : 'text-gray-400'}`}>Delivered</h4>
+                                                            <p className="text-xs text-gray-500">Package delivered to your address</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -652,14 +625,14 @@ function TrackOrderContent() {
                         </div>
 
                         {/* Search Form */}
-                        <div className="bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-2xl p-6 mb-8 shadow-sm">
+                        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl p-6 mb-8 shadow-sm">
                             <form onSubmit={handleTrack} className="flex gap-4">
                                 <div className="flex-1 relative">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-silver-500" size={20} />
                                     <input
                                         type="text"
                                         placeholder="Enter Order ID (e.g. ORD-123456)"
-                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-dark-700 border border-gray-200 dark:border-dark-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-silver-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-accent-500 focus:border-transparent outline-none transition-all"
+                                        className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-dark-700 border border-gray-100 dark:border-dark-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-silver-500 focus:ring-2 focus:ring-primary-500 dark:focus:ring-accent-500 focus:border-transparent outline-none transition-all"
                                         value={orderId}
                                         onChange={(e) => setOrderId(e.target.value)}
                                     />
@@ -689,7 +662,7 @@ function TrackOrderContent() {
                         {isAuthenticated && orders.length === 0 && (
                             <div className="text-center mt-8">
                                 <Link href="/products" className="btn-primary inline-flex items-center gap-2">
-                                    <Package size={20} />
+                                    <ShoppingBag size={20} />
                                     Start Shopping
                                 </Link>
                             </div>
@@ -705,10 +678,10 @@ function TrackOrderContent() {
 export default function TrackOrderPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-50 dark:bg-dark-950 flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-accent-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-silver-400">Loading...</p>
+                    <p className="text-gray-500 dark:text-silver-400">Loading...</p>
                 </div>
             </div>
         }>

@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { Facebook, Instagram, Mail, Phone, MapPin, Truck, Shield, CreditCard, Headphones, ArrowRight, ChevronRight } from 'lucide-react';
+import { Facebook, Instagram, Mail, Phone, MapPin, Truck, Shield, CreditCard, Headphones, ChevronRight } from 'lucide-react';
 
 export default function Footer() {
     return (
         <footer
-            className="dark-section"
-            style={{ backgroundColor: '#111827', color: '#d1d5db' }}
+            className="bg-gray-900 dark:bg-dark-950 text-gray-300 dark:text-silver-400"
         >
             {/* Trust Badges Strip */}
-            <div style={{ borderBottom: '1px solid #1f2937' }}>
+            <div className="border-b border-gray-800 dark:border-dark-800">
                 <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {[
@@ -21,14 +20,13 @@ export default function Footer() {
                         ].map((item) => (
                             <div key={item.title} className="flex items-center gap-3.5">
                                 <div
-                                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                                    style={{ backgroundColor: '#1f2937', color: '#818cf8' }}
+                                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gray-800 dark:bg-dark-800 text-accent-400"
                                 >
                                     {item.icon}
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-sm" style={{ color: '#ffffff' }}>{item.title}</h4>
-                                    <p className="text-xs mt-0.5" style={{ color: '#6b7280' }}>{item.desc}</p>
+                                    <h4 className="font-semibold text-sm text-white">{item.title}</h4>
+                                    <p className="text-xs mt-0.5 text-gray-500">{item.desc}</p>
                                 </div>
                             </div>
                         ))}
@@ -48,26 +46,20 @@ export default function Footer() {
                                 className="h-16 w-auto object-contain"
                             />
                         </Link>
-                        <p className="text-sm leading-relaxed mb-6 max-w-xs" style={{ color: '#9ca3af' }}>
+                        <p className="text-sm leading-relaxed mb-6 max-w-xs text-gray-400">
                             Premium D2C platform bringing the future of shopping to your doorstep.
                             Pay on delivery, no hassles.
                         </p>
                         <div className="flex gap-3">
                             <a
                                 href="#"
-                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                style={{ backgroundColor: '#1f2937', color: '#9ca3af' }}
-                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#6366f1'; e.currentTarget.style.color = '#ffffff'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1f2937'; e.currentTarget.style.color = '#9ca3af'; }}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-800 dark:bg-dark-800 text-gray-400 hover:bg-accent-500 hover:text-white"
                             >
                                 <Facebook size={18} />
                             </a>
                             <a
                                 href="#"
-                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-                                style={{ backgroundColor: '#1f2937', color: '#9ca3af' }}
-                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#6366f1'; e.currentTarget.style.color = '#ffffff'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#1f2937'; e.currentTarget.style.color = '#9ca3af'; }}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-800 dark:bg-dark-800 text-gray-400 hover:bg-accent-500 hover:text-white"
                             >
                                 <Instagram size={18} />
                             </a>
@@ -76,7 +68,7 @@ export default function Footer() {
 
                     {/* Quick Links */}
                     <div className="lg:col-span-2">
-                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5" style={{ color: '#ffffff' }}>
+                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5 text-white">
                             Quick Links
                         </h3>
                         <ul className="space-y-3">
@@ -88,12 +80,9 @@ export default function Footer() {
                                 <li key={link.label}>
                                     <Link
                                         href={link.href}
-                                        className="group flex items-center gap-2 text-sm transition-colors duration-200"
-                                        style={{ color: '#9ca3af' }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.color = '#9ca3af'; }}
+                                        className="group flex items-center gap-2 text-sm transition-colors duration-200 text-gray-400 hover:text-white"
                                     >
-                                        <ChevronRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" style={{ color: '#6366f1' }} />
+                                        <ChevronRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5 text-accent-500" />
                                         {link.label}
                                     </Link>
                                 </li>
@@ -103,7 +92,7 @@ export default function Footer() {
 
                     {/* Customer Service */}
                     <div className="lg:col-span-3">
-                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5" style={{ color: '#ffffff' }}>
+                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5 text-white">
                             Customer Service
                         </h3>
                         <ul className="space-y-3">
@@ -116,12 +105,9 @@ export default function Footer() {
                                 <li key={link.label}>
                                     <Link
                                         href={link.href}
-                                        className="group flex items-center gap-2 text-sm transition-colors duration-200"
-                                        style={{ color: '#9ca3af' }}
-                                        onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
-                                        onMouseLeave={(e) => { e.currentTarget.style.color = '#9ca3af'; }}
+                                        className="group flex items-center gap-2 text-sm transition-colors duration-200 text-gray-400 hover:text-white"
                                     >
-                                        <ChevronRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" style={{ color: '#6366f1' }} />
+                                        <ChevronRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5 text-accent-500" />
                                         {link.label}
                                     </Link>
                                 </li>
@@ -131,41 +117,38 @@ export default function Footer() {
 
                     {/* Contact Info */}
                     <div className="lg:col-span-3">
-                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5" style={{ color: '#ffffff' }}>
+                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5 text-white">
                             Get in Touch
                         </h3>
                         <ul className="space-y-4">
                             <li>
-                                <a href="tel:7356216468" className="flex items-center gap-3 group text-sm transition-colors duration-200" style={{ color: '#9ca3af' }}>
+                                <a href="tel:7356216468" className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-400 hover:text-white">
                                     <div
-                                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                                        style={{ backgroundColor: '#1f2937' }}
+                                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-gray-800 dark:bg-dark-800"
                                     >
-                                        <Phone size={16} style={{ color: '#818cf8' }} />
+                                        <Phone size={16} className="text-accent-400" />
                                     </div>
                                     <span className="group-hover:underline">7356216468</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="mailto:vorionnexustech@gmail.com" className="flex items-center gap-3 group text-sm transition-colors duration-200" style={{ color: '#9ca3af' }}>
+                                <a href="mailto:vorionnexustech@gmail.com" className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-400 hover:text-white">
                                     <div
-                                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                                        style={{ backgroundColor: '#1f2937' }}
+                                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-gray-800 dark:bg-dark-800"
                                     >
-                                        <Mail size={16} style={{ color: '#818cf8' }} />
+                                        <Mail size={16} className="text-accent-400" />
                                     </div>
                                     <span className="group-hover:underline break-all">vorionnexustech@gmail.com</span>
                                 </a>
                             </li>
-                            <li className="flex items-start gap-3 text-sm" style={{ color: '#9ca3af' }}>
+                            <li className="flex items-start gap-3 text-sm text-gray-400">
                                 <div
-                                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                                    style={{ backgroundColor: '#1f2937' }}
+                                    className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-gray-800 dark:bg-dark-800"
                                 >
-                                    <MapPin size={16} style={{ color: '#818cf8' }} />
+                                    <MapPin size={16} className="text-accent-400" />
                                 </div>
                                 <div>
-                                    <span className="block font-semibold mb-0.5" style={{ color: '#e5e7eb' }}>Vorion Nexus Technology</span>
+                                    <span className="block font-semibold mb-0.5 text-gray-200">Vorion Nexus Technology</span>
                                     <span>Kozhikode, Kerala</span>
                                 </div>
                             </li>
@@ -175,7 +158,7 @@ export default function Footer() {
             </div>
 
             {/* Legal Links */}
-            <div style={{ borderTop: '1px solid #1f2937' }}>
+            <div className="border-t border-gray-800 dark:border-dark-800">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5">
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                         {[
@@ -184,14 +167,11 @@ export default function Footer() {
                             { href: '/shipping-policy', label: 'Shipping Policy' },
                             { href: '/return-refund-policy', label: 'Return Policy' },
                             { href: '/cod-disclaimer', label: 'COD Disclaimer' },
-                        ].map((link, i) => (
+                        ].map((link) => (
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                className="text-xs transition-colors duration-200"
-                                style={{ color: '#6b7280' }}
-                                onMouseEnter={(e) => { e.currentTarget.style.color = '#818cf8'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.color = '#6b7280'; }}
+                                className="text-xs transition-colors duration-200 text-gray-500 hover:text-accent-400"
                             >
                                 {link.label}
                             </Link>
@@ -201,18 +181,18 @@ export default function Footer() {
             </div>
 
             {/* Bottom Bar */}
-            <div style={{ borderTop: '1px solid #1f2937' }}>
+            <div className="border-t border-gray-800 dark:border-dark-800">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-center md:text-left">
-                        <p className="text-sm" style={{ color: '#6b7280' }}>
+                        <p className="text-sm text-gray-500">
                             &copy; 2026 VorionMart. All Rights Reserved.
                         </p>
-                        <p className="text-xs mt-1" style={{ color: '#4b5563' }}>
-                            Powered by <span className="font-medium" style={{ color: '#818cf8' }}>Vorion Nexus Technology</span>
+                        <p className="text-xs mt-1 text-gray-600">
+                            Powered by <span className="font-medium text-accent-400">Vorion Nexus Technology</span>
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm" style={{ color: '#6b7280' }}>
-                        <Shield size={15} style={{ color: '#818cf8' }} />
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Shield size={15} className="text-accent-400" />
                         <span>COD Only • Trusted Platform • Secure Delivery</span>
                     </div>
                 </div>

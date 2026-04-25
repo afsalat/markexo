@@ -7,7 +7,7 @@ import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { Mail, Lock, ArrowRight, ArrowLeft, Github, Twitter } from 'lucide-react';
 
 export default function LoginPage() {
-    const { login } = useCustomerAuth();
+    const { login, loginWithGoogle } = useCustomerAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectPath = searchParams?.get('redirect') || '/profile';
@@ -32,15 +32,15 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-dark-900">
+        <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white dark:bg-dark-900">
             {/* Left Side - Image/Brand */}
-            <div className="hidden lg:flex flex-col justify-center p-12 bg-dark-800 relative overflow-hidden border-r border-dark-700" data-aos="fade-right">
-                <div className="absolute inset-0 bg-gradient-to-br from-accent-600/20 to-primary-900/40 opacity-90" />
+            <div className="hidden lg:flex flex-col justify-center p-12 bg-gray-50 dark:bg-dark-800 relative overflow-hidden border-r border-gray-100 dark:border-dark-700">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-600/10 to-primary-900/20 dark:from-accent-600/20 dark:to-primary-900/40 opacity-90" />
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557821552-17105176677c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center opacity-10" />
 
-                <div className="relative z-10 text-white max-w-lg mx-auto">
-                    <h1 className="font-display text-5xl font-bold mb-6">Welcome Back!</h1>
-                    <p className="text-xl text-silver-300 mb-8">
+                <div className="relative z-10 text-gray-900 dark:text-white max-w-lg mx-auto">
+                    <h1 className="font-display text-5xl font-bold mb-6 leading-tight">Welcome <br />Back!</h1>
+                    <p className="text-xl text-gray-600 dark:text-silver-300 mb-8 leading-relaxed">
                         Login to access your personalized shopping experience, track orders, and manage your wishlist.
                     </p>
                     <div className="grid grid-cols-3 gap-6">
@@ -49,9 +49,9 @@ export default function LoginPage() {
                             { value: '10k+', label: 'Products' },
                             { value: '500+', label: 'Local Shops' }
                         ].map((stat, i) => (
-                            <div key={i} className="bg-dark-700/50 backdrop-blur-sm rounded-2xl p-4 text-center border border-dark-600" data-aos="zoom-in" data-aos-delay={i * 100 + 300}>
-                                <div className="font-bold text-2xl mb-1 text-accent-500">{stat.value}</div>
-                                <div className="text-sm text-silver-400">{stat.label}</div>
+                            <div key={i} className="bg-white/80 dark:bg-dark-700/50 backdrop-blur-sm rounded-2xl p-4 text-center border border-white dark:border-dark-600 shadow-sm">
+                                <div className="font-bold text-2xl mb-1 text-primary-600 dark:text-accent-500">{stat.value}</div>
+                                <div className="text-xs font-bold text-gray-500 dark:text-silver-400 tracking-wider uppercase">{stat.label}</div>
                             </div>
                         ))}
                     </div>
@@ -59,37 +59,37 @@ export default function LoginPage() {
             </div>
 
             {/* Right Side - Form */}
-            <div className="flex flex-col justify-center p-6 sm:p-12 lg:p-24 bg-dark-900 relative" data-aos="fade-left">
+            <div className="flex flex-col justify-center p-6 sm:p-12 lg:p-24 bg-white dark:bg-dark-900 relative">
                 {/* Back Button */}
-                <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-silver-400 hover:text-accent-500 transition-colors">
-                    <ArrowLeft size={20} />
-                    <span className="text-sm font-medium">Back to Home</span>
+                <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 dark:text-silver-400 hover:text-primary-600 dark:hover:text-accent-500 transition-colors group">
+                    <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                    <span className="text-sm font-semibold">Back to Home</span>
                 </Link>
                 <div className="max-w-md mx-auto w-full">
                     <div className="text-center mb-10">
-                        <Link href="/" className="inline-block font-display text-3xl font-bold text-accent-500 mb-6">
+                        <Link href="/" className="inline-block font-display text-4xl font-bold text-primary-600 dark:text-accent-500 mb-6 tracking-tighter">
                             VorionMart.
                         </Link>
-                        <h2 className="text-2xl font-bold text-white">Sign in to your account</h2>
-                        <p className="text-silver-400 mt-2">
-                            Don't have an account? <Link href={signupHref} className="text-accent-500 font-medium hover:underline">Sign up</Link>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sign in to your account</h2>
+                        <p className="text-gray-500 dark:text-silver-400 mt-2 font-medium">
+                            Don't have an account? <Link href={signupHref} className="text-primary-600 dark:text-accent-500 font-bold hover:underline">Sign up</Link>
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm border border-red-500/20">
+                            <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm border border-red-100 dark:border-red-500/20 font-medium animate-shake">
                                 {error}
                             </div>
                         )}
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-2">Email Address</label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
+                            <label className="block text-sm font-bold text-gray-700 dark:text-silver-300 mb-2 ml-1">Email Address</label>
+                            <div className="relative group/input">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-silver-500 group-focus-within/input:text-primary-600 dark:group-focus-within/input:text-accent-500 transition-colors" size={20} />
                                 <input
                                     type="email"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-600 dark:focus:ring-accent-500 focus:border-transparent outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-silver-600 font-medium"
                                     placeholder="john@example.com"
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -98,31 +98,34 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-silver-300 mb-2">Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-silver-500" size={20} />
+                            <label className="block text-sm font-bold text-gray-700 dark:text-silver-300 mb-2 ml-1">Password</label>
+                            <div className="relative group/input">
+                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-silver-500 group-focus-within/input:text-primary-600 dark:group-focus-within/input:text-accent-500 transition-colors" size={20} />
                                 <input
                                     type="password"
                                     required
-                                    className="w-full pl-12 pr-4 py-3 bg-dark-800 border border-dark-600 rounded-xl focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none transition-all text-white placeholder:text-silver-600"
+                                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl focus:ring-2 focus:ring-primary-600 dark:focus:ring-accent-500 focus:border-transparent outline-none transition-all text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-silver-600 font-medium"
                                     placeholder="••••••••"
                                     value={formData.password}
                                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                 />
                             </div>
                             <div className="flex justify-end mt-2">
-                                <Link href="#" className="text-sm text-accent-500 hover:underline">Forgot password?</Link>
+                                <Link href="#" className="text-sm font-bold text-primary-600 dark:text-accent-500 hover:underline">Forgot password?</Link>
                             </div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full btn-primary py-3.5 flex items-center justify-center gap-2 text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                            className="w-full py-4 bg-primary-600 dark:bg-accent-500 hover:bg-primary-700 dark:hover:bg-accent-600 text-white dark:text-dark-900 rounded-xl font-bold flex items-center justify-center gap-2 text-lg transition-all shadow-lg shadow-primary-600/20 dark:shadow-accent-500/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed group"
                         >
-                            {loading ? 'Signing in...' : (
+                            {loading ? (
+                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
                                 <>
-                                    Sign In <ArrowRight size={20} />
+                                    <span>Sign In</span>
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                 </>
                             )}
                         </button>
@@ -131,19 +134,40 @@ export default function LoginPage() {
                     <div className="mt-8">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-dark-600"></div>
+                                <div className="w-full border-t border-gray-100 dark:border-dark-700"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-4 bg-dark-900 text-silver-500">Or continue with</span>
+                                <span className="px-4 bg-white dark:bg-dark-900 text-gray-400 dark:text-silver-500 font-bold uppercase tracking-widest text-[10px]">Or continue with</span>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 mt-6">
-                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors text-silver-300">
-                                <Github size={20} className="text-silver-300" /> GitHub
+                            <button 
+                                type="button" 
+                                onClick={async () => {
+                                    setLoading(true);
+                                    setError(null);
+                                    try {
+                                        await loginWithGoogle();
+                                        router.push(redirectPath);
+                                    } catch (err: any) {
+                                        setError(err.message || 'Google login failed');
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-700 transition-all text-gray-700 dark:text-silver-300 font-bold text-sm shadow-sm"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" />
+                                </svg>
+                                Google
                             </button>
-                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 bg-dark-800 border border-dark-600 rounded-xl hover:bg-dark-700 transition-colors text-silver-300">
-                                <Twitter size={20} className="text-blue-400" /> Twitter
+                            <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-700 transition-all text-gray-700 dark:text-silver-300 font-bold text-sm shadow-sm">
+                                <Twitter size={20} className="text-[#1DA1F2]" /> Twitter
                             </button>
                         </div>
                     </div>

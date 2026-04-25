@@ -4,14 +4,14 @@ import React from 'react';
 
 export default function ReturnsPage() {
     return (
-        <div className="min-h-screen bg-dark-900 text-silver-300 py-16 px-4">
+        <div className="min-h-screen bg-gray-50 dark:bg-dark-950 text-gray-700 dark:text-silver-300 py-16 px-4">
             <div className="container mx-auto max-w-4xl">
-                <div className="bg-dark-800 border border-dark-600 rounded-2xl p-8 md:p-12 shadow-2xl">
-                    <h1 className="font-display text-3xl md:text-4xl font-bold text-white mb-8">Return & Refund Policy</h1>
+                <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-600 rounded-2xl p-8 md:p-12 shadow-sm dark:shadow-2xl">
+                    <h1 className="font-display text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-8">Return & Refund Policy</h1>
 
-                    <div className="space-y-8 text-silver-300 leading-relaxed">
+                    <div className="space-y-8 text-gray-700 dark:text-silver-300 leading-relaxed">
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">Eligible Returns</h2>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Eligible Returns</h2>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Damaged products</li>
                                 <li>Defective products</li>
@@ -20,7 +20,7 @@ export default function ReturnsPage() {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">Non-Eligible Returns</h2>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Non-Eligible Returns</h2>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>Change of mind</li>
                                 <li>Used or opened products</li>
@@ -29,7 +29,7 @@ export default function ReturnsPage() {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">Refund Process</h2>
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Refund Process</h2>
                             <ul className="list-disc pl-5 space-y-2">
                                 <li>COD refunds via UPI or bank transfer.</li>
                                 <li>Processing time: 7–10 business days.</li>
@@ -38,8 +38,8 @@ export default function ReturnsPage() {
                         </section>
 
                         <section>
-                            <h2 className="text-xl font-bold text-white mb-3">Contact</h2>
-                            <div className="p-4 bg-dark-700/50 rounded-xl border border-dark-600">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Contact</h2>
+                            <div className="p-4 bg-gray-50 dark:bg-dark-700/50 rounded-xl border border-gray-100 dark:border-dark-600">
                                 <p>📞 Phone: 7356216468</p>
                                 <p>📧 Email: vorionnexustech@gmail.com</p>
                             </div>
