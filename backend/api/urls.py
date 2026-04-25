@@ -12,7 +12,7 @@ from .views import (
     # Public views
     CategoryViewSet, ProductViewSet, ReviewViewSet,
     BannerListView, SiteSettingView, CreateOrderView, OrderDetailView, CancelOrderView, ReturnOrderView, CreateEnquiryView,
-    CartAPIView, RegisterUserView, RegisterPartnerView, CustomTokenObtainPairView, CustomerOrdersView, TwilioWhatsAppWebhookView,
+    CartAPIView, RegisterUserView, RegisterPartnerView, CustomTokenObtainPairView, CustomerOrdersView, TwilioWhatsAppWebhookView, SocialLoginView,
     # Admin views
     AdminDashboardStatsView, AdminShopViewSet, AdminCategoryViewSet,
     AdminProductViewSet, AdminOrderViewSet, AdminCustomerViewSet,
@@ -68,6 +68,7 @@ urlpatterns = [
     path('auth/register/', RegisterUserView.as_view(), name='register'),
     path('auth/register-partner/', RegisterPartnerView.as_view(), name='register-partner'),
     path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/social-login/', SocialLoginView.as_view(), name='social-login'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Partner API

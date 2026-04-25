@@ -2,6 +2,9 @@
 API Views for VorionMart marketplace.
 """
 import logging
+import firebase_admin
+from firebase_admin import auth as firebase_auth
+from rest_framework_simplejwt.tokens import RefreshToken
 from collections import deque
 from pathlib import Path
 
@@ -45,7 +48,7 @@ from .serializers import (
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
     SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
     ChecklistSectionSerializer, ChecklistSectionWriteSerializer, ChecklistItemSerializer, ChecklistItemWriteSerializer,
-    normalize_email_value,
+    normalize_email_value, get_or_create_customer_for_user,
 )
 from .order_emails import (
     send_order_created_email,
@@ -61,6 +64,10 @@ from .whatsapp import (
     send_order_alert_whatsapp,
     send_order_confirmation_whatsapp,
 )
+
+# Initialize Firebase Admin if not already initialized
+if not firebase_admin._apps:
+    firebase_admin.initialize_app()
 
 logger = logging.getLogger(__name__)
 
@@ -1282,6 +1289,67 @@ class AdminSiteSettingView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SocialLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        provider = request.data.get('provider')
+        token = request.data.get('token')
+
+        if provider != 'google':
+            return Response({'error': 'Unsupported provider'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Verify Firebase ID token
+            decoded_token = firebase_auth.verify_id_token(token)
+            email = decoded_token.get('email')
+            name = decoded_token.get('name', '')
+            
+            if not email:
+                return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get or create user
+            normalized_email = normalize_email_value(email)
+            user = User.objects.filter(email__iexact=normalized_email).first()
+            if not user:
+                username = normalized_email.split('@')[0]
+                # Ensure unique username
+                base_username = username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=name.split(' ')[0] if name else '',
+                    last_name=' '.join(name.split(' ')[1:]) if name and len(name.split(' ')) > 1 else '',
+                )
+                user.set_unusable_password()
+                user.save()
+
+            # Ensure customer profile exists
+            get_or_create_customer_for_user(user)
+
+            # Generate JWT
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'name': f"{user.first_name} {user.last_name}".strip() or user.username,
+                }
+            })
+
+        except Exception as e:
+            logger.error("Social login error: %s", str(e))
+            return Response({'error': 'Social login failed'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminSystemLogsView(APIView):
