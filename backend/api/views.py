@@ -66,6 +66,8 @@ from .whatsapp import (
     send_order_confirmation_whatsapp,
 )
 
+logger = logging.getLogger(__name__)
+
 # Initialize Firebase Admin if not already initialized
 if not firebase_admin._apps:
     try:
@@ -106,8 +108,6 @@ if not firebase_admin._apps:
             firebase_admin.initialize_app()
         except Exception:
             pass
-
-logger = logging.getLogger(__name__)
 
 
 def get_sales_orders_queryset(queryset=None):
