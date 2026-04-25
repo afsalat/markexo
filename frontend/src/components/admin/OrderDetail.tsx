@@ -18,17 +18,17 @@ interface OrderDetailProps {
 
 // All available order statuses
 const ORDER_STATUSES = [
-    { value: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-700' },
-    { value: 'pending_verification', label: 'Pending Verification', color: 'bg-orange-100 text-orange-700' },
-    { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-100 text-blue-700' },
-    { value: 'processing', label: 'Processing', color: 'bg-indigo-100 text-indigo-700' },
-    { value: 'shipped', label: 'Shipped', color: 'bg-cyan-100 text-cyan-700' },
-    { value: 'out_for_delivery', label: 'Out for Delivery', color: 'bg-teal-100 text-teal-700' },
-    { value: 'delivered', label: 'Delivered', color: 'bg-green-100 text-green-700' },
-    { value: 'completed', label: 'Completed', color: 'bg-emerald-100 text-emerald-700' },
-    { value: 'rto', label: 'Returned to Origin (RTO)', color: 'bg-red-100 text-red-700' },
-    { value: 'returned', label: 'Returned (Customer)', color: 'bg-orange-100 text-orange-700' },
-    { value: 'cancelled', label: 'Cancelled', color: 'bg-dark-700 text-silver-400' },
+    { value: 'pending', label: 'Pending', color: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' },
+    { value: 'pending_verification', label: 'Pending Verification', color: 'bg-orange-500/10 text-orange-400 border border-orange-500/20' },
+    { value: 'confirmed', label: 'Confirmed', color: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
+    { value: 'processing', label: 'Processing', color: 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' },
+    { value: 'shipped', label: 'Shipped', color: 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' },
+    { value: 'out_for_delivery', label: 'Out for Delivery', color: 'bg-teal-500/10 text-teal-400 border border-teal-500/20' },
+    { value: 'delivered', label: 'Delivered', color: 'bg-green-500/10 text-green-400 border border-green-500/20' },
+    { value: 'completed', label: 'Completed', color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
+    { value: 'rto', label: 'Returned to Origin (RTO)', color: 'bg-red-500/10 text-red-400 border border-red-500/20' },
+    { value: 'returned', label: 'Returned (Customer)', color: 'bg-orange-500/10 text-orange-400 border border-orange-500/20' },
+    { value: 'cancelled', label: 'Cancelled', color: 'bg-dark-700 text-silver-400 border border-dark-600' },
 ];
 
 const PAYMENT_STATUSES = [

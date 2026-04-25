@@ -1,5 +1,6 @@
 import AdminGuard from '@/components/AdminGuard';
 import { buildNoIndexMetadata } from '@/lib/seo';
+import AdminThemeWrapper from '@/components/admin/AdminThemeWrapper';
 
 export const metadata = buildNoIndexMetadata({
     title: 'Admin Dashboard | VorionMart',
@@ -17,9 +18,9 @@ export default function AdminLayout({
     return (
         <AuthProvider storageKeyPrefix="admin">
             <AdminGuard>
-                <div className="min-h-screen light">
+                <AdminThemeWrapper>
                     {children}
-                </div>
+                </AdminThemeWrapper>
             </AdminGuard>
         </AuthProvider>
     );
