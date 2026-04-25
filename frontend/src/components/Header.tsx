@@ -230,7 +230,11 @@ export default function Header() {
                             onMouseEnter={() => setIsCategoryDropdownOpen(true)}
                             onMouseLeave={() => setIsCategoryDropdownOpen(false)}
                         >
-                            <button className="flex items-center gap-1 text-sm font-bold text-gray-800 transition-colors hover:text-accent-600 focus:outline-none py-4 px-1">
+                            <button 
+                                onDoubleClick={() => router.push('/categories')}
+                                className="flex items-center gap-1 text-sm font-bold text-gray-800 transition-colors hover:text-accent-600 focus:outline-none py-4 px-1"
+                                title="Double click to view all categories"
+                            >
                                 Categories <ChevronDown size={12} className={`transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180 text-accent-600' : 'text-gray-400'}`} />
                             </button>
                             

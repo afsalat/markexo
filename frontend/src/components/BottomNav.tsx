@@ -11,7 +11,7 @@ export default function BottomNav() {
 
     const navItems = [
         { label: 'Home', icon: Home, href: '/' },
-        { label: 'Categories', icon: Grid, href: '/products' },
+        { label: 'Categories', icon: Grid, href: '/categories' },
         { label: 'Orders', icon: Package, href: '/profile?tab=orders' },
         { label: 'Cart', icon: ShoppingCart, href: '/cart', badge: totalItems },
         { label: 'Account', icon: User, href: '/profile' },
