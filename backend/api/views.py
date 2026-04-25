@@ -69,17 +69,43 @@ from .whatsapp import (
 # Initialize Firebase Admin if not already initialized
 if not firebase_admin._apps:
     try:
-        cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
-        if os.path.exists(cred_path):
-            cred = firebase_admin.credentials.Certificate(cred_path)
+        # 1. Try environment variables (best for production)
+        project_id = os.environ.get('FIREBASE_PROJECT_ID')
+        private_key = os.environ.get('FIREBASE_PRIVATE_KEY')
+        client_email = os.environ.get('FIREBASE_CLIENT_EMAIL')
+
+        if project_id and private_key and client_email:
+            # Handle potential escaping of newlines in env vars
+            if "\\n" in private_key:
+                private_key = private_key.replace("\\n", "\n")
+            
+            cred = firebase_admin.credentials.Certificate({
+                "type": "service_account",
+                "project_id": project_id,
+                "private_key": private_key,
+                "client_email": client_email,
+                "token_uri": "https://oauth2.googleapis.com/token",
+            })
             firebase_admin.initialize_app(cred)
+            logger.info("Firebase initialized using environment variables.")
         else:
-            # Fallback for environments where project ID is set via env vars
-            firebase_admin.initialize_app()
+            # 2. Try the service account JSON file (local development)
+            cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
+            if os.path.exists(cred_path):
+                cred = firebase_admin.credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
+                logger.info("Firebase initialized using service account JSON.")
+            else:
+                # 3. Fallback for environments with default credentials (e.g., GCP)
+                firebase_admin.initialize_app()
+                logger.info("Firebase initialized using default credentials.")
     except Exception as e:
-        print(f"Firebase initialization error: {e}")
-        # Final fallback
-        firebase_admin.initialize_app()
+        logger.error(f"Firebase initialization error: {e}")
+        # Final fallback to prevent crash, though subsequent auth calls will fail
+        try:
+            firebase_admin.initialize_app()
+        except Exception:
+            pass
 
 logger = logging.getLogger(__name__)
 
