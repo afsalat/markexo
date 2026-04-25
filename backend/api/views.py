@@ -1,6 +1,7 @@
 """
 API Views for VorionMart marketplace.
 """
+import os
 import logging
 import firebase_admin
 from firebase_admin import auth as firebase_auth
@@ -67,7 +68,18 @@ from .whatsapp import (
 
 # Initialize Firebase Admin if not already initialized
 if not firebase_admin._apps:
-    firebase_admin.initialize_app()
+    try:
+        cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
+        if os.path.exists(cred_path):
+            cred = firebase_admin.credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        else:
+            # Fallback for environments where project ID is set via env vars
+            firebase_admin.initialize_app()
+    except Exception as e:
+        print(f"Firebase initialization error: {e}")
+        # Final fallback
+        firebase_admin.initialize_app()
 
 logger = logging.getLogger(__name__)
 
