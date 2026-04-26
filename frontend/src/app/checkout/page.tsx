@@ -231,11 +231,13 @@ export default function CheckoutPage() {
 
     if (items.length === 0 && !orderPlaced) {
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-gray-50" data-aos="fade-up">
-                <ShoppingBag size={80} className="text-gray-300 mb-6" />
+            <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 bg-gray-50" data-aos="fade-up">
+                <div className="w-24 h-24 bg-accent-50 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-accent-500/10">
+                    <ShoppingBag size={44} className="text-accent-400" />
+                </div>
                 <h1 className="font-display text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
-                <p className="text-gray-500 mb-8 font-medium">Add some products before checkout.</p>
-                <Link href="/products" className="btn-primary shadow-lg shadow-accent-500/20">
+                <p className="text-gray-500 mb-8 font-medium text-sm text-center">Add some products before checkout.</p>
+                <Link href="/products" className="btn-primary shadow-lg shadow-accent-500/20 px-8 py-3 rounded-2xl font-bold">
                     Browse Products
                 </Link>
             </div>
@@ -244,37 +246,33 @@ export default function CheckoutPage() {
 
     if (orderPlaced) {
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 bg-gray-50 py-12" data-aos="fade-up">
-                <div className="w-20 h-20 bg-accent-50 rounded-full flex items-center justify-center mb-6 animate-bounce shadow-lg shadow-accent-500/20">
-                    <Check size={40} className="text-accent-600" />
+            <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 bg-gray-50 py-12" data-aos="fade-up">
+                <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
+                    <Check size={44} className="text-emerald-500" strokeWidth={3} />
                 </div>
-                <h1 className="font-display text-3xl font-bold text-gray-900 mb-2">Order Placed!</h1>
-                <p className="text-gray-600 font-medium mb-2">Thank you for shopping with VorionMart</p>
-                <p className="text-lg font-bold text-accent-600 mb-8">Order ID: {orderId}</p>
+                <h1 className="font-display text-3xl font-bold text-gray-900 mb-1">Order Placed!</h1>
+                <p className="text-gray-500 font-medium mb-2 text-sm">Thank you for shopping with VorionMart</p>
+                <p className="text-base font-bold text-accent-600 mb-8 bg-accent-50 px-4 py-1.5 rounded-full">Order ID: {orderId}</p>
 
-                <div className="w-full max-w-md space-y-4 mb-8">
-                    {/* Payment Verification Notice */}
-                    <div className="bg-blue-50 border border-blue-100 shadow-sm rounded-xl p-4">
+                <div className="w-full max-w-sm space-y-3 mb-8">
+                    <div className="bg-blue-50 border border-blue-100 shadow-sm rounded-2xl p-4">
                         <p className="text-blue-700 text-sm text-center font-medium">
                             📞 <span className="font-bold">Verification Call:</span> Our team will call you to confirm payment before dispatch.
                         </p>
                     </div>
-
-                    {/* Payment Confirmation */}
-                    <div className="bg-accent-50 border border-accent-100 shadow-sm rounded-xl p-4">
-                        <p className="text-gray-700 text-center">
-                            💳 <span className="font-bold text-gray-900">Payment confirmed</span>
+                    <div className="bg-emerald-50 border border-emerald-100 shadow-sm rounded-2xl p-4">
+                        <p className="text-gray-700 text-sm text-center font-medium">
+                            💳 <span className="font-bold text-gray-900">Payment confirmed</span> — Your order will be processed shortly
                         </p>
-                        <p className="text-sm text-gray-500 font-medium mt-1 text-center">Your order will be processed shortly</p>
                     </div>
                 </div>
 
-                <div className="flex gap-4">
-                    <Link href={`/track-order?id=${orderId}`} className="btn-primary shadow-lg shadow-accent-500/20">
+                <div className="flex gap-3 w-full max-w-sm">
+                    <Link href={`/track-order?id=${orderId}`} className="btn-primary flex-1 text-center py-3.5 rounded-2xl font-bold shadow-lg shadow-accent-500/20">
                         Track Order
                     </Link>
-                    <Link href="/products" className="btn-ghost font-bold text-gray-600 hover:text-black">
-                        Continue Shopping
+                    <Link href="/products" className="flex-1 text-center py-3.5 rounded-2xl font-bold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                        Shop More
                     </Link>
                 </div>
             </div>
@@ -284,22 +282,50 @@ export default function CheckoutPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-accent-500"></div>
+                <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-b-4 border-accent-500"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Page Header */}
-            <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="min-h-screen bg-gray-50 pb-0">
+            {/* Mobile Compact Header */}
+            <div className="lg:hidden bg-white border-b border-gray-100 px-4 py-3 sticky top-0 z-30 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                    <Link href="/cart" className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                        <ArrowLeft size={18} />
+                    </Link>
+                    <h1 className="font-display text-lg font-bold text-gray-900">Checkout</h1>
+                </div>
+                {/* Mobile Progress Steps */}
+                <div className="flex items-center gap-2">
+                    {[
+                        { num: 1, label: 'Delivery' },
+                        { num: 2, label: 'Payment' },
+                        { num: 3, label: 'Confirm' },
+                    ].map((s, i) => (
+                        <div key={s.num} className="flex items-center flex-1">
+                            <div className={`flex items-center gap-1.5 ${ step >= s.num ? 'text-accent-600' : 'text-gray-400'}`}>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                                    step > s.num ? 'bg-accent-500 text-white' : step === s.num ? 'bg-accent-50 text-accent-600 border-2 border-accent-500' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                    {step > s.num ? <Check size={12} strokeWidth={3} /> : s.num}
+                                </div>
+                                <span className="text-[11px] font-semibold">{s.label}</span>
+                            </div>
+                            {i < 2 && <div className={`flex-1 h-[2px] mx-1.5 rounded-full ${step > s.num ? 'bg-accent-500' : 'bg-gray-200'}`} />}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Desktop Header */}
+            <div className="hidden lg:block bg-white border-b border-gray-200 shadow-sm">
                 <div className="container mx-auto px-4 py-8">
                     <Link href="/cart" className="inline-flex items-center gap-2 text-gray-500 hover:text-accent-600 font-medium mb-4 transition-colors">
                         <ArrowLeft size={18} /> Back to Cart
                     </Link>
                     <h1 className="font-display text-3xl font-bold text-gray-900 tracking-tight">Checkout</h1>
-
-                    {/* Progress Steps */}
                     <div className="flex items-center gap-4 mt-8">
                         {[
                             { num: 1, label: 'Delivery', icon: MapPin },
@@ -321,8 +347,8 @@ export default function CheckoutPage() {
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-10">
-                <div className="flex flex-col lg:flex-row gap-8">
+            <div className="container mx-auto px-0 lg:px-4 py-0 lg:py-10">
+                <div className="flex flex-col lg:flex-row gap-0 lg:gap-8">
                     {/* Form Area */}
                     <div className="flex-1" data-aos="fade-right" data-aos-delay="100">
                         <form onSubmit={handleSubmit}>

@@ -1,13 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Home, Package, ShoppingCart, User, Grid } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 
 export default function BottomNav() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { totalItems } = useCart();
+
+    const currentTab = searchParams.get('tab');
+
+    const isItemActive = (href: string) => {
+        if (href === '/') return pathname === '/';
+        if (href === '/categories') return pathname.startsWith('/categories');
+        if (href === '/cart') return pathname.startsWith('/cart');
+        if (href === '/profile?tab=orders') {
+            return pathname === '/profile' && currentTab === 'orders';
+        }
+        if (href === '/profile') {
+            // Account is active only when on /profile WITHOUT the orders tab
+            return pathname === '/profile' && currentTab !== 'orders';
+        }
+        return pathname.startsWith(href);
+    };
 
     const navItems = [
         { label: 'Home', icon: Home, href: '/' },
@@ -21,7 +38,7 @@ export default function BottomNav() {
         <nav className="fixed bottom-0 left-0 z-[60] w-full border-t border-gray-100 bg-white/95 pb-safe pt-2 backdrop-blur-md lg:hidden">
             <div className="flex items-center justify-around">
                 {navItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    const isActive = isItemActive(item.href);
                     const Icon = item.icon;
 
                     return (

@@ -11,14 +11,14 @@ export default function Footer() {
             {/* Trust Badges Strip */}
             <div className="border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    <div className="flex md:grid overflow-x-auto md:grid-cols-4 gap-6 md:gap-6 pb-2 md:pb-0 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {[
                             { icon: <CreditCard size={22} />, title: 'Cash on Delivery', desc: 'Pay when you receive' },
                             { icon: <Truck size={22} />, title: 'Free Shipping', desc: 'Free Delivery on Every Order' },
                             { icon: <Shield size={22} />, title: 'Secure Checkout', desc: '100% protected' },
                             { icon: <Headphones size={22} />, title: '24/7 Support', desc: 'Always here to help' },
                         ].map((item) => (
-                            <div key={item.title} className="flex items-center gap-3.5">
+                            <div key={item.title} className="flex items-center gap-3.5 shrink-0 w-[220px] md:w-auto snap-start">
                                 <div
                                     className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gray-50 text-accent-600"
                                 >
@@ -35,18 +35,18 @@ export default function Footer() {
             </div>
 
             {/* Main Footer Content */}
-            <div className="max-w-7xl mx-auto px-4 md:px-12 py-10 md:py-16">
+            <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 md:py-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-8">
                     {/* Brand Column */}
-                    <div className="lg:col-span-4">
-                        <Link href="/" className="inline-flex items-center group mb-6">
+                    <div className="lg:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
+                        <Link href="/" className="inline-flex items-center group mb-4 md:mb-6">
                             <img
                                 src="/logo-black-text.png"
                                 alt="VorionMart"
-                                className="h-16 w-auto object-contain"
+                                className="h-12 md:h-16 w-auto object-contain"
                             />
                         </Link>
-                        <p className="text-sm leading-relaxed mb-6 max-w-xs text-gray-500">
+                        <p className="text-xs md:text-sm leading-relaxed mb-6 max-w-xs text-gray-500">
                             Premium D2C platform bringing the future of shopping to your doorstep.
                             Pay on delivery, no hassles.
                         </p>
@@ -66,8 +66,44 @@ export default function Footer() {
                         </div>
                     </div>
 
-                    {/* Quick Links */}
-                    <div className="lg:col-span-2">
+                    {/* Mobile Compact Links Grid */}
+                    <div className="grid grid-cols-2 gap-4 md:hidden border-t border-gray-100 pt-6 mt-2 w-full">
+                        <div>
+                            <h3 className="font-display font-semibold text-xs uppercase tracking-wider mb-4 text-gray-900">Quick Links</h3>
+                            <ul className="space-y-3">
+                                {[
+                                    { href: '/products', label: 'All Collection' },
+                                    { href: '/products?featured=true', label: 'Trending Now' },
+                                    { href: '/track-order', label: 'Track Order' },
+                                ].map((link) => (
+                                    <li key={link.label}>
+                                        <Link href={link.href} className="text-xs text-gray-500 hover:text-accent-600 transition-colors">
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="font-display font-semibold text-xs uppercase tracking-wider mb-4 text-gray-900">Support</h3>
+                            <ul className="space-y-3">
+                                {[
+                                    { href: '/contact', label: 'Contact Us' },
+                                    { href: '/shipping-policy', label: 'Shipping' },
+                                    { href: '/return-refund-policy', label: 'Returns' },
+                                ].map((link) => (
+                                    <li key={link.label}>
+                                        <Link href={link.href} className="text-xs text-gray-500 hover:text-accent-600 transition-colors">
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Quick Links (Desktop) */}
+                    <div className="hidden md:block lg:col-span-2">
                         <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5 text-gray-900">
                             Quick Links
                         </h3>
@@ -90,8 +126,8 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Customer Service */}
-                    <div className="lg:col-span-3">
+                    {/* Customer Service (Desktop) */}
+                    <div className="hidden md:block lg:col-span-3">
                         <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5 text-gray-900">
                             Customer Service
                         </h3>
@@ -115,8 +151,8 @@ export default function Footer() {
                         </ul>
                     </div>
 
-                    {/* Contact Info */}
-                    <div className="lg:col-span-3">
+                    {/* Contact Info (Desktop) */}
+                    <div className="hidden md:block lg:col-span-3">
                         <h3 className="font-display font-semibold text-sm uppercase tracking-wider mb-5 text-gray-900">
                             Get in Touch
                         </h3>
@@ -182,7 +218,7 @@ export default function Footer() {
 
             {/* Bottom Bar */}
             <div className="border-t border-gray-100">
-                <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5 pb-24 md:pb-5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
                     <div className="text-center md:text-left">
                         <p className="text-sm text-gray-400">
                             &copy; 2026 VorionMart. All Rights Reserved.
@@ -191,8 +227,8 @@ export default function Footer() {
                             Powered by <span className="font-medium text-accent-500">Vorion Nexus Technology</span>
                         </p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                        <Shield size={15} className="text-accent-500" />
+                    <div className="flex items-center justify-center md:justify-start gap-2 text-xs md:text-sm text-gray-400">
+                        <Shield size={15} className="text-accent-500 shrink-0" />
                         <span>COD Only • Trusted Platform • Secure Delivery</span>
                     </div>
                 </div>

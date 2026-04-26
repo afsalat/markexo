@@ -86,7 +86,15 @@ function ProductsPageContent({
 
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [showFilters, setShowFilters] = useState(false);
+    const [showSortMenu, setShowSortMenu] = useState(false);
     const { addItem } = useCart();
+
+    const sortOptions = [
+        { value: 'newest', label: 'Newest First' },
+        { value: 'price_low', label: 'Price: Low to High' },
+        { value: 'price_high', label: 'Price: High to Low' },
+        { value: 'popular', label: 'Most Popular' },
+    ];
     const { addToWishlist, removeFromWishlist, isWishlisted } = useCustomerAuth();
 
     // Product and category states
@@ -202,19 +210,19 @@ function ProductsPageContent({
     return (
         <div className="min-h-screen bg-[#f8f9fb]">
             {/* Page Header */}
-            <div className="bg-white border-b border-gray-100">
-                <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
-                    <nav className="flex items-center gap-2 text-sm text-gray-400 mb-3">
+            <div className="bg-white border-b border-gray-100 sm:border-none">
+                <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-6">
+                    <nav className="hidden sm:flex items-center gap-2 text-sm text-gray-400 mb-3">
                         <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
                         <span className="text-gray-300">/</span>
                         <span className="text-gray-900 font-medium">{getPageTitle()}</span>
                     </nav>
-                    <div className="flex items-end justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4">
                         <div>
-                            <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+                            <h1 className="font-display text-lg sm:text-3xl font-bold text-gray-900 tracking-tight">
                                 {getPageTitle()}
                             </h1>
-                            <p className="text-gray-500 text-sm mt-1">
+                            <p className="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1">
                                 {isVisualSearch ? 'Found products matching your image' : `${filteredProducts.length} products found`}
                             </p>
                         </div>
@@ -222,8 +230,8 @@ function ProductsPageContent({
                 </div>
             </div>
 
-            <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
-                <div className="flex gap-6 lg:gap-8">
+            <div className="w-full max-w-[1440px] mx-auto px-2 sm:px-6 lg:px-10 py-3 sm:py-6">
+                <div className="flex gap-4 sm:gap-6 lg:gap-8">
                     {/* Filters Sidebar - Desktop */}
                     <aside className="hidden lg:block w-[260px] flex-shrink-0 sticky top-28 self-start max-h-[calc(100vh-7rem)] overflow-y-auto custom-scrollbar">
                         <div className="filter-sidebar">
@@ -329,38 +337,87 @@ function ProductsPageContent({
 
                     {/* Main Content */}
                     <div className="flex-1 min-w-0">
-                        {/* Toolbar */}
-                        <div className="toolbar mb-5">
-                            {/* Mobile Filter Toggle */}
+                        {/* Mobile Toolbar (Sort & Filter) */}
+                        <div className="lg:hidden flex items-center mb-4 bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-xl divide-x divide-gray-100 sticky top-1 z-20 mx-1">
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
-                                className="lg:hidden flex items-center gap-2 px-3.5 py-2 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                                className="flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors rounded-l-xl"
                             >
-                                <Filter size={15} />
-                                Filters
+                                <Filter size={16} className="text-gray-500" />
+                                Filter
                                 {activeFilterCount > 0 && (
                                     <span className="text-[10px] font-bold bg-accent-500 text-white w-4 h-4 rounded-full flex items-center justify-center">{activeFilterCount}</span>
                                 )}
                             </button>
+                            
+                            <div className="flex-1 relative">
+                                <button
+                                    onClick={() => setShowSortMenu(!showSortMenu)}
+                                    className="w-full flex items-center justify-center gap-2 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                                >
+                                    <ArrowUpDown size={16} className="text-gray-500" />
+                                    Sort
+                                </button>
+                                
+                                {/* Custom Sort Dropdown (Mobile) */}
+                                {showSortMenu && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
+                                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100 py-1.5 z-50 overflow-hidden origin-top">
+                                            {sortOptions.map((option) => (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={() => {
+                                                        setSortBy(option.value);
+                                                        setShowSortMenu(false);
+                                                    }}
+                                                    className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${sortBy === option.value ? 'bg-accent-50 text-accent-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
 
+                        {/* Desktop Toolbar */}
+                        <div className="hidden lg:flex items-center gap-2 mb-5">
                             <div className="flex items-center gap-2 ml-auto">
                                 {/* Sort */}
                                 <div className="relative">
-                                    <select
-                                        value={sortBy}
-                                        onChange={(e) => setSortBy(e.target.value)}
-                                        className="sort-select"
+                                    <button
+                                        onClick={() => setShowSortMenu(!showSortMenu)}
+                                        className="flex items-center gap-2 pl-4 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:border-accent-300 hover:text-accent-600 transition-all"
                                     >
-                                        <option value="newest">Newest First</option>
-                                        <option value="price_low">Price: Low to High</option>
-                                        <option value="price_high">Price: High to Low</option>
-                                        <option value="popular">Most Popular</option>
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                        {sortOptions.find(o => o.value === sortBy)?.label || 'Sort'}
+                                        <ChevronDown size={14} className={`text-gray-400 transition-transform ${showSortMenu ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    
+                                    {showSortMenu && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
+                                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-gray-100 py-1.5 z-50 overflow-hidden">
+                                                {sortOptions.map((option) => (
+                                                    <button
+                                                        key={option.value}
+                                                        onClick={() => {
+                                                            setSortBy(option.value);
+                                                            setShowSortMenu(false);
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${sortBy === option.value ? 'bg-accent-50 text-accent-600' : 'text-gray-700 hover:bg-gray-50'}`}
+                                                    >
+                                                        {option.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* View Mode Toggle */}
-                                <div className="hidden sm:flex items-center bg-gray-50 rounded-lg p-0.5 border border-gray-100">
+                                <div className="flex items-center bg-gray-50 rounded-lg p-0.5 border border-gray-100">
                                     <button
                                         onClick={() => setViewMode('grid')}
                                         className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
@@ -399,7 +456,7 @@ function ProductsPageContent({
 
                         {/* Loading State */}
                         {loading ? (
-                            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+                            <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6' : 'grid-cols-1 gap-4 sm:gap-6'}`}>
                                 {Array.from({ length: 12 }).map((_, i) => (
                                     <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden animate-pulse">
                                         <div className="aspect-[4/5] bg-gray-100" />
@@ -418,17 +475,17 @@ function ProductsPageContent({
                         ) : (
                             <>
                                 {/* Products Grid */}
-                                <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+                                <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6' : 'grid-cols-1 gap-4 sm:gap-6'}`}>
                                     {filteredProducts.map((product, index) => (
                                         <div
                                             key={product.id}
                                             data-aos="fade-up"
                                             data-aos-delay={(index % 12) * 40}
-                                            className={`product-grid-card group ${viewMode === 'list' ? 'flex' : ''}`}
+                                            className={`bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden sm:rounded-2xl transition-all hover:shadow-md group ${viewMode === 'list' ? 'flex' : ''}`}
                                         >
                                             <Link href={`/products/${product.slug}`} className={`block ${viewMode === 'list' ? 'flex flex-1' : ''}`}>
                                                 {/* Image */}
-                                                <div className={`relative overflow-hidden bg-gray-50 ${viewMode === 'list' ? 'w-44 flex-shrink-0' : 'aspect-[4/5]'}`}>
+                                                <div className={`relative overflow-hidden bg-gray-50 ${viewMode === 'list' ? 'w-32 sm:w-44 flex-shrink-0' : 'aspect-[4/5]'}`}>
                                                     {product.image ? (
                                                         <img
                                                             src={product.image}
@@ -487,14 +544,14 @@ function ProductsPageContent({
                                                 </div>
 
                                                 {/* Content */}
-                                                <div className="p-4 flex-1 flex flex-col">
+                                                <div className="p-3 sm:p-4 flex-1 flex flex-col">
                                                     {/* Category */}
-                                                    <span className="text-[10px] font-bold tracking-widest text-accent-500 uppercase mb-1.5">
+                                                    <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-accent-500 uppercase mb-1 sm:mb-1.5 line-clamp-1">
                                                         {product.category?.name || 'Curated'}
                                                     </span>
 
                                                     {/* Title */}
-                                                    <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2.5rem]">
+                                                    <h3 className="font-semibold text-gray-900 text-xs sm:text-sm leading-snug mb-1 line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2rem] sm:min-h-[2.5rem]">
                                                         {product.name}
                                                     </h3>
 
@@ -513,30 +570,30 @@ function ProductsPageContent({
                                                     </div>
 
                                                     {/* Price & Cart Actions */}
-                                                    <div className="mt-auto flex flex-col pt-3 border-t border-gray-50">
-                                                        <div className="flex items-end justify-between mb-3">
+                                                    <div className="mt-auto flex flex-col pt-2 sm:pt-3 border-t border-gray-50">
+                                                        <div className="flex items-end justify-between mb-2 sm:mb-3">
                                                             <div className="flex flex-col">
-                                                                <span className="text-base font-bold text-gray-900 tracking-tight">
+                                                                <span className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">
                                                                     ₹{product.current_price.toLocaleString()}
                                                                 </span>
                                                                 {product.price > product.current_price && (
-                                                                    <span className="text-[11px] text-gray-400 line-through">
+                                                                    <span className="text-[10px] sm:text-[11px] text-gray-400 line-through">
                                                                         ₹{product.price.toLocaleString()}
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1.5 sm:gap-2">
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     e.preventDefault();
                                                                     addItem(product as any);
                                                                 }}
-                                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 bg-gray-50 border border-gray-100 text-gray-600 rounded-xl font-bold text-[10px] hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all"
+                                                                className="w-8 h-8 sm:w-auto sm:flex-1 flex items-center justify-center sm:gap-1.5 sm:py-2 sm:px-2 bg-gray-50 border border-gray-100 text-gray-600 rounded-lg sm:rounded-xl hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all shrink-0"
                                                             >
-                                                                <ShoppingCart size={12} /> Add
+                                                                <ShoppingCart size={14} className="sm:w-3 sm:h-3" /> <span className="hidden sm:inline font-bold text-[10px]">Add</span>
                                                             </button>
                                                             <button
                                                                 onClick={(e) => {
@@ -545,7 +602,7 @@ function ProductsPageContent({
                                                                     addItem(product as any);
                                                                     router.push('/checkout');
                                                                 }}
-                                                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 bg-accent-500 text-white rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all shadow-sm shadow-accent-500/20"
+                                                                className="flex-1 flex items-center justify-center py-1.5 sm:py-2 px-1 sm:px-2 bg-accent-500 text-white rounded-lg sm:rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all shadow-sm shadow-accent-500/20"
                                                             >
                                                                 Buy Now
                                                             </button>
@@ -653,7 +710,7 @@ function ProductsPageContent({
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-3 pt-4 border-t border-gray-100">
+                            <div className="flex gap-3 pt-4 pb-6 border-t border-gray-100">
                                 <button
                                     onClick={() => {
                                         setSelectedCategories([]);

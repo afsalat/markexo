@@ -28,10 +28,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }
 
     return (
-        <div className="min-h-screen flex flex-col pb-16 lg:pb-0">
+        <div className={`flex flex-col pb-16 lg:pb-0 ${pathname?.startsWith('/categories') ? 'h-[100dvh] overflow-hidden md:h-auto md:min-h-screen md:overflow-visible' : 'min-h-screen'}`}>
             <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <main className="flex-1 overflow-hidden md:overflow-visible flex flex-col">{children}</main>
+            <div className={pathname?.startsWith('/categories') ? "hidden md:block" : ""}>
+                <Footer />
+            </div>
             <BottomNav />
         </div>
     );

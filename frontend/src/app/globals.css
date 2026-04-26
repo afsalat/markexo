@@ -74,6 +74,31 @@ body {
 }
 
 /* ============================================
+   HORIZONTAL SCROLLBAR (FOR MOBILE TABS)
+   ============================================ */
+.tab-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.tab-scrollbar::-webkit-scrollbar {
+  height: 4px; /* Thin horizontal scrollbar */
+}
+
+.tab-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tab-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 99px;
+}
+
+.tab-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
+/* ============================================
    GLASSMORPHISM
    ============================================ */
 .glass {
@@ -629,11 +654,11 @@ input:-webkit-autofill:active {
    MOBILE FILTER DRAWER
    ============================================ */
 .filter-drawer-overlay {
-  @apply fixed inset-0 bg-black/30 backdrop-blur-sm z-50 transition-opacity duration-300;
+  @apply fixed inset-0 bg-black/30 backdrop-blur-sm z-[100] transition-opacity duration-300;
 }
 
 .filter-drawer {
-  @apply fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 max-h-[85vh] overflow-y-auto transition-transform duration-300;
+  @apply fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-[100] max-h-[85vh] overflow-y-auto transition-transform duration-300;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
 }
 

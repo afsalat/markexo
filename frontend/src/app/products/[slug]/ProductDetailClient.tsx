@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw,
-    Award, ChevronRight, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X
+    Award, ChevronRight, ChevronLeft, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
@@ -485,8 +485,11 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
             return variants[0];
         }
 
-        return (
-            <div className="min-h-screen bg-white">
+        return variants[2];
+    };
+
+    return (
+        <div className="min-h-screen bg-white">
                 {/* Product Schema for SEO */}
                 <ProductSchema
                     product={productData}
@@ -494,7 +497,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 />
 
                 {/* Breadcrumb */}
-                <div className="bg-gray-50 border-b border-gray-100" data-aos="fade-down" data-aos-delay="0">
+                <div className="hidden lg:block bg-gray-50 border-b border-gray-100" data-aos="fade-down" data-aos-delay="0">
                     <div className="container mx-auto px-4 py-4">
                         <nav className="flex items-center gap-2 text-sm text-gray-500">
                             <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
@@ -512,11 +515,11 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                     </div>
                 </div>
 
-                <div className="container mx-auto px-4 py-8">
+                <div className="container mx-auto px-4 py-4 lg:py-8 pb-24">
                     {/* Product Main Section */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                         {/* Image Gallery */}
-                        <div className="space-y-4" data-aos="fade-right" data-aos-delay="100">
+                        <div className="space-y-4 -mx-4 lg:mx-0" data-aos="fade-right" data-aos-delay="100">
                             {(() => {
                                 // Construct all images list (Main Image + Gallery Images)
                                 const allImages = [
@@ -532,20 +535,28 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 return (
                                     <>
                                         {/* Main Image */}
-                                        <div className="relative aspect-square bg-white rounded-3xl overflow-hidden border border-gray-100 group shadow-sm">
+                                        <div className="relative aspect-square bg-white lg:rounded-3xl overflow-hidden border-y lg:border border-gray-100 group shadow-sm">
+                                            {/* Floating Back Button (Mobile Only) */}
+                                            <button
+                                                onClick={() => router.back()}
+                                                className="lg:hidden absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center bg-white/80 backdrop-blur-md shadow-sm transition-all z-10 text-gray-700"
+                                            >
+                                                <ChevronLeft size={24} />
+                                            </button>
+
                                             <img
                                                 src={displayImage || 'https://placehold.co/600x600/1a1a2e/ffffff?text=No+Image'}
                                                 alt={productData.name}
                                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                             />
                                             {productData.discount_percent > 0 && (
-                                                <div className="absolute top-4 left-4 badge badge-sale px-4 py-2 text-lg font-bold">
+                                                <div className="absolute top-4 left-16 lg:left-4 badge badge-sale px-4 py-2 text-lg font-bold">
                                                     {productData.discount_percent}% OFF
                                                 </div>
                                             )}
                                             <button
                                                 onClick={toggleWishlist}
-                                                className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${wishlisted ? 'bg-red-500 text-white' : 'bg-white/80 backdrop-blur-md text-gray-500 hover:bg-accent-500 hover:text-white'}`}
+                                                className={`absolute top-4 right-4 w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center shadow-md transition-all ${wishlisted ? 'bg-red-500 text-white' : 'bg-white/80 backdrop-blur-md text-gray-500 hover:bg-accent-500 hover:text-white'}`}
                                             >
                                                 <Heart size={20} className={wishlisted ? 'fill-current' : ''} />
                                             </button>
@@ -553,12 +564,12 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
                                         {/* Thumbnail Gallery */}
                                         {allImages.length > 1 && (
-                                            <div className="grid grid-cols-4 gap-3">
+                                            <div className="flex lg:grid lg:grid-cols-4 gap-3 overflow-x-auto snap-x hide-scrollbar px-4 lg:px-0 pb-2 lg:pb-0">
                                                 {allImages.map((img: any, index: number) => (
                                                     <button
                                                         key={img.id || index}
                                                         onClick={() => setSelectedImage(index)}
-                                                        className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${selectedImage === index ? 'border-accent-500 shadow-sm' : 'border-gray-200 hover:border-accent-500/50'}`}
+                                                        className={`aspect-square w-20 lg:w-auto shrink-0 rounded-xl overflow-hidden border-2 transition-all snap-center ${selectedImage === index ? 'border-accent-500 shadow-sm' : 'border-gray-200 hover:border-accent-500/50'}`}
                                                     >
                                                         <img src={img.image} alt={`View ${index + 1}`} className="w-full h-full object-cover" />
                                                     </button>
@@ -571,18 +582,18 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                         </div>
 
                         {/* Product Info */}
-                        <div className="space-y-6" data-aos="fade-left" data-aos-delay="200">
+                        <div className="space-y-4 lg:space-y-6" data-aos="fade-left" data-aos-delay="200">
                             {/* Title & Rating */}
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="px-3 py-1 bg-accent-500/10 text-accent-500 rounded-full text-sm font-semibold">
+                                    <span className="px-2 lg:px-3 py-1 bg-accent-500/10 text-accent-500 rounded-full text-xs lg:text-sm font-semibold">
                                         {categoryName}
                                     </span>
-                                    <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm font-semibold flex items-center gap-1">
+                                    <span className="px-2 lg:px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs lg:text-sm font-semibold flex items-center gap-1">
                                         <Check size={14} /> In Stock ({productData.stock})
                                     </span>
                                 </div>
-                                <h1 className="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-3">
+                                <h1 className="font-display text-2xl lg:text-4xl font-bold text-gray-900 mb-2 lg:mb-3 leading-tight">
                                     {productData.name}
                                 </h1>
                                 <div className="flex items-center gap-4 flex-wrap">
@@ -604,51 +615,51 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                             </div>
 
                             {/* Price */}
-                            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                <div className="price-reveal flex flex-wrap items-baseline gap-3 mb-2">
+                            <div className="bg-white border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm">
+                                <div className="price-reveal flex flex-wrap items-baseline gap-2 lg:gap-3 mb-1 lg:mb-2">
                                     {hasMrpDiscount ? (
                                         <>
-                                            <span className="price-reveal__mrp text-2xl text-gray-400">
+                                            <span className="price-reveal__mrp text-xl lg:text-2xl text-gray-400">
                                                 <span className="price-reveal__mrp-value">₹{displayMrp.toLocaleString()}</span>
                                             </span>
-                                            <span className="price-reveal__sale text-4xl font-bold text-gray-900">₹{displaySalePrice.toLocaleString()}</span>
-                                            <span className="price-reveal__badge px-3 py-1 bg-green-500 text-white rounded-full text-sm font-bold">
+                                            <span className="price-reveal__sale text-3xl lg:text-4xl font-bold text-gray-900">₹{displaySalePrice.toLocaleString()}</span>
+                                            <span className="price-reveal__badge px-2 lg:px-3 py-0.5 lg:py-1 bg-green-500 text-white rounded-full text-xs lg:text-sm font-bold">
                                                 Save ₹{savedAmount.toLocaleString()}
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="text-4xl font-bold text-gray-900">₹{displaySalePrice.toLocaleString()}</span>
+                                        <span className="text-3xl lg:text-4xl font-bold text-gray-900">₹{displaySalePrice.toLocaleString()}</span>
                                     )}
                                 </div>
-                                <p className="text-sm text-gray-500 font-medium">Inclusive of all taxes</p>
+                                <p className="text-xs lg:text-sm text-gray-500 font-medium">Inclusive of all taxes</p>
                             </div>
 
                             {/* COD Trust Badge - Prominent */}
-                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex items-center gap-4">
-                                <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-                                    <CreditCard className="text-emerald-600" size={28} />
+                            <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-3 lg:p-4 flex items-center gap-3 lg:gap-4">
+                                <div className="w-10 h-10 lg:w-14 lg:h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0">
+                                    <CreditCard className="text-emerald-600 w-5 h-5 lg:w-7 lg:h-7" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-emerald-900 text-lg">Cash on Delivery Available</h3>
-                                    <p className="text-emerald-700/70 text-sm">Pay when you receive your order. No advance payment needed.</p>
+                                    <h3 className="font-bold text-emerald-900 text-sm lg:text-lg">Cash on Delivery Available</h3>
+                                    <p className="text-emerald-700/70 text-xs lg:text-sm">Pay when you receive your order. No advance payment needed.</p>
                                 </div>
                             </div>
 
                             {/* Trust & Fulfillment Info */}
-                            <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
+                            <div className="bg-white border border-gray-100 rounded-2xl p-3 lg:p-5 shadow-sm">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-900 border border-gray-100">
-                                            <Package size={24} className="text-accent-600" />
+                                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-900 border border-gray-100 shrink-0">
+                                            <Package className="text-accent-600 w-5 h-5 lg:w-6 lg:h-6" />
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-sm sm:text-base">
+                                            <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-sm lg:text-base">
                                                 Fulfilled by VorionMart
-                                                <Award size={16} className="text-accent-500" />
+                                                <Award size={14} className="text-accent-500" />
                                             </h3>
-                                            <div className="flex items-center gap-3 text-sm text-gray-500">
+                                            <div className="flex items-center gap-3 text-xs lg:text-sm text-gray-500 mt-0.5">
                                                 <span className="flex items-center gap-1">
-                                                    <Star size={14} className="fill-accent-500 text-accent-500" />
+                                                    <Star size={12} className="fill-accent-500 text-accent-500" />
                                                     Premium Quality Checked
                                                 </span>
                                             </div>
@@ -659,29 +670,29 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
                             {/* Quantity & Actions */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-4">
-                                    <span className="text-gray-700 font-medium">Quantity:</span>
-                                    <div className="flex items-center border-2 border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                                <div className="flex items-center gap-3 lg:gap-4">
+                                    <span className="text-gray-700 text-sm lg:text-base font-medium">Quantity:</span>
+                                    <div className="flex items-center border lg:border-2 border-gray-100 rounded-lg lg:rounded-xl overflow-hidden shadow-sm">
                                         <button
                                             onClick={decrementQuantity}
-                                            className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"
+                                            className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"
                                         >
-                                            <Minus size={18} />
+                                            <Minus size={16} className="lg:w-[18px] lg:h-[18px]" />
                                         </button>
-                                        <span className="w-16 h-12 flex items-center justify-center font-bold text-lg border-x-2 border-gray-100 text-gray-900">
+                                        <span className="w-12 lg:w-16 h-10 lg:h-12 flex items-center justify-center font-bold text-base lg:text-lg border-x lg:border-x-2 border-gray-100 text-gray-900">
                                             {quantity}
                                         </span>
                                         <button
                                             onClick={incrementQuantity}
-                                            className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600 hover:text-accent-500"
+                                            className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600 hover:text-accent-500"
                                         >
-                                            <Plus size={18} />
+                                            <Plus size={16} className="lg:w-[18px] lg:h-[18px]" />
                                         </button>
                                     </div>
-                                    <span className="text-sm text-gray-500">({productData.stock} available)</span>
+                                    <span className="text-xs lg:text-sm text-gray-500">({productData.stock} available)</span>
                                 </div>
 
-                                <div className="flex gap-3">
+                                <div className="hidden lg:flex gap-3">
                                     <button
                                         onClick={handleAddToCart}
                                         className="flex-1 btn-primary py-4 text-lg font-bold flex items-center justify-center gap-2"
@@ -709,32 +720,32 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 </div>
 
                                 {shareMessage && (
-                                    <p className="text-sm text-accent-600 font-medium">{shareMessage}</p>
+                                    <p className="hidden lg:block text-sm text-accent-600 font-medium">{shareMessage}</p>
                                 )}
 
                                 <button
                                     onClick={handleBuyNow}
-                                    className="w-full py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-bold text-lg hover:from-primary-500 hover:to-primary-600 transition-all shadow-lg active:scale-[0.98]"
+                                    className="hidden lg:block w-full py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-bold text-lg hover:from-primary-500 hover:to-primary-600 transition-all shadow-lg active:scale-[0.98]"
                                 >
                                     Buy Now — Pay on Delivery
                                 </button>
                             </div>
 
                             {/* Trust Features Grid */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2 lg:gap-4">
                                 {[
                                     { icon: Truck, title: 'Free Delivery', detail: 'Free Delivery on Every Order' },
                                     { icon: Shield, title: 'Secure Checkout', detail: '100% protected' },
                                     { icon: RotateCcw, title: '7 Days Return', detail: 'Easy returns' },
                                     { icon: Package, title: 'Quality Assured', detail: 'Verified seller' }
                                 ].map((item, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm transition-all hover:bg-gray-50/50">
-                                        <div className="w-10 h-10 bg-accent-500/10 rounded-lg flex items-center justify-center shrink-0">
-                                            <item.icon className="text-accent-500" size={20} />
+                                    <div key={idx} className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3 p-3 lg:p-4 bg-white border border-gray-100 rounded-xl shadow-sm transition-all hover:bg-gray-50/50">
+                                        <div className="w-8 h-8 lg:w-10 lg:h-10 bg-accent-500/10 rounded-lg flex items-center justify-center shrink-0">
+                                            <item.icon className="text-accent-500 w-4 h-4 lg:w-5 lg:h-5" />
                                         </div>
                                         <div>
-                                            <p className="font-bold text-gray-900 text-sm leading-tight">{item.title}</p>
-                                            <p className="text-xs text-gray-500 mt-0.5">{item.detail}</p>
+                                            <p className="font-bold text-gray-900 text-xs lg:text-sm leading-tight">{item.title}</p>
+                                            <p className="text-[10px] lg:text-xs text-gray-500 mt-0.5 line-clamp-1">{item.detail}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -743,35 +754,35 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                     </div>
 
                     {/* Product Detailed Content Sections */}
-                    <div className="space-y-12 mb-16">
+                    <div className="space-y-4 lg:space-y-12 mb-8 lg:mb-16">
                         {/* Description Section */}
-                        <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
-                            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <Package className="text-accent-500" size={22} />
+                        <div className="bg-white border border-gray-100 rounded-2xl lg:rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
+                            <div className="px-4 lg:px-6 py-3 lg:py-5 border-b border-gray-100 bg-gray-50/50">
+                                <h2 className="text-base lg:text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <Package className="text-accent-500 w-4 h-4 lg:w-[22px] lg:h-[22px]" />
                                     Description
                                 </h2>
                             </div>
-                            <div className="p-6 sm:p-8 space-y-8">
+                            <div className="p-4 lg:p-8 space-y-4 lg:space-y-8">
                                 {descriptionLead && (
-                                    <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 sm:p-6">
-                                        <p className="text-base leading-relaxed text-gray-700 sm:text-lg">{descriptionLead}</p>
+                                    <div className="rounded-xl lg:rounded-2xl border border-gray-100 bg-gray-50/50 p-3 lg:p-6">
+                                        <p className="text-sm lg:text-lg leading-relaxed text-gray-700">{descriptionLead}</p>
                                     </div>
                                 )}
 
                                 {descriptionDetails.length > 0 && (
                                     <div>
-                                        <h3 className="mb-4 text-lg font-bold text-gray-900 sm:text-xl">Product Details</h3>
-                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                        <h3 className="mb-2.5 lg:mb-4 text-sm lg:text-xl font-bold text-gray-900">Product Details</h3>
+                                        <div className="grid grid-cols-2 gap-2 lg:gap-3 lg:grid-cols-2">
                                             {descriptionDetails.map((detail) => (
                                                 <div
                                                     key={`${detail.label}-${detail.value}`}
-                                                    className="rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
+                                                    className="rounded-lg lg:rounded-xl border border-gray-100 bg-white px-3 py-2 lg:px-4 lg:py-3 shadow-sm"
                                                 >
-                                                    <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent-500/80">
+                                                    <p className="mb-0.5 text-[10px] lg:text-xs font-semibold uppercase tracking-[0.18em] text-accent-500/80">
                                                         {detail.label}
                                                     </p>
-                                                    <p className="break-words text-sm text-gray-700 sm:text-base">{detail.value}</p>
+                                                    <p className="break-words text-xs lg:text-base text-gray-700">{detail.value}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -779,10 +790,10 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 )}
 
                                 {descriptionNotes.length > 0 && (
-                                    <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 sm:p-6">
-                                        <div className="space-y-2">
+                                    <div className="rounded-xl lg:rounded-2xl border border-gray-100 bg-gray-50/50 p-3 lg:p-6">
+                                        <div className="space-y-1.5 lg:space-y-2">
                                             {descriptionNotes.map((line) => (
-                                                <p key={line} className="text-gray-600 leading-relaxed">
+                                                <p key={line} className="text-xs lg:text-base text-gray-600 leading-relaxed">
                                                     {line}
                                                 </p>
                                             ))}
@@ -792,14 +803,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
                                 {productData.features && productData.features.length > 0 && (
                                     <div>
-                                        <h3 className="font-bold text-xl text-gray-900 mb-4">Key Features</h3>
-                                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <h3 className="font-bold text-sm lg:text-xl text-gray-900 mb-2.5 lg:mb-4">Key Features</h3>
+                                        <ul className="grid grid-cols-1 gap-1.5 lg:gap-3 md:grid-cols-2">
                                             {productData.features.map((feature: string, index: number) => (
-                                                <li key={index} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
-                                                    <div className="w-6 h-6 bg-accent-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                                        <Check size={14} className="text-white" />
+                                                <li key={index} className="flex items-center gap-2 p-2 lg:p-3 bg-white border border-gray-100 rounded-lg lg:rounded-xl shadow-sm">
+                                                    <div className="w-4 h-4 lg:w-6 lg:h-6 bg-accent-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                                        <Check size={10} className="text-white" />
                                                     </div>
-                                                    <span className="text-gray-600">{feature}</span>
+                                                    <span className="text-xs lg:text-base text-gray-600">{feature}</span>
                                                 </li>
                                             ))}
                                         </ul>
@@ -816,26 +827,27 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                         )}
 
                         {/* Specifications Section */}
-                        <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
-                            <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-                                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                    <Award className="text-accent-500" size={22} />
+                        <div className="bg-white border border-gray-100 rounded-2xl lg:rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
+                            <div className="px-4 lg:px-6 py-3 lg:py-5 border-b border-gray-100 bg-gray-50/50">
+                                <h2 className="text-base lg:text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <Award className="text-accent-500 w-4 h-4 lg:w-[22px] lg:h-[22px]" />
                                     Specifications
                                 </h2>
                             </div>
-                            <div className="p-6 sm:p-8">
+                            <div className="p-3 lg:p-8">
                                 {Object.keys(productData.specifications || {}).length > 0 ? (
-                                    <div className="bg-white border border-gray-100 rounded-xl overflow-hidden divide-y divide-gray-100 shadow-sm">
+                                    <div className="bg-white border border-gray-100 rounded-lg lg:rounded-xl overflow-hidden divide-y divide-gray-100 shadow-sm">
                                         {Object.entries(productData.specifications || {}).map(([key, value]) => (
-                                            <div key={key} className="flex flex-col gap-1 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
-                                                <span className="text-sm font-semibold text-gray-900 sm:w-1/3 sm:text-base">{key}</span>
-                                                <span className="break-words text-sm text-gray-600 sm:flex-1 sm:text-base">{String(value)}</span>
+                                            <div key={key} className="flex flex-row items-center gap-1 px-3 lg:px-5 py-2 lg:py-3.5">
+                                                <span className="text-xs lg:text-base font-semibold text-gray-900 w-1/3 shrink-0">{key}</span>
+                                                <span className="text-[10px] lg:text-base text-gray-400 mr-1">—</span>
+                                                <span className="break-words text-xs lg:text-base text-gray-600 flex-1">{String(value)}</span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="text-center py-8 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
-                                        <p className="text-gray-400">No specifications available for this product.</p>
+                                    <div className="text-center py-6 lg:py-8 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+                                        <p className="text-sm lg:text-base text-gray-400">No specifications available for this product.</p>
                                     </div>
                                 )}
                             </div>
@@ -849,20 +861,20 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                     Customer Reviews ({displayReviewCount})
                                 </h2>
                             </div>
-                            <div className="p-6 sm:p-8 space-y-10">
+                            <div className="p-4 lg:p-8 space-y-6 lg:space-y-10">
                                 {/* Rating Summary */}
-                                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                    <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+                                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm">
+                                    <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
                                         <div className="text-center flex-shrink-0">
-                                            <div className="text-5xl font-bold text-gray-900 mb-2">
+                                            <div className="text-4xl lg:text-5xl font-bold text-gray-900 mb-1 lg:mb-2">
                                                 {formattedDisplayRating}
                                             </div>
                                             <div className="flex items-center gap-1 mb-1 justify-center">
                                                 {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={20} className={star <= roundedDisplayRating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'} />
+                                                    <Star key={star} size={16} className={`lg:w-[20px] lg:h-[20px] ${star <= roundedDisplayRating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
                                                 ))}
                                             </div>
-                                            <p className="text-sm text-gray-500">{displayReviewCount} review{displayReviewCount !== 1 ? 's' : ''}</p>
+                                            <p className="text-xs lg:text-sm text-gray-500">{displayReviewCount} review{displayReviewCount !== 1 ? 's' : ''}</p>
                                         </div>
                                         <div className="flex-1 w-full">
                                             {[5, 4, 3, 2, 1].map((star) => {
@@ -885,14 +897,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 </div>
 
                                 {/* Write a Review */}
-                                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 shadow-sm">
-                                    <h3 className="font-bold text-lg text-gray-900 mb-4">Write a Review</h3>
+                                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm">
+                                    <h3 className="font-bold text-base lg:text-lg text-gray-900 mb-3 lg:mb-4">Write a Review</h3>
                                     {isAuthenticated ? (
-                                        <form onSubmit={handleReviewSubmit} className="space-y-4">
+                                        <form onSubmit={handleReviewSubmit} className="space-y-3 lg:space-y-4">
                                             {/* Star Picker */}
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
-                                                <div className="flex items-center gap-2">
+                                                <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-1 lg:mb-2">Your Rating</label>
+                                                <div className="flex items-center gap-1.5 lg:gap-2">
                                                     {[1, 2, 3, 4, 5].map((star) => (
                                                         <button
                                                             key={star}
@@ -901,12 +913,12 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                             className="transition-transform hover:scale-125"
                                                         >
                                                             <Star
-                                                                size={28}
-                                                                className={star <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-300'}
+                                                                size={22}
+                                                                className={`lg:w-[28px] lg:h-[28px] ${star <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-300'}`}
                                                             />
                                                         </button>
                                                     ))}
-                                                    <span className="ml-2 text-sm text-gray-500">
+                                                    <span className="ml-2 text-xs lg:text-sm text-gray-500">
                                                         {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][reviewForm.rating]}
                                                     </span>
                                                 </div>
@@ -997,31 +1009,31 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 ) : (
                                     <div className="space-y-4">
                                         {reviews.map((review) => (
-                                            <div key={review.id} className="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-gray-200 transition-colors">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-sm">
+                                            <div key={review.id} className="p-4 lg:p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-gray-200 transition-colors">
+                                                <div className="flex items-start justify-between mb-3 lg:mb-4">
+                                                    <div className="flex items-center gap-2 lg:gap-3">
+                                                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-accent-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-base lg:text-lg flex-shrink-0 shadow-sm">
                                                             {review.customer_name.charAt(0).toUpperCase()}
                                                         </div>
                                                         <div>
-                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                <h4 className="font-bold text-gray-900">{review.customer_name}</h4>
+                                                            <div className="flex items-center gap-1.5 lg:gap-2 flex-wrap">
+                                                                <h4 className="font-bold text-sm lg:text-base text-gray-900">{review.customer_name}</h4>
                                                                 {review.verified && (
-                                                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-xs rounded-lg font-bold flex items-center gap-1 border border-emerald-100">
-                                                                        <Check size={12} strokeWidth={3} /> Verified Purchase
+                                                                    <span className="px-1.5 lg:px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] lg:text-xs rounded-lg font-bold flex items-center gap-0.5 lg:gap-1 border border-emerald-100">
+                                                                        <Check size={10} className="lg:w-[12px] lg:h-[12px]" strokeWidth={3} /> Verified
                                                                     </span>
                                                                 )}
                                                             </div>
-                                                            <p className="text-sm text-gray-400">{review.created_at_formatted}</p>
+                                                            <p className="text-xs lg:text-sm text-gray-400">{review.created_at_formatted}</p>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-0.5 flex-shrink-0">
                                                         {[1, 2, 3, 4, 5].map((star) => (
-                                                            <Star key={star} size={16} className={star <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'} />
+                                                            <Star key={star} size={12} className={`lg:w-[16px] lg:h-[16px] ${star <= review.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <p className="text-gray-700 leading-relaxed font-medium">{review.comment}</p>
+                                                <p className="text-sm lg:text-base text-gray-700 leading-relaxed font-medium">{review.comment}</p>
                                                 {review.images?.length > 0 && (
                                                     <div className="mt-4 overflow-x-auto pb-2 custom-scrollbar">
                                                         <div className="flex min-w-max gap-4">
@@ -1058,46 +1070,44 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
                     {/* Related Products */}
                     {relatedProducts.length > 0 && (
-                        <div data-aos="fade-up" data-aos-delay="400" className="mt-16">
-                            <div className="flex items-center justify-between mb-8">
-                                <h2 className="font-display text-2xl font-bold text-gray-900 px-1 border-l-4 border-accent-500 pl-4">You May Also Like</h2>
-                                <Link href="/products" className="text-accent-600 font-bold hover:text-accent-700 flex items-center gap-1 transition-colors">
-                                    View All <ChevronRight size={18} />
+                        <div data-aos="fade-up" data-aos-delay="400" className="mt-8 lg:mt-16">
+                            <div className="flex items-center justify-between mb-4 lg:mb-8">
+                                <h2 className="font-display text-lg lg:text-2xl font-bold text-gray-900 border-l-4 border-accent-500 pl-3 lg:pl-4">You May Also Like</h2>
+                                <Link href="/products" className="text-accent-600 text-sm font-bold hover:text-accent-700 flex items-center gap-1 transition-colors">
+                                    View All <ChevronRight size={14} className="lg:w-[18px] lg:h-[18px]" />
                                 </Link>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-6">
                                 {relatedProducts.map((product) => (
                                     <Link key={product.id} href={`/products/${product.slug}`} className="group">
-                                        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                        <div className="bg-white border border-gray-100 rounded-xl lg:rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
                                             <div className="aspect-square bg-gray-50 overflow-hidden relative">
                                                 <img
                                                     src={product.image}
                                                     alt={product.name}
                                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                                 />
-                                                <div className="absolute top-3 right-3">
-                                                    <div className="bg-white/90 backdrop-blur-sm p-2 rounded-full shadow-sm text-gray-400 group-hover:text-accent-500 transition-colors">
-                                                        <Star size={14} className="fill-current" />
+                                                <div className="absolute top-2 right-2">
+                                                    <div className="bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-sm text-gray-400 group-hover:text-accent-500 transition-colors">
+                                                        <Star size={11} className="fill-current" />
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="p-5">
-                                                <h3 className="font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-accent-600 transition-colors h-12">
+                                            <div className="p-2.5 lg:p-5">
+                                                <h3 className="font-bold text-gray-900 text-xs lg:text-base line-clamp-2 mb-1.5 lg:mb-2 group-hover:text-accent-600 transition-colors">
                                                     {product.name}
                                                 </h3>
-                                                <div className="flex items-center gap-1 mb-3">
-                                                    <div className="flex items-center text-amber-400">
-                                                        <Star size={14} className="fill-current" />
-                                                    </div>
-                                                    <span className="text-xs font-bold text-gray-500">{product.rating}</span>
+                                                <div className="flex items-center gap-1 mb-1.5 lg:mb-3">
+                                                    <Star size={11} className="fill-amber-400 text-amber-400" />
+                                                    <span className="text-[10px] lg:text-xs font-bold text-gray-500">{product.rating}</span>
                                                 </div>
-                                                <div className="flex items-center justify-between gap-2 mt-auto">
+                                                <div className="flex items-center justify-between gap-1 lg:gap-2">
                                                     <div className="flex flex-col">
-                                                        <span className="text-lg font-bold text-gray-900 border-b-2 border-accent-500/20">₹{product.sale_price.toLocaleString()}</span>
-                                                        <span className="text-xs text-gray-400 line-through">₹{product.price.toLocaleString()}</span>
+                                                        <span className="text-sm lg:text-lg font-bold text-gray-900">₹{product.sale_price.toLocaleString()}</span>
+                                                        <span className="text-[10px] lg:text-xs text-gray-400 line-through">₹{product.price.toLocaleString()}</span>
                                                     </div>
-                                                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-accent-500 group-hover:text-white transition-all">
-                                                        <ShoppingCart size={18} />
+                                                    <div className="w-7 h-7 lg:w-10 lg:h-10 bg-gray-50 rounded-lg lg:rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-accent-500 group-hover:text-white transition-all">
+                                                        <ShoppingCart size={13} className="lg:w-[18px] lg:h-[18px]" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1138,7 +1148,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 )}
 
                 {/* Sticky Mobile CTA */}
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/80 backdrop-blur-lg border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] p-4 pb-6 bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
                     <div className="flex gap-3 max-w-lg mx-auto">
                         <button
                             onClick={handleAddToCart}
@@ -1157,5 +1167,4 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 </div>
             </div>
         );
-    }
 }

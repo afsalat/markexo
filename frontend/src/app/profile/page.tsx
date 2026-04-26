@@ -100,42 +100,55 @@ export default function ProfilePage() {
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-950 py-12">
-            <div className="container mx-auto px-4">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Sidebar */}
+        <div className="min-h-screen bg-white lg:bg-gray-50 py-4 lg:py-12 pb-24 lg:pb-12">
+            <div className="container mx-auto px-4 lg:px-4">
+                <div className="flex flex-col lg:flex-row gap-0 lg:gap-8">
+                    {/* Sidebar / Mobile Header */}
                     <div className="lg:w-80" data-aos="fade-right">
-                        <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl p-6 shadow-sm mb-6">
-                            <div className="flex items-center gap-4 mb-6">
-                                <img
-                                    src={customer.avatar || `https://ui-avatars.com/api/?name=${customer.name}&background=random`}
-                                    alt={customer.name}
-                                    className="w-16 h-16 rounded-full border-4 border-gray-50 dark:border-dark-700"
-                                />
-                                <div>
-                                    <h2 className="font-bold text-gray-900 dark:text-white">{customer.name}</h2>
-                                    <p className="text-sm text-gray-500 dark:text-silver-500 truncate max-w-[150px]">{customer.email}</p>
+                        <div className="bg-white lg:border lg:border-gray-100 lg:rounded-2xl lg:p-6 lg:shadow-sm mb-2 lg:mb-6">
+                            {/* User Info */}
+                            <div className="flex items-center justify-between gap-4 mb-4 lg:mb-6">
+                                <div className="flex items-center gap-4">
+                                    <img
+                                        src={customer.avatar || `https://ui-avatars.com/api/?name=${customer.name}&background=random`}
+                                        alt={customer.name}
+                                        className="w-12 h-12 lg:w-16 lg:h-16 rounded-full border-4 border-gray-50"
+                                    />
+                                    <div>
+                                        <h2 className="font-bold text-gray-900 text-lg lg:text-xl">{customer.name}</h2>
+                                        <p className="text-xs lg:text-sm text-gray-500 truncate max-w-[150px] lg:max-w-full">{customer.email}</p>
+                                    </div>
                                 </div>
+                                {/* Mobile Logout */}
+                                <button 
+                                    onClick={logout} 
+                                    className="lg:hidden p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50" 
+                                    aria-label="Logout"
+                                >
+                                    <LogOut size={20} />
+                                </button>
                             </div>
 
-                            <nav className="space-y-1">
+                            {/* Navigation */}
+                            <nav className="flex overflow-x-auto lg:flex-col gap-2 lg:space-y-1 pb-4 lg:pb-0 tab-scrollbar border-b border-gray-100 lg:border-none mb-6 lg:mb-0">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === tab.id
-                                            ? 'bg-primary-50 dark:bg-accent-500/10 text-primary-700 dark:text-accent-500 font-medium'
-                                            : 'text-gray-600 dark:text-silver-400 hover:bg-gray-50 dark:hover:bg-dark-700'
+                                        className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 lg:py-3 rounded-full lg:rounded-xl transition-colors ${activeTab === tab.id
+                                            ? 'bg-primary-600 text-white shadow-sm'
+                                            : 'bg-gray-50 lg:bg-transparent text-gray-600 hover:bg-gray-100'
                                             }`}
                                     >
-                                        <tab.icon size={20} />
-                                        {tab.label}
+                                        <tab.icon size={18} className="lg:w-5 lg:h-5" />
+                                        <span className="text-sm font-medium whitespace-nowrap">{tab.label}</span>
                                     </button>
                                 ))}
-                                <div className="pt-4 mt-4 border-t border-gray-100 dark:border-dark-700">
+                                {/* Desktop Logout */}
+                                <div className="hidden lg:block pt-4 mt-4 border-t border-gray-100">
                                     <button
                                         onClick={logout}
-                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors"
                                     >
                                         <LogOut size={20} />
                                         Logout
@@ -149,55 +162,55 @@ export default function ProfilePage() {
                     <div className="flex-1" data-aos="fade-left" data-aos-delay="100">
                         {/* Overview Tab */}
                         {activeTab === 'overview' && (
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 p-6 rounded-2xl shadow-sm">
-                                        <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-xl flex items-center justify-center mb-4">
-                                            <Package className="text-blue-600 dark:text-blue-400" size={24} />
+                            <div className="space-y-6 lg:space-y-8">
+                                <div className="grid grid-cols-3 gap-3 lg:gap-6">
+                                    <div className="bg-gray-50 lg:bg-white lg:border lg:border-gray-100 p-4 lg:p-6 rounded-2xl lg:shadow-sm flex flex-col items-center text-center">
+                                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100/50 lg:bg-blue-50 rounded-xl flex items-center justify-center mb-2 lg:mb-4">
+                                            <Package className="text-blue-600" size={20} />
                                         </div>
-                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{orders.length}</h3>
-                                        <p className="text-gray-500 dark:text-silver-500">Total Orders</p>
+                                        <h3 className="text-lg lg:text-2xl font-bold text-gray-900 leading-none mb-1">{orders.length}</h3>
+                                        <p className="text-[10px] lg:text-sm text-gray-500 font-medium uppercase tracking-wider">Orders</p>
                                     </div>
-                                    <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 p-6 rounded-2xl shadow-sm">
-                                        <div className="w-12 h-12 bg-pink-50 dark:bg-pink-900/30 rounded-xl flex items-center justify-center mb-4">
-                                            <Heart className="text-pink-600 dark:text-pink-400" size={24} />
+                                    <div className="bg-gray-50 lg:bg-white lg:border lg:border-gray-100 p-4 lg:p-6 rounded-2xl lg:shadow-sm flex flex-col items-center text-center">
+                                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-pink-100/50 lg:bg-pink-50 rounded-xl flex items-center justify-center mb-2 lg:mb-4">
+                                            <Heart className="text-pink-600" size={20} />
                                         </div>
-                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{wishlist.length}</h3>
-                                        <p className="text-gray-500 dark:text-silver-500">Wishlist Items</p>
+                                        <h3 className="text-lg lg:text-2xl font-bold text-gray-900 leading-none mb-1">{wishlist.length}</h3>
+                                        <p className="text-[10px] lg:text-sm text-gray-500 font-medium uppercase tracking-wider">Wishlist</p>
                                     </div>
-                                    <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 p-6 rounded-2xl shadow-sm">
-                                        <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center mb-4">
-                                            <ShoppingBag className="text-green-600 dark:text-green-400" size={24} />
+                                    <div className="bg-gray-50 lg:bg-white lg:border lg:border-gray-100 p-4 lg:p-6 rounded-2xl lg:shadow-sm flex flex-col items-center text-center">
+                                        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-green-100/50 lg:bg-green-50 rounded-xl flex items-center justify-center mb-2 lg:mb-4">
+                                            <ShoppingBag className="text-green-600" size={20} />
                                         </div>
-                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white">0</h3>
-                                        <p className="text-gray-500 dark:text-silver-500">Cart Items</p>
+                                        <h3 className="text-lg lg:text-2xl font-bold text-gray-900 leading-none mb-1">0</h3>
+                                        <p className="text-[10px] lg:text-sm text-gray-500 font-medium uppercase tracking-wider">Cart</p>
                                     </div>
                                 </div>
 
-                                <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl shadow-sm p-6">
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">Recent Orders</h3>
+                                <div className="bg-white lg:border lg:border-gray-100 lg:rounded-2xl lg:shadow-sm lg:p-6 mt-8">
+                                    <h3 className="font-bold text-lg text-gray-900 mb-4 px-1 lg:px-0">Recent Orders</h3>
                                     {orders.length > 0 ? (
                                         <div className="space-y-4">
                                             {orders.map((order) => (
-                                                <div key={order.id} className="flex items-center justify-between p-4 border border-gray-100 dark:border-dark-700 rounded-xl">
+                                                <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-gray-100 rounded-xl">
                                                     <div>
-                                                        <p className="font-medium text-gray-900 dark:text-white">{order.id}</p>
-                                                        <p className="text-sm text-gray-500 dark:text-silver-500">{formatDate(order.date)} • {order.items} Items</p>
+                                                        <p className="font-medium text-gray-900">{order.id}</p>
+                                                        <p className="text-sm text-gray-500">{formatDate(order.date)} • {order.items} Items</p>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'Delivered' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
-                                                            order.status === 'Processing' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' :
-                                                                'bg-gray-100 dark:bg-dark-700 text-gray-700 dark:text-silver-300'
+                                                    <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' :
+                                                            order.status === 'Processing' ? 'bg-blue-100 text-blue-700' :
+                                                                'bg-gray-100 text-gray-700'
                                                             }`}>
                                                             {order.status}
                                                         </span>
-                                                        <Link href={`/track-order?id=${order.id}`} className="text-primary-600 dark:text-accent-500 text-sm font-medium hover:underline">
+                                                        <Link href={`/track-order?id=${order.id}`} className="text-primary-600 text-sm font-medium hover:underline">
                                                             Track
                                                         </Link>
                                                         {order.status === 'Delivered' && (
                                                             <button
                                                                 onClick={() => handleReturnClick(order)}
-                                                                className="text-orange-600 dark:text-orange-400 text-sm font-medium hover:underline flex items-center gap-1"
+                                                                className="text-orange-600 text-sm font-medium hover:underline flex items-center gap-1"
                                                             >
                                                                 <RotateCcw size={14} /> Return
                                                             </button>
@@ -218,8 +231,8 @@ export default function ProfilePage() {
 
                         {/* Orders Tab */}
                         {activeTab === 'orders' && (
-                            <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl shadow-sm p-6">
-                                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">My Orders</h3>
+                            <div className="bg-white lg:border lg:border-gray-100 lg:rounded-2xl lg:shadow-sm lg:p-6">
+                                <h3 className="font-bold text-lg text-gray-900 mb-6 px-1 lg:px-0">My Orders</h3>
                                 <div className="space-y-4">
                                     {orders.map((order) => {
                                         const getStepStatus = (orderStatus: string, step: number) => {
@@ -241,47 +254,47 @@ export default function ProfilePage() {
                                         };
 
                                         return (
-                                            <div key={order.id} className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-700 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
-                                                <div className="bg-gray-50 dark:bg-dark-700/50 px-6 py-4 flex flex-wrap justify-between items-center gap-4 border-b border-gray-200 dark:border-dark-700">
-                                                    <div className="flex flex-wrap gap-8">
+                                            <div key={order.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md">
+                                                <div className="bg-gray-50 px-4 md:px-6 py-4 flex flex-col sm:flex-row sm:flex-wrap justify-between items-start sm:items-center gap-4 border-b border-gray-200">
+                                                    <div className="grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-8 w-full sm:w-auto">
                                                         <div>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500 uppercase font-semibold tracking-wide">Order Placed</p>
-                                                            <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{formatDate(order.date)}</p>
+                                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide">Order Placed</p>
+                                                            <p className="text-sm font-bold text-gray-900 mt-0.5">{formatDate(order.date)}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500 uppercase font-semibold tracking-wide">Total</p>
-                                                            <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">₹{order.total.toLocaleString()}</p>
+                                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide">Total</p>
+                                                            <p className="text-sm font-bold text-gray-900 mt-0.5">₹{order.total.toLocaleString()}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500 uppercase font-semibold tracking-wide">Order ID</p>
-                                                            <p className="text-sm font-bold text-primary-600 dark:text-accent-500 mt-0.5">{order.id}</p>
+                                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide">Order ID</p>
+                                                            <p className="text-sm font-bold text-primary-600 mt-0.5 break-all">{order.id}</p>
                                                         </div>
                                                         <div>
-                                                            <p className="text-xs text-gray-500 dark:text-silver-500 uppercase font-semibold tracking-wide">Status</p>
+                                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wide">Status</p>
                                                             <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mt-0.5 ${order.status.toLowerCase().includes('delivered') || order.status.toLowerCase().includes('completed')
-                                                                ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400'
+                                                                ? 'bg-green-100 text-green-600'
                                                                 : order.status.toLowerCase().includes('return') || order.status.toLowerCase() === 'rto'
-                                                                    ? 'bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400'
+                                                                    ? 'bg-orange-100 text-orange-600'
                                                                     : order.status.toLowerCase() === 'cancelled'
-                                                                        ? 'bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400'
+                                                                        ? 'bg-red-100 text-red-600'
                                                                         : order.status.toLowerCase().includes('shipped')
-                                                                            ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400'
-                                                                            : 'bg-gray-100 dark:bg-gray-500/20 text-gray-600 dark:text-gray-400'
+                                                                            ? 'bg-blue-100 text-blue-600'
+                                                                            : 'bg-gray-100 text-gray-600'
                                                                 }`}>
                                                                 {order.status}
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <div className="flex gap-3">
+                                                    <div className="flex gap-3 w-full sm:w-auto">
                                                         {order.status === 'Delivered' && (
                                                             <button
                                                                 onClick={() => handleReturnClick(order)}
-                                                                className="flex items-center gap-2 px-4 py-2 border border-orange-300 dark:border-orange-500/30 text-orange-600 dark:text-orange-500 bg-orange-50 dark:bg-orange-500/10 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-500/20 font-medium transition-all text-xs"
+                                                                className="flex-1 sm:flex-none flex justify-center items-center gap-2 px-4 py-2 border border-orange-300 text-orange-600 bg-orange-50 rounded-xl hover:bg-orange-100 font-medium transition-all text-xs"
                                                             >
                                                                 <RotateCcw size={14} /> Return
                                                             </button>
                                                         )}
-                                                        <Link href={`/track-order?id=${order.id}`} className="btn-secondary text-xs px-4 py-2 rounded-xl flex items-center gap-2">
+                                                        <Link href={`/track-order?id=${order.id}`} className="btn-secondary flex-1 sm:flex-none justify-center text-xs px-4 py-2 rounded-xl flex items-center gap-2">
                                                             Track Order
                                                         </Link>
                                                     </div>
@@ -290,8 +303,8 @@ export default function ProfilePage() {
                                                 {!order.status.toLowerCase().includes('return') &&
                                                     order.status.toLowerCase() !== 'rto' &&
                                                     order.status.toLowerCase() !== 'cancelled' && (
-                                                        <div className="p-8">
-                                                            <div className="flex items-center justify-between relative">
+                                                        <div className="p-4 md:p-8 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                                            <div className="flex items-center justify-between relative min-w-[500px] px-2 md:px-0">
                                                                 <div className="absolute left-6 right-6 top-5 h-1 bg-gray-200 dark:bg-dark-600 rounded-full" />
                                                                 <div
                                                                     className="absolute left-6 top-5 h-1 bg-gradient-to-r from-green-500 via-primary-500 dark:via-accent-500 to-green-400 rounded-full transition-all duration-700"
@@ -357,8 +370,8 @@ export default function ProfilePage() {
 
                         {/* Wishlist Tab */}
                         {activeTab === 'wishlist' && (
-                            <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl shadow-sm p-6">
-                                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">My Wishlist ({wishlist.length})</h3>
+                            <div className="bg-white lg:border lg:border-gray-100 lg:rounded-2xl lg:shadow-sm lg:p-6">
+                                <h3 className="font-bold text-lg text-gray-900 mb-6 px-1 lg:px-0">My Wishlist ({wishlist.length})</h3>
                                 {wishlist.length === 0 ? (
                                     <div className="text-center py-12">
                                         <div className="w-16 h-16 bg-gray-50 dark:bg-dark-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -402,9 +415,9 @@ export default function ProfilePage() {
 
                         {/* Addresses Tab */}
                         {activeTab === 'addresses' && (
-                            <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl shadow-sm p-6">
-                                <div className="flex justify-between items-center mb-6">
-                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white">Saved Addresses</h3>
+                            <div className="bg-white lg:border lg:border-gray-100 lg:rounded-2xl lg:shadow-sm lg:p-6">
+                                <div className="flex justify-between items-center mb-6 px-1 lg:px-0">
+                                    <h3 className="font-bold text-lg text-gray-900">Saved Addresses</h3>
                                     <button
                                         onClick={() => addAddress({
                                             type: 'Home',
@@ -449,9 +462,9 @@ export default function ProfilePage() {
 
                         {/* Settings Tab */}
                         {activeTab === 'settings' && (
-                            <div className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-2xl shadow-sm p-6">
-                                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">Account Settings</h3>
-                                <form className="space-y-6 max-w-lg">
+                            <div className="bg-white lg:border lg:border-gray-100 lg:rounded-2xl lg:shadow-sm lg:p-6">
+                                <h3 className="font-bold text-lg text-gray-900 mb-6 px-1 lg:px-0">Account Settings</h3>
+                                <form className="space-y-6 max-w-lg px-1 lg:px-0">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-silver-300 mb-2">Full Name</label>
                                         <input
