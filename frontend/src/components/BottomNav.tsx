@@ -10,9 +10,10 @@ export default function BottomNav() {
     const searchParams = useSearchParams();
     const { totalItems } = useCart();
 
-    const currentTab = searchParams.get('tab');
+    const currentTab = searchParams?.get('tab');
 
     const isItemActive = (href: string) => {
+        if (!pathname) return false;
         if (href === '/') return pathname === '/';
         if (href === '/categories') return pathname.startsWith('/categories');
         if (href === '/cart') return pathname.startsWith('/cart');

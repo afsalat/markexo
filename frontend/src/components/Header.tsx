@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, Search, Menu, X, Zap, Sparkles, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Search, Menu, X, Zap, Sparkles, ChevronDown, Heart } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/lib/cart';
 import { useRouter } from 'next/navigation';
@@ -324,16 +324,11 @@ export default function Header() {
                         {/* Search Icon Removed for Mobile as it's now on homepage */}
 
                         <Link
-                            href="/cart"
+                            href="/profile?tab=wishlist"
                             className="relative flex h-11 items-center gap-2 rounded-full border border-gray-200 px-4 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
                         >
-                            <ShoppingCart size={18} />
-                            <span className="hidden sm:inline">Cart</span>
-                            {totalItems > 0 && (
-                                <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-black px-1 text-[11px] font-semibold text-white">
-                                    {totalItems}
-                                </span>
-                            )}
+                            <Heart size={18} />
+                            <span className="hidden sm:inline">Wishlist</span>
                         </Link>
 
                         {isAuthenticated && customer ? (
