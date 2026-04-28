@@ -210,6 +210,18 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Google Merchant Center Sync
+    GOOGLE_SYNC_STATUS_CHOICES = [
+        ('pending', 'Pending Sync'),
+        ('synced', 'Synced'),
+        ('failed', 'Failed'),
+        ('not_applicable', 'Not Applicable'),
+    ]
+    google_merchant_status = models.CharField(max_length=20, choices=GOOGLE_SYNC_STATUS_CHOICES, default='not_applicable')
+    google_merchant_errors = models.TextField(blank=True, null=True)
+    last_google_sync = models.DateTimeField(null=True, blank=True)
+
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)

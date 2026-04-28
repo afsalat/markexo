@@ -569,6 +569,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'shop', 'shop_name', 'shop_id',
             'category', 'category_name', 'category_id', 'image', 'images', 'uploaded_images',
             'meesho_url', 'specifications', 'is_featured', 'is_active', 'approval_status', 'views', 'sold_count', 'rating', 'review_count', 
+            'google_merchant_status', 'google_merchant_errors', 'last_google_sync',
             'created_at', 'created_by_name', 'created_by_email'
         ]
 
@@ -655,7 +656,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'price', 'sale_price', 'current_price',
             'discount_percent', 'image', 'shop', 'shop_name', 'category', 'category_name', 'category_details',
-            'is_featured', 'stock', 'approval_status', 'views', 'sold_count', 'rating', 'review_count'
+            'is_featured', 'stock', 'approval_status', 'views', 'sold_count', 'rating', 'review_count',
+            'google_merchant_status', 'google_merchant_errors', 'last_google_sync'
         ]
 
 

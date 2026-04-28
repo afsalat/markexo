@@ -46,3 +46,5 @@ typing_extensions>=4.8.0
 tzdata>=2023.0
 urllib3>=2.0.0
 whitenoise>=6.6.0
+google-api-python-client>=2.0.0
+

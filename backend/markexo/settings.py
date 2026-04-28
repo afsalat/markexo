@@ -260,6 +260,11 @@ TWILIO_WHATSAPP_ORDER_ALERT_CONTENT_SID = os.environ.get('TWILIO_WHATSAPP_ORDER_
 TWILIO_WHATSAPP_STATUS_CALLBACK_URL = os.environ.get('TWILIO_WHATSAPP_STATUS_CALLBACK_URL', '').strip()
 TWILIO_VALIDATE_WEBHOOK_SIGNATURE = parse_bool_env('TWILIO_VALIDATE_WEBHOOK_SIGNATURE', default=False)
 
+# Google Merchant Center
+GOOGLE_MERCHANT_ID = os.environ.get('GOOGLE_MERCHANT_ID', '').strip()
+GOOGLE_SERVICE_ACCOUNT_FILE = os.environ.get('GOOGLE_SERVICE_ACCOUNT_FILE', str(BASE_DIR / 'firebase-service-account.json')).strip()
+
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

@@ -22,12 +22,13 @@ import ProductAnalyticsTab from '@/components/admin/ProductAnalyticsTab';
 import PartnersTab from '@/components/admin/PartnersTab';
 import ShopsTab from '@/components/admin/ShopsTab';
 import LaunchReadinessTab from '@/components/admin/LaunchReadinessTab';
+import GoogleMerchantTab from '@/components/admin/GoogleMerchantTab';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 
 const API_BASE_URL = API_URL;
 
-type TabType = 'dashboard' | 'launch-readiness' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners';
+type TabType = 'dashboard' | 'launch-readiness' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners' | 'google-merchant';
 
 export default function AdminPage() {
     const { token, user, hasPermission, loading: authLoading } = useAuth();
@@ -155,6 +156,7 @@ export default function AdminPage() {
             suppliers: 'view_sitesetting',
             'system-logs': 'view_sitesetting',
             partners: 'add_user', // Use add_user as proxy permission for now
+            'google-merchant': 'view_sitesetting',
         };
 
         const reqPerm = checkMap[activeTab];
@@ -202,6 +204,8 @@ export default function AdminPage() {
                 return <SupplierAPITab />;
             case 'system-logs':
                 return <SystemLogsTab />;
+            case 'google-merchant':
+                return <GoogleMerchantTab />;
             default:
                 return null;
         }

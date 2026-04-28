@@ -89,7 +89,11 @@ export interface Product {
     sold_count?: number;
     rating?: number;
     review_count?: number;
+    google_merchant_status?: 'pending' | 'synced' | 'failed' | 'not_applicable';
+    google_merchant_errors?: string | null;
+    last_google_sync?: string | null;
 }
+
 
 export interface Shop {
     id: number;

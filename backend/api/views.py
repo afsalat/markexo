@@ -1893,3 +1893,35 @@ class PayoutRequestViewSet(viewsets.ModelViewSet):
              serializer.save(processed_at=processed_at)
         else:
              serializer.save()
+
+class AdminGoogleMerchantView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        """Get Google Merchant sync stats."""
+        total = Product.objects.count()
+        synced = Product.objects.filter(google_merchant_status='synced').count()
+        failed = Product.objects.filter(google_merchant_status='failed').count()
+        pending = Product.objects.filter(google_merchant_status='pending').count()
+        
+        return Response({
+            'total': total,
+            'synced': synced,
+            'failed': failed,
+            'pending': pending,
+            'is_configured': bool(getattr(settings, 'GOOGLE_MERCHANT_ID', None))
+        })
+
+    def post(self, request):
+        """Trigger bulk sync."""
+        from django.core.management import call_command
+        import threading
+        
+        try:
+            # Run bulk sync in a background thread to avoid timeout
+            thread = threading.Thread(target=call_command, args=('sync_google_merchant',))
+            thread.start()
+            return Response({'message': 'Bulk sync triggered successfully in background'})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import {
     LayoutDashboard, ShoppingCart, Package, CreditCard,
-    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList
+    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe
 } from 'lucide-react';
+
 import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
@@ -30,7 +31,9 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         { id: 'partners', label: 'Partners', icon: Users, permission: 'add_user' },
         { id: 'user-management', label: 'User Management', icon: Shield, permission: 'view_user' },
         { id: 'suppliers', label: 'Suppliers', icon: Zap, permission: 'view_sitesetting' },
+        { id: 'google-merchant', label: 'Google Merchant', icon: Globe, permission: 'view_sitesetting' },
         { id: 'system-logs', label: 'System Logs', icon: TerminalSquare, permission: 'view_sitesetting' },
+
         { id: 'banners', label: 'Banners', icon: Image, permission: 'view_banner' },
         { id: 'settings', label: 'Settings', icon: Settings, permission: 'view_sitesetting' },
     ];
