@@ -1,4 +1,4 @@
-import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X, Sparkles } from 'lucide-react';
 import { Product, Category } from '@/types/admin';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -115,6 +115,41 @@ export default function ProductsTab({
             }
         } catch (error) {
             console.error('Error approving product:', error);
+        }
+    };
+
+    const handleGenerateBlog = async (e: React.MouseEvent, product: Product) => {
+        e.stopPropagation();
+        if (!confirm(`Generate AI blog for "${product.name}"? This will use Gemini AI to create SEO-optimized content.`)) return;
+
+        const button = e.currentTarget as HTMLButtonElement;
+        const originalContent = button.innerHTML;
+        button.innerHTML = '<svg class="animate-spin h-4 w-4 text-accent-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+        button.disabled = true;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/blog/generate_from_product/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ product_id: product.id })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(`Success! AI Blog generated: "${data.title}"`);
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                alert(`AI Generation failed: ${errorData.error || 'Server error'}`);
+            }
+        } catch (error) {
+            console.error('Error calling AI blog service:', error);
+            alert('An unexpected error occurred during AI blog generation.');
+        } finally {
+            button.innerHTML = originalContent;
+            button.disabled = false;
         }
     };
 
@@ -421,6 +456,15 @@ export default function ProductsTab({
                                                             title="Approve Product"
                                                         >
                                                             <CheckCircle size={16} />
+                                                        </button>
+                                                    )}
+                                                    {canEdit && (
+                                                        <button
+                                                            onClick={(e) => handleGenerateBlog(e, product)}
+                                                            className="rounded-lg p-2 text-accent-500 transition-colors hover:bg-accent-500/10"
+                                                            title="Generate AI Blog"
+                                                        >
+                                                            <Sparkles size={16} />
                                                         </button>
                                                     )}
                                                     {canEdit && (

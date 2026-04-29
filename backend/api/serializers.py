@@ -14,7 +14,7 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, ReviewImage, Customer,
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem
+    ChecklistSection, ChecklistItem, BlogPost
 )
 
 logger = logging.getLogger(__name__)
@@ -1264,3 +1264,29 @@ class PayoutRequestSerializer(serializers.ModelSerializer):
         if obj.shop.owner:
             return obj.shop.owner.email
         return "Unknown"
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    """Serializer for blog posts."""
+    featured_image_url = serializers.SerializerMethodField()
+    related_products_data = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BlogPost
+        fields = [
+            'id', 'title', 'slug', 'content', 'excerpt', 'meta_title', 
+            'meta_description', 'keywords', 'featured_image', 'featured_image_url',
+            'related_products', 'related_products_data', 'author', 'is_published', 
+            'ai_generated', 'views', 'created_at', 'updated_at', 'published_at'
+        ]
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'published_at']
+
+    def get_featured_image_url(self, obj):
+        if obj.featured_image:
+            return get_image_url(self.context.get('request'), obj.featured_image)
+        return obj.featured_image_url
+
+    def get_related_products_data(self, obj):
+        # Avoid circular import or deep nesting by using a simplified representation
+        from .serializers import ProductListSerializer
+        serializer = ProductListSerializer(obj.related_products.all(), many=True, context=self.context)
+        return serializer.data

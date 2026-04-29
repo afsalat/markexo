@@ -21,7 +21,7 @@ from .views import (
     AdminEnquiryViewSet, AdminUserViewSet, AdminRoleViewSet, PermissionListView, AdminAnalyticsView, AdminSystemLogsView,
     AdminLaunchChecklistView, AdminLaunchChecklistSectionCreateView, AdminLaunchChecklistSectionDetailView,
     AdminLaunchChecklistItemCreateView, AdminLaunchChecklistItemDetailView, AdminLaunchChecklistSeedView,
-    AdminGoogleMerchantView, GoogleMerchantFeedView,
+    AdminGoogleMerchantView, GoogleMerchantFeedView, BlogPostViewSet,
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
@@ -33,6 +33,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'products', ProductViewSet, basename='product')
+router.register(r'blog', BlogPostViewSet, basename='blog')
 router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'payouts', PayoutRequestViewSet, basename='payout')
 

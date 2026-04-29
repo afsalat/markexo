@@ -104,6 +104,9 @@ ALLOWED_HOSTS = sorted({
     urlparse(BACKEND_ORIGIN).hostname,
 })
 
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCRjjsGU4jJZw6PHz4j0-Ay3vgv_Zu9WjY')
+
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

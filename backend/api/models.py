@@ -769,3 +769,48 @@ class PayoutRequest(models.Model):
 
     class Meta:
         ordering = ['-requested_at']
+
+class BlogPost(models.Model):
+    """AI-generated blog posts for SEO and product promotion."""
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
+    content = models.TextField()
+    excerpt = models.TextField(blank=True)
+    meta_title = models.CharField(max_length=255, blank=True)
+    meta_description = models.TextField(blank=True)
+    keywords = models.JSONField(default=list, blank=True)
+    featured_image = models.ImageField(upload_to='blog/', null=True, blank=True)
+    featured_image_url = models.URLField(max_length=500, blank=True, null=True, help_text="External image URL if not uploaded")
+    
+    # Relationships
+    related_products = models.ManyToManyField(Product, blank=True, related_name='blog_posts')
+    author = models.CharField(max_length=100, default='VorionMart AI')
+    
+    # Status
+    is_published = models.BooleanField(default=False)
+    ai_generated = models.BooleanField(default=True)
+    
+    # Metrics
+    views = models.PositiveIntegerField(default=0)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(BlogPost, self.title, instance_id=self.pk)
+        
+        if self.is_published and not self.published_at:
+            from django.utils import timezone
+            self.published_at = timezone.now()
+            
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Blog Post'
+        verbose_name_plural = 'Blog Posts'

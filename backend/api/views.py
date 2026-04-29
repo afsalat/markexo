@@ -31,7 +31,7 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, Customer,
     Order, OrderItem, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem
+    ChecklistSection, ChecklistItem, BlogPost
 )
 from .launch_checklist import (
     LAUNCH_CHECKLIST_PROJECT_NAME,
@@ -48,10 +48,12 @@ from .serializers import (
     DashboardStatsSerializer, EnquirySerializer,
     UserSerializer, RoleSerializer, PermissionSerializer,
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
-    SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
+    BlogPostSerializer, SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
     ChecklistSectionSerializer, ChecklistSectionWriteSerializer, ChecklistItemSerializer, ChecklistItemWriteSerializer,
     normalize_email_value, get_or_create_customer_for_user,
 )
+from .ai_service import GeminiBlogService
+
 from .order_emails import (
     send_order_created_email,
     send_order_status_email,
@@ -1946,3 +1948,49 @@ class GoogleMerchantFeedView(APIView):
         
         xml_content = render_to_string('google_merchant_feed.xml', context)
         return HttpResponse(xml_content, content_type='application/xml')
+
+class BlogPostViewSet(viewsets.ModelViewSet):
+    """ViewSet for blog posts."""
+    queryset = BlogPost.objects.all()
+    serializer_class = BlogPostSerializer
+    lookup_field = 'slug'
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAdminUser()]
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
+    def generate_from_product(self, request):
+        """Action to generate a blog post from a product using AI."""
+        product_id = request.data.get('product_id')
+        if not product_id:
+            return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Start AI generation
+        ai_service = GeminiBlogService()
+        blog_data, error = ai_service.generate_complete_blog(product)
+        
+        if error:
+            return Response({"error": error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Create blog post
+        blog_post = BlogPost.objects.create(
+            title=blog_data['title'],
+            content=blog_data['content'],
+            excerpt=blog_data['excerpt'],
+            meta_title=blog_data['title'],
+            meta_description=blog_data['meta_description'],
+            keywords=blog_data['keywords'],
+            ai_generated=True
+        )
+        blog_post.related_products.add(product)
+        
+        serializer = self.get_serializer(blog_post)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
