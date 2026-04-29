@@ -21,7 +21,7 @@ from .views import (
     AdminEnquiryViewSet, AdminUserViewSet, AdminRoleViewSet, PermissionListView, AdminAnalyticsView, AdminSystemLogsView,
     AdminLaunchChecklistView, AdminLaunchChecklistSectionCreateView, AdminLaunchChecklistSectionDetailView,
     AdminLaunchChecklistItemCreateView, AdminLaunchChecklistItemDetailView, AdminLaunchChecklistSeedView,
-    AdminGoogleMerchantView,
+    AdminGoogleMerchantView, GoogleMerchantFeedView,
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
@@ -95,5 +95,6 @@ urlpatterns = [
     path('admin/forward-orders/', ForwardOrdersView.as_view(), name='forward-orders'),
     path('admin/pending-orders-for-forwarding/', PendingOrdersForForwardingView.as_view(), name='pending-orders-for-forwarding'),
     path('admin/google-merchant/', AdminGoogleMerchantView.as_view(), name='admin-google-merchant'),
+    path('google-merchant-feed/', GoogleMerchantFeedView.as_view(), name='google-merchant-feed'),
     path('admin/', include(admin_router.urls)),
 ]

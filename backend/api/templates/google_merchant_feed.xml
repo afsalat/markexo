@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+  <title>VorionMart Product Feed</title>
+  <link>{{ frontend_url }}</link>
+  <description>VorionMart Shopping Feed for Google Merchant Center</description>
+  {% for product in products %}
+  <item>
+    <g:id>{{ product.id }}</g:id>
+    <g:title>{{ product.name }}</g:title>
+    <g:description>{{ product.description|default:product.name|striptags }}</g:description>
+    <g:link>{{ frontend_url }}/product/{{ product.slug }}</g:link>
+    {% if product.image %}
+    <g:image_link>{{ base_url }}{{ product.image.url }}</g:image_link>
+    {% endif %}
+    <g:condition>new</g:condition>
+    <g:availability>{% if product.stock > 0 %}in stock{% else %}out of stock{% endif %}</g:availability>
+    <g:price>{{ product.current_price }} INR</g:price>
+    <g:brand>{{ product.shop.name|default:"VorionMart" }}</g:brand>
+  </item>
+  {% endfor %}
+</channel>
+</rss>

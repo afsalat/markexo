@@ -20,6 +20,7 @@ from django.db.models.functions import Coalesce, TruncDay
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.template.loader import render_to_string
 from django.contrib.auth.models import User, Group, Permission
 from django.conf import settings
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly, IsAdminUser, DjangoModelPermissions
@@ -1925,3 +1926,23 @@ class AdminGoogleMerchantView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class GoogleMerchantFeedView(APIView):
+    """
+    Public XML feed for Google Merchant Center.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        products = Product.objects.filter(is_active=True, approval_status='approved').select_related('shop')
+        
+        frontend_url = getattr(settings, 'APP_URL', 'https://vorionmart.com').rstrip('/')
+        base_url = request.build_absolute_uri('/') .rstrip('/')
+        
+        context = {
+            'products': products,
+            'frontend_url': frontend_url,
+            'base_url': base_url,
+        }
+        
+        xml_content = render_to_string('google_merchant_feed.xml', context)
+        return HttpResponse(xml_content, content_type='application/xml')
