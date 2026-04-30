@@ -25,8 +25,6 @@ class GeminiBlogService:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://markexo.com", # Site URL for OpenRouter rankings
-            "X-Title": "Markexo eCommerce",
         }
 
         max_retries = 3
