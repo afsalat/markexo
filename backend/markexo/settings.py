@@ -266,6 +266,7 @@ TWILIO_VALIDATE_WEBHOOK_SIGNATURE = parse_bool_env('TWILIO_VALIDATE_WEBHOOK_SIGN
 GOOGLE_MERCHANT_ID = os.environ.get('GOOGLE_MERCHANT_ID', '').strip()
 GOOGLE_SERVICE_ACCOUNT_FILE = os.environ.get('GOOGLE_SERVICE_ACCOUNT_FILE', str(BASE_DIR / 'firebase-service-account.json')).strip()
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCRjjsGU4jJZw6PHz4j0-Ay3vgv_Zu9WjY').strip()
+OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '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').strip()
 
 
 LOGGING = {

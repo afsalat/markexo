@@ -1,6 +1,7 @@
 import os
 import sys
 import django
+import json
 
 # Setup Django environment
 sys.path.append(r'c:\Users\USER\Desktop\markexo\backend')
@@ -16,27 +17,27 @@ def test_blog_gen():
         print("No products found")
         return
         
-    print(f"Testing blog gen for: {product.name}")
+    print(f"Testing OpenRouter Master Blog Gen for: {product.name}")
     service = GeminiBlogService()
     
-    # Test plan (Keywords + Outline)
-    print("Generating SEO plan (Keywords + Outline)...")
-    plan, error = service.generate_keywords_and_outline(product)
+    # Test complete generation
+    print("Generating full blog (using DeepSeek/OpenRouter)...")
+    blog_data, error = service.generate_complete_blog(product)
+    
     if error:
-        print(f"Plan Error: {error}")
-        return
+        print(f"Error: {error}")
     else:
-        print(f"Plan Title: {plan.get('title')}")
-        print(f"Keywords: {plan.get('keywords')}")
-
-    # Test full content
-    print("Generating full content (this will take a while)...")
-    content, error = service.generate_full_content(product, plan)
-    if error:
-        print(f"Content Error: {error}")
-    else:
-        print(f"Content Length: {len(content)} characters")
-        print("First 100 chars:", content[:100])
+        print("\n--- GENERATED BLOG DATA ---")
+        print(f"Title: {blog_data.get('title')}")
+        print(f"Slug: {blog_data.get('slug')}")
+        print(f"Keywords: {blog_data.get('keywords')}")
+        print(f"Content Preview: {blog_data.get('content')[:200]}...")
+        print(f"FAQs Count: {len(blog_data.get('faqs', []))}")
+        
+        # Save sample to scratch
+        with open('scratch/sample_blog.json', 'w') as f:
+            json.dump(blog_data, f, indent=2)
+        print("\nSample saved to scratch/sample_blog.json")
 
 if __name__ == "__main__":
     test_blog_gen()
