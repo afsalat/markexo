@@ -102,7 +102,7 @@ class GeminiBlogService:
             )
             
             if error:
-                return {"error": f"Keyword generation failed: {error}"}
+                return None, f"Keyword generation failed: {error}"
 
             # Step 2: Use Master Prompt
             master_prompt_template = """
