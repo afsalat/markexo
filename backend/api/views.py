@@ -1972,25 +1972,29 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        # Start AI generation
-        ai_service = GeminiBlogService()
-        blog_data, error = ai_service.generate_complete_blog(product)
-        
-        if error:
-            return Response({"error": error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        # Create blog post
-        blog_post = BlogPost.objects.create(
-            title=blog_data['title'],
-            content=blog_data['content'],
-            excerpt=blog_data['excerpt'],
-            meta_title=blog_data['title'],
-            meta_description=blog_data['meta_description'],
-            keywords=blog_data['keywords'],
-            ai_generated=True
-        )
-        blog_post.related_products.add(product)
-        
-        serializer = self.get_serializer(blog_post)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            # Start AI generation
+            ai_service = GeminiBlogService()
+            blog_data, error = ai_service.generate_complete_blog(product)
+            
+            if error:
+                return Response({"error": f"AI Generation failed: {error}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Create blog post
+            blog_post = BlogPost.objects.create(
+                title=blog_data['title'],
+                content=blog_data['content'],
+                excerpt=blog_data.get('excerpt', ''),
+                meta_title=blog_data['title'],
+                meta_description=blog_data.get('meta_description', ''),
+                keywords=blog_data.get('keywords', []),
+                ai_generated=True
+            )
+            blog_post.related_products.add(product)
+            
+            serializer = self.get_serializer(blog_post)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Blog generation error for product {product_id}: {str(e)}", exc_info=True)
+            return Response({"error": f"Blog generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

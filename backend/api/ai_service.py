@@ -11,7 +11,7 @@ class GeminiBlogService:
     
     def __init__(self):
         self.api_key = getattr(settings, 'GEMINI_API_KEY', None)
-        self.model = "gemini-2.0-flash"
+        self.model = "gemini-flash-latest"
         self.url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
 
     def _generate_text(self, prompt):
@@ -36,14 +36,14 @@ class GeminiBlogService:
                 
                 # Handle 429 Rate Limit with exponential backoff
                 if response.status_code == 429:
-                    wait_time = min(2 ** attempt * 3, 60)  # 3s, 6s, 12s, 24s, 48s
+                    wait_time = min(2 ** attempt * 10, 60)  # 10s, 20s, 40s, 60s
                     logger.warning(f"Gemini API 429 (Rate Limited). Attempt {attempt + 1}/{max_retries}. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                     continue
                 
                 # Handle temporary 503 Overload
                 if response.status_code == 503:
-                    wait_time = min(2 ** attempt * 2, 30)
+                    wait_time = min(2 ** attempt * 5, 30)
                     logger.warning(f"Gemini API 503 (Service Unavailable). Attempt {attempt + 1}/{max_retries}. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                     continue
@@ -72,44 +72,25 @@ class GeminiBlogService:
                 logger.warning(f"Gemini API Attempt {attempt + 1} failed: {str(e)}. Retrying...")
                 time.sleep(2)
         
-        return None, "Failed after multiple retries"
+        return None, "AI Service is currently busy. Please try again in a few minutes."
 
-    def generate_keywords(self, product):
-        """Step 1: Generate SEO keywords for a product."""
+    def generate_keywords_and_outline(self, product):
+        """Step 1 & 2: Generate SEO keywords and blog outline in one call."""
         prompt = f"""
-        Generate 10 SEO keywords for this product:
+        Generate a comprehensive SEO plan for a blog post about this product:
         Product Name: {product.name}
-        Description: {product.description[:500]}
+        Description: {product.description[:1000]}
         Category: {product.category.name if product.category else 'General'}
         Location: India
-        Focus: High buying intent keywords.
-        Return as a comma-separated list without any extra text.
-        """
-        text, error = self._generate_text(prompt)
-        if error:
-            return [], error
         
-        # Clean up keywords
-        keywords = [k.strip() for k in text.split(',')]
-        return keywords[:10], None
-
-    def generate_outline(self, product, keywords):
-        """Step 2: Generate SEO blog outline."""
-        keywords_str = ", ".join(keywords)
-        prompt = f"""
-        Create a comprehensive SEO blog outline for this product:
-        Product: {product.name}
-        Keywords: {keywords_str}
+        Return a JSON object with these keys:
+        1. "keywords": A list of 10 high-intent SEO keywords.
+        2. "title": A catchy SEO-optimized blog title.
+        3. "meta_description": A meta description (150-160 chars).
+        4. "excerpt": A brief 2-sentence summary.
+        5. "outline_structure": A detailed outline with H2 and H3 sections.
         
-        The outline should include:
-        1. A catchy SEO Title (H1)
-        2. Meta Description (150-160 chars)
-        3. Excerpt (Brief summary)
-        4. Sections (H2 and H3)
-        5. FAQ Section
-        6. Call to Action (CTA)
-        
-        Format the response strictly as a JSON object with keys: title, meta_description, excerpt, outline_structure.
+        Strictly return ONLY the JSON object.
         """
         text, error = self._generate_text(prompt)
         if error:
@@ -119,24 +100,30 @@ class GeminiBlogService:
         try:
             json_match = re.search(r'\{.*\}', text, re.DOTALL)
             if json_match:
-                return json.loads(json_match.group()), None
-            return json.loads(text), None
+                data = json.loads(json_match.group())
+            else:
+                data = json.loads(text)
+            
+            # Ensure all keys exist
+            if 'keywords' not in data: data['keywords'] = [product.name, "buy " + product.name]
+            return data, None
         except Exception as e:
-            logger.warning(f"Failed to parse outline JSON: {e}. Raw text: {text}")
+            logger.warning(f"Failed to parse SEO plan JSON: {e}. Raw text: {text}")
             return {
+                "keywords": [product.name],
                 "title": f"Why {product.name} is the best choice for you", 
                 "meta_description": f"Discover why {product.name} is trending in India. Read our full review and buyer guide.", 
                 "excerpt": f"An in-depth look at {product.name}.", 
                 "outline_structure": text
             }, None
 
-    def generate_full_content(self, product, outline, keywords):
+    def generate_full_content(self, product, plan):
         """Step 3: Generate full blog content."""
-        keywords_str = ", ".join(keywords)
+        keywords_str = ", ".join(plan.get('keywords', []))
         prompt = f"""
-        Write a high-quality 1200-word SEO-optimized blog post based on this outline:
-        Title: {outline.get('title')}
-        Structure: {outline.get('outline_structure')}
+        Write a high-quality 1200-word SEO-optimized blog post based on this plan:
+        Title: {plan.get('title')}
+        Structure: {plan.get('outline_structure')}
         Target Keywords: {keywords_str}
         Product Details: {product.name}, {product.description[:1000]}
         
@@ -156,25 +143,21 @@ class GeminiBlogService:
         """Full pipeline to generate a blog from a product."""
         logger.info(f"Starting auto-blog generation for product: {product.name}")
         
-        # 1. Keywords
-        keywords, error = self.generate_keywords(product)
+        # 1 & 2. Plan (Keywords + Outline)
+        plan, error = self.generate_keywords_and_outline(product)
         if error:
-            return None, f"Keyword Gen Failed: {error}"
-            
-        # 2. Outline
-        outline, error = self.generate_outline(product, keywords)
-        if error:
-            return None, f"Outline Gen Failed: {error}"
+            return None, f"Plan Gen Failed: {error}"
             
         # 3. Content
-        content, error = self.generate_full_content(product, outline, keywords)
+        content, error = self.generate_full_content(product, plan)
         if error:
             return None, f"Content Gen Failed: {error}"
             
         return {
-            "title": outline.get('title', f"Everything you need to know about {product.name}"),
+            "title": plan.get('title', f"Everything you need to know about {product.name}"),
             "content": content,
-            "excerpt": outline.get('excerpt', ''),
-            "meta_description": outline.get('meta_description', ''),
-            "keywords": keywords
+            "excerpt": plan.get('excerpt', ''),
+            "meta_description": plan.get('meta_description', ''),
+            "keywords": plan.get('keywords', [])
         }, None
+
