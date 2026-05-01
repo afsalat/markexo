@@ -12,8 +12,8 @@ class GeminiBlogService:
     
     def __init__(self):
         self.api_key = getattr(settings, 'OPENROUTER_API_KEY', None)
-        self.model = "deepseek/deepseek-chat"
-        self.backup_model = "mistralai/mistral-7b-instruct"
+        self.model = "google/gemini-2.0-flash-001"
+        self.backup_model = "deepseek/deepseek-chat"
         self.url = "https://openrouter.ai/api/v1/chat/completions"
 
     def _call_openrouter(self, messages, model=None):
