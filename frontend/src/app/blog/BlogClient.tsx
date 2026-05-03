@@ -65,7 +65,7 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
             {/* Hero Section */}
             <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-br from-accent-500/10 via-white to-primary-500/5 dark:from-accent-500/5 dark:via-dark-900 dark:to-primary-500/10">
                 <div className="container mx-auto px-4">
-                    <div className="max-w-4xl text-center">
+                    <div className="max-w-4xl mx-auto text-center">
                         <div className="inline-flex items-center gap-2 bg-accent-500/10 dark:bg-accent-500/10 border border-accent-500/20 px-4 py-1.5 rounded-full mb-8">
                             <Calendar className="text-accent-500" size={16} />
                             <span className="text-accent-500 text-xs font-bold uppercase tracking-widest">Shopping Guides</span>
