@@ -68,6 +68,8 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
     };
 
     const renderContent = (content: string) => {
+        if (!content) return '';
+        
         // Replace product slugs with actual product links
         let processedContent = content;
         
@@ -85,21 +87,27 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
             });
         }
         
+        // If the content doesn't contain HTML tags, treat it as markdown/plain text
+        if (!/<[a-z][\s\S]*>/i.test(processedContent)) {
+            // Convert markdown-style links to HTML
+            processedContent = processedContent.replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g,
+                '<a href="$2" class="text-accent-500 hover:text-accent-600 font-bold underline">$1</a>'
+            );
+
+            // Convert newlines to paragraphs
+            processedContent = processedContent.split('\n').map((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return '';
+                // Simple header detection
+                if (trimmed.length < 100 && !trimmed.endsWith('.') && !trimmed.endsWith('!') && !trimmed.endsWith('?')) {
+                    return `<h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">${trimmed}</h2>`;
+                }
+                return `<p class="mb-6 text-gray-700 dark:text-silver-300 leading-relaxed text-lg">${trimmed}</p>`;
+            }).join('');
+        }
+        
         return processedContent;
-
-        // Convert markdown-style links to HTML
-        processedContent = processedContent.replace(
-            /\[([^\]]+)\]\(([^)]+)\)/g,
-            '<a href="$2" class="text-accent-500 hover:text-accent-600 font-medium underline">$1</a>'
-        );
-
-        // Convert newlines to paragraphs
-        return processedContent.split('\n').map((line, index) => {
-            if (line.trim()) {
-                return `<p class="mb-4 text-gray-700 dark:text-silver-300 leading-relaxed">${line}</p>`;
-            }
-            return line;
-        }).join('');
     };
 
     return (
@@ -193,9 +201,50 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
             </section>
 
             {/* Content */}
-            <section className="py-16">
+            <section className="py-16 bg-white dark:bg-dark-800/50">
                 <div className="container mx-auto px-4">
-                    <div className="max-w-4xl">
+                    <div className="max-w-4xl mx-auto">
+                        <style jsx global>{`
+                            .blog-content h2 {
+                                font-size: 1.875rem;
+                                font-weight: 700;
+                                color: #111827;
+                                margin-top: 2.5rem;
+                                margin-bottom: 1.25rem;
+                                line-height: 1.25;
+                            }
+                            .blog-content h3 {
+                                font-size: 1.5rem;
+                                font-weight: 600;
+                                color: #111827;
+                                margin-top: 2rem;
+                                margin-bottom: 1rem;
+                                line-height: 1.25;
+                            }
+                            .blog-content p {
+                                font-size: 1.125rem;
+                                line-height: 1.8;
+                                color: #374151;
+                                margin-bottom: 1.5rem;
+                            }
+                            .blog-content ul, .blog-content ol {
+                                margin-bottom: 1.5rem;
+                                padding-left: 1.5rem;
+                            }
+                            .blog-content li {
+                                font-size: 1.125rem;
+                                line-height: 1.8;
+                                color: #374151;
+                                margin-bottom: 0.5rem;
+                                list-style-type: disc;
+                            }
+                            .dark .blog-content h2, .dark .blog-content h3 {
+                                color: #ffffff;
+                            }
+                            .dark .blog-content p, .dark .blog-content li {
+                                color: #9ca3af;
+                            }
+                        `}</style>
                         <article className="prose prose-lg dark:prose-invert max-w-none">
                             <div
                                 dangerouslySetInnerHTML={{
