@@ -89,8 +89,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                                        <a href="mailto:support@vorionmart.in" className="text-primary-600 hover:underline">
-                                            support@vorionmart.in
+                                        <a href="mailto:vorionnexustech@gmail.com" className="text-primary-600 hover:underline">
+                                            vorionnexustech@gmail.com
                                         </a>
                                     </div>
                                 </div>
@@ -101,7 +101,7 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Phone</h3>
-                                        <a href="tel:+911234567890" className="text-primary-600 hover:underline">
+                                        <a href="tel:+917356216468" className="text-primary-600 hover:underline">
                                             +91 735 621 6468
                                         </a>
                                     </div>
@@ -115,7 +115,8 @@ export default function ContactPage() {
                                         <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
                                         <p className="text-gray-600">
                                             Vorion Nexus Technology<br />
-                                            Kozhikode, Kerala<br />
+                                            Thoppayil Beach C.25, O.P Nadakkavu<br />
+                                            Kozhikode, Kerala 673011<br />
                                             India
                                         </p>
                                     </div>

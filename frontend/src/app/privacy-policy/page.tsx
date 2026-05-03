@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
                         <div className="mt-3 text-gray-700 dark:text-silver-300">
                             <p>📞 Phone: <span className="text-primary-600 dark:text-accent-500 font-semibold">7356216468</span></p>
                             <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionnexustech@gmail.com</span></p>
-                            <p className="mt-1">🏢 Company: Vorion Nexus Technology, Kozhikode, Kerala</p>
+                            <p className="mt-1">🏢 Company: Vorion Nexus Technology, Thoppayil Beach C.25, O.P Nadakkavu, Kozhikode, Kerala 673011</p>
                         </div>
                     </section>
 

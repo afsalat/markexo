@@ -52,13 +52,9 @@ export default function Footer() {
                         </p>
                         <div className="flex gap-3">
                             <a
-                                href="#"
-                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
-                            >
-                                <Facebook size={18} />
-                            </a>
-                            <a
-                                href="#"
+                                href="https://www.instagram.com/vorionnexus"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
                             >
                                 <Instagram size={18} />
@@ -72,6 +68,7 @@ export default function Footer() {
                             <h3 className="font-display font-semibold text-xs uppercase tracking-wider mb-4 text-gray-900">Quick Links</h3>
                             <ul className="space-y-3">
                                 {[
+                                    { href: '/about', label: 'About Us' },
                                     { href: '/products', label: 'All Collection' },
                                     { href: '/products?featured=true', label: 'Trending Now' },
                                     { href: '/blog', label: 'Blog' },
@@ -110,6 +107,7 @@ export default function Footer() {
                         </h3>
                         <ul className="space-y-3">
                             {[
+                                { href: '/about', label: 'About Us' },
                                 { href: '/products', label: 'All Collection' },
                                 { href: '/products?featured=true', label: 'Trending Now' },
                                 { href: '/blog', label: 'Blog' },
@@ -187,7 +185,8 @@ export default function Footer() {
                                 </div>
                                 <div>
                                     <span className="block font-semibold mb-0.5 text-gray-800">Vorion Nexus Technology</span>
-                                    <span>Kozhikode, Kerala</span>
+                                    <span>Thoppayil Beach C.25, O.P Nadakkavu</span><br />
+                                    <span>Kozhikode, Kerala 673011</span>
                                 </div>
                             </li>
                         </ul>
@@ -200,6 +199,7 @@ export default function Footer() {
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5">
                     <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                         {[
+                            { href: '/about', label: 'About Us' },
                             { href: '/terms-and-conditions', label: 'Terms & Conditions' },
                             { href: '/privacy-policy', label: 'Privacy Policy' },
                             { href: '/shipping-policy', label: 'Shipping Policy' },
