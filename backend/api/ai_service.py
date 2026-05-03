@@ -20,10 +20,6 @@ class GeminiBlogService:
         """Helper to make OpenRouter API calls with retry logic."""
         if not self.api_key:
             return None, "OpenRouter API Key not configured."
-            
-        # Diagnostic: Print the first 10 chars of the key to verify which one is being used
-        key_prefix = str(self.api_key)[:15]
-        logger.info(f"Using OpenRouter Key starting with: {key_prefix}...")
 
         target_model = model or self.model
         headers = {
