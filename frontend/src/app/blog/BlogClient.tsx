@@ -81,8 +81,8 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
                         </p>
 
                         {/* Search and Filter */}
-                        <div className="flex flex-col md:flex-row gap-4 max-w-2xl mx-auto">
-                            <div className="relative flex-1">
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-4 max-w-2xl mx-auto mb-16">
+                            <div className="relative flex-1 w-full">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-silver-500" size={20} />
                                 <input
                                     type="text"
@@ -92,11 +92,12 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
                                     className="w-full bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-2xl px-12 py-4 text-gray-900 dark:text-white focus:border-accent-500 outline-none transition-all shadow-lg"
                                 />
                             </div>
-                            <div className="relative">
+                            <div className="flex items-center gap-3 w-full md:w-auto relative">
+                                <Filter size={20} className="text-gray-400 dark:text-silver-500 absolute left-4 pointer-events-none" />
                                 <select
                                     value={selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="appearance-none bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-2xl px-6 py-4 pr-12 text-gray-900 dark:text-white focus:border-accent-500 outline-none transition-all shadow-lg cursor-pointer"
+                                    className="appearance-none bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-2xl pl-12 pr-12 py-4 text-gray-900 dark:text-white focus:border-accent-500 outline-none transition-all shadow-lg cursor-pointer w-full md:w-48"
                                 >
                                     <option value="all">All Categories</option>
                                     {categories.map(category => (
