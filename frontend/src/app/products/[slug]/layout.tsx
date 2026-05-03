@@ -88,12 +88,17 @@ export default async function ProductDetailLayout({
         const productImages = getProductImages(product);
         const productUrl = `${APP_URL}/products/${product.slug}`;
         const description = truncateDescription(product.description || '');
-        const reviewCount = Number(product.review_count ?? product.reviewCount ?? reviews.length ?? 0);
-        const ratingValue = Number(product.rating ?? 0);
+        const rawReviewCount = Number(product.review_count ?? product.reviewCount ?? reviews.length ?? 0);
+        const reviewCount = isFinite(rawReviewCount) && rawReviewCount > 0 ? Math.round(rawReviewCount) : 0;
+        const rawRating = Number(product.rating ?? 0);
+        const ratingValue = isFinite(rawRating) && rawRating > 0 ? Math.min(Math.max(rawRating, 1), 5) : 0;
         const salePrice = Number(product.current_price ?? product.price ?? 0);
         const shippingRate = salePrice >= 500 ? 0 : 49;
         const schemaReviews = reviews.slice(0, 3)
-            .filter((review: Review) => Boolean(review?.comment) && Number(review?.rating) > 0)
+            .filter((review: Review) => {
+                const r = Number(review?.rating);
+                return Boolean(review?.comment) && isFinite(r) && r >= 1 && r <= 5;
+            })
             .map((review: Review) => ({
                 '@type': 'Review',
                 author: {
@@ -102,7 +107,7 @@ export default async function ProductDetailLayout({
                 },
                 reviewRating: {
                     '@type': 'Rating',
-                    ratingValue: Number(review.rating),
+                    ratingValue: Math.min(Math.max(Number(review.rating), 1), 5),
                     bestRating: 5,
                     worstRating: 1,
                 },
@@ -211,10 +216,10 @@ export default async function ProductDetailLayout({
                             url: `${APP_URL}/shipping-policy`,
                         },
                     },
-                    ...(reviewCount > 0 && ratingValue > 0 ? {
+                    ...(reviewCount > 0 && ratingValue >= 1 && ratingValue <= 5 ? {
                         aggregateRating: {
                             '@type': 'AggregateRating',
-                            ratingValue,
+                            ratingValue: parseFloat(ratingValue.toFixed(1)),
                             ratingCount: reviewCount,
                             reviewCount,
                             bestRating: 5,
