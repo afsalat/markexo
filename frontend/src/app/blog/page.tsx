@@ -33,6 +33,13 @@ export async function generateMetadata(): Promise<Metadata> {
                 title: 'VorionMart Blog - Expert Shopping Guides',
                 description: 'Expert shopping guides and product reviews on premium products with COD delivery.',
             },
+            alternates: {
+                canonical: '/blog',
+            },
+            robots: {
+                index: true,
+                follow: true,
+            },
         };
     } catch {
         return {

@@ -31,11 +31,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 type: 'article',
             },
             twitter: {
-                card: 'summary_large_image',
-                title: blogPost.meta_title || blogPost.title,
-                description: blogPost.meta_description || `${blogPost.title} - Expert shopping guide and product review.`,
                 images: blogPost.featured_image ? [blogPost.featured_image] : [],
             },
+            alternates: {
+                canonical: `/blog/${params.slug}`,
+            },
+            robots: {
+                index: true,
+                follow: true,
+                googleBot: {
+                    index: true,
+                    follow: true,
+                }
+            }
         };
     } catch {
         return {

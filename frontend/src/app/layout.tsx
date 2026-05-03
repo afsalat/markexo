@@ -13,9 +13,6 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space
 
 export const metadata: Metadata = {
     metadataBase: new URL(APP_URL),
-    alternates: {
-        canonical: '/',
-    },
     title: {
         template: '%s | VorionMart',
         default: 'VorionMart - Premium D2C Store | Pay on Delivery',

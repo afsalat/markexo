@@ -61,8 +61,8 @@ export async function generateMetadata(
             title: 'Product Not Found',
             description: 'The requested product could not be found.',
             robots: {
-                index: false,
-                follow: false,
+                index: true,
+                follow: true,
             },
         };
     }
