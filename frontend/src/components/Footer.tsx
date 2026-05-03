@@ -74,6 +74,7 @@ export default function Footer() {
                                 {[
                                     { href: '/products', label: 'All Collection' },
                                     { href: '/products?featured=true', label: 'Trending Now' },
+                                    { href: '/blog', label: 'Blog' },
                                     { href: '/track-order', label: 'Track Order' },
                                 ].map((link) => (
                                     <li key={link.label}>
@@ -111,6 +112,7 @@ export default function Footer() {
                             {[
                                 { href: '/products', label: 'All Collection' },
                                 { href: '/products?featured=true', label: 'Trending Now' },
+                                { href: '/blog', label: 'Blog' },
                                 { href: '/track-order', label: 'Track Order' },
                             ].map((link) => (
                                 <li key={link.label}>
