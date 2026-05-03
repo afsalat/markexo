@@ -66,6 +66,10 @@ class GeminiBlogService:
                     if target_model == self.model:
                         logger.info(f"Switching to backup model: {self.backup_model}")
                         return self._call_openrouter(messages, model=self.backup_model)
+                    elif target_model == self.backup_model:
+                        free_model = "mistralai/mistral-7b-instruct:free"
+                        logger.info(f"Switching to free model: {free_model}")
+                        return self._call_openrouter(messages, model=free_model)
                     return None, f"OpenRouter Error: {str(e)}"
                 time.sleep(5)
         
