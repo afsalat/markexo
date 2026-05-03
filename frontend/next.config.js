@@ -45,6 +45,20 @@ const nextConfig = {
             },
         ];
     },
+    async headers() {
+        return [
+            {
+                // Apply X-Robots-Tag to all public pages
+                source: '/((?!admin|partner|checkout|cart|login|signup|profile|track-order|seo-dashboard).*)',
+                headers: [
+                    {
+                        key: 'X-Robots-Tag',
+                        value: 'index, follow',
+                    },
+                ],
+            },
+        ];
+    },
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
     },
