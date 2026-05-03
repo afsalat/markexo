@@ -25,6 +25,8 @@ class GeminiBlogService:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
+            "HTTP-Referer": "https://vorionmart.com",
+            "X-Title": "VorionMart",
         }
 
         max_retries = 3

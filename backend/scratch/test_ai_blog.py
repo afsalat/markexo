@@ -30,18 +30,20 @@ def test_blog_generation():
     blog_data, error = service.generate_complete_blog(product)
     
     if error:
-        print(f"\n❌ FAILED: {error}")
+        print(f"\n[ERROR] Blog Generation Failed: {error}")
     else:
-        print("\n✅ SUCCESS!")
+        print("\n[SUCCESS] Blog Generation Completed!")
         print(f"Title: {blog_data.get('title')}")
         print(f"Slug: {blog_data.get('slug')}")
-        print(f"Word Count (approx): {len(blog_data.get('content', '').split())}")
-        print(f"Keywords: {blog_data.get('keywords')}")
+        print(f"Word Count: {len(blog_data.get('content', '').split())}")
         
-        # Save to file for inspection
-        with open('scratch/test_blog_output.json', 'w') as f:
-            json.dump(blog_data, f, indent=2)
-        print("\nFull output saved to scratch/test_blog_output.json")
+        # Save to file
+        try:
+            with open('scratch/test_blog_output.json', 'w', encoding='utf-8') as f:
+                json.dump(blog_data, f, indent=2)
+            print("\nFull output saved to scratch/test_blog_output.json")
+        except Exception as e:
+            print(f"Could not save JSON file: {e}")
 
 if __name__ == "__main__":
     test_blog_generation()
