@@ -115,7 +115,7 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
             {/* Hero Section */}
             <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-br from-accent-500/10 via-white to-primary-500/5 dark:from-accent-500/5 dark:via-dark-900 dark:to-primary-500/10">
                 <div className="container mx-auto px-4">
-                    <div className="max-w-4xl">
+                    <div className="max-w-4xl mx-auto">
                         {/* Breadcrumb */}
                         <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-silver-500 mb-6">
                             <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
