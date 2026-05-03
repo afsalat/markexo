@@ -151,8 +151,8 @@ class GeminiBlogService:
                - Use bullet points and bold text for readability.
             7. Product Context: Explicitly refer to "{product_name}" available on VorionMart.
             8. Internal Linking: Add 2-3 suggestions like "Check our latest collection" or "View more from this category".
-            9. FAQ Section: 5 schema-ready questions and answers.
-            10. Conclusion: Strong summary with a clear CTA (Buy Now / Explore Products).
+            - FAQs Section: You MUST include a 'Frequently Asked Questions (FAQs)' section at the end. For this section, provide at least 5 detailed questions and answers that potential buyers usually ask about this product. Format the questions as <strong>Question:</strong> and answers as a clear paragraph below.
+            - Call to Action: End with a strong closing statement and a 'Shop Now' recommendation.
 
             ========================
 
