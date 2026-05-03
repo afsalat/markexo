@@ -99,7 +99,8 @@ export interface BlogPost {
     is_published: boolean;
     meta_title?: string;
     meta_description?: string;
-    products: string[]; // Array of product slugs
+    products?: string[]; // Array of product slugs
+    related_products?: string[]; // Backend name
     category?: string;
     tags?: string[];
     read_time?: number;

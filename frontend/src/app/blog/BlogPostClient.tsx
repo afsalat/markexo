@@ -73,8 +73,9 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
         // Replace product slugs with actual product links
         let processedContent = content;
         
-        if (blogPost.products && Array.isArray(blogPost.products)) {
-            blogPost.products.forEach((productSlug: string) => {
+        const productSlugs = blogPost.products || blogPost.related_products || [];
+        if (productSlugs && Array.isArray(productSlugs)) {
+            productSlugs.forEach((productSlug: string) => {
                 const product = linkedProducts?.find(p => p.slug === productSlug);
                 if (product) {
                     const productLink = `[👉 Buy Best ${product.name}](/products/${product.slug})`;
@@ -96,7 +97,7 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
             );
 
             // Convert newlines to paragraphs
-            processedContent = processedContent.split('\n').map((line) => {
+            processedContent = processedContent.split('\n').map((line: string) => {
                 const trimmed = line.trim();
                 if (!trimmed) return '';
                 // Simple header detection

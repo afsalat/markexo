@@ -53,8 +53,9 @@ export default async function BlogPostPage({ params }: Props) {
         blogPost = await fetchBlogPost(params.slug);
         
         // Fetch linked products if any
-        if (blogPost.products && blogPost.products.length > 0) {
-            const productPromises = blogPost.products.map(async (productSlug: string) => {
+        const productSlugs = blogPost.products || blogPost.related_products || [];
+        if (productSlugs.length > 0) {
+            const productPromises = productSlugs.map(async (productSlug: string) => {
                 try {
                     return await fetchProduct(productSlug);
                 } catch {
