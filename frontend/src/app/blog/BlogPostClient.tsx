@@ -18,7 +18,9 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
     const [shareMessage, setShareMessage] = useState<string | null>(null);
 
     const formatDate = (dateString: string) => {
+        if (!dateString) return 'Pending Publication';
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Draft';
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -27,9 +29,10 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
     };
 
     const calculateReadTime = (content: string) => {
+        if (!content) return 1;
         const wordsPerMinute = 200;
-        const words = content.split(/\s+/).length;
-        return Math.ceil(words / wordsPerMinute);
+        const words = content.trim().split(/\s+/).length;
+        return Math.max(1, Math.ceil(words / wordsPerMinute));
     };
 
     const handleShare = async () => {
@@ -68,17 +71,19 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
         // Replace product slugs with actual product links
         let processedContent = content;
         
-        blogPost.products.forEach((productSlug: string) => {
-            const product = linkedProducts.find(p => p.slug === productSlug);
-            if (product) {
-                const productLink = `[👉 Buy Best ${product.name}](/products/${product.slug})`;
-                const escapedSlug = productSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                processedContent = processedContent.replace(
-                    new RegExp(escapedSlug, 'g'),
-                    productLink
-                );
-            }
-        });
+        if (blogPost.products && Array.isArray(blogPost.products)) {
+            blogPost.products.forEach((productSlug: string) => {
+                const product = linkedProducts?.find(p => p.slug === productSlug);
+                if (product) {
+                    const productLink = `[👉 Buy Best ${product.name}](/products/${product.slug})`;
+                    const escapedSlug = productSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    processedContent = processedContent.replace(
+                        new RegExp(escapedSlug, 'g'),
+                        productLink
+                    );
+                }
+            });
+        }
         
         return processedContent;
 
