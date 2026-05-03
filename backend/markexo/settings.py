@@ -14,8 +14,8 @@ LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 SYSTEM_LOG_FILE = LOG_DIR / 'system.log'
 APP_CONFIG_PATH = BASE_DIR.parent / 'frontend' / 'src' / 'config' / 'appConfig.json'
-LOCAL_HOST_ALIASES = ['127.0.0.1', 'localhost', '0.0.0.0']
-LOCAL_DEV_FRONTEND_PORTS = [3000, 443]
+LOCAL_HOST_ALIASES = ['127.0.0.1', 'localhost', '0.0.0.0', '72.62.194.237']
+LOCAL_DEV_FRONTEND_PORTS = [3000, 443, 8000]
 
 def load_app_config():
     with APP_CONFIG_PATH.open(encoding='utf-8') as config_file:

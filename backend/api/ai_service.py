@@ -30,6 +30,7 @@ class GeminiBlogService:
         max_retries = 3
         for attempt in range(max_retries):
             try:
+                logger.info(f"Calling OpenRouter (Attempt {attempt + 1}) with model {target_model}...")
                 response = requests.post(
                     self.url,
                     headers=headers,
@@ -38,7 +39,7 @@ class GeminiBlogService:
                         "messages": messages,
                         "response_format": { "type": "json_object" }
                     },
-                    timeout=90
+                    timeout=120 # Increased timeout for long blog generation
                 )
                 
                 if response.status_code == 429:
@@ -46,6 +47,12 @@ class GeminiBlogService:
                     logger.warning(f"OpenRouter Rate Limited. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
                     continue
+                
+                if response.status_code >= 500:
+                    logger.error(f"OpenRouter Server Error ({response.status_code}): {response.text}")
+                    if attempt < max_retries - 1:
+                        time.sleep(5)
+                        continue
                 
                 response.raise_for_status()
                 return response.json(), None
