@@ -180,8 +180,18 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
                             </div>
                         )}
 
-                        {/* Share Button */}
-                        <div className="flex justify-center mb-8">
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap justify-center gap-4 mb-8">
+                            {linkedProducts && linkedProducts.length > 0 && (
+                                <Link
+                                    href={`/products/${linkedProducts[0].slug}`}
+                                    className="flex items-center gap-2 bg-accent-500 text-white px-8 py-3 rounded-2xl hover:bg-accent-600 transition-all shadow-lg font-bold"
+                                >
+                                    <ShoppingCart size={18} />
+                                    <span>Buy {linkedProducts[0].name} - ₹{linkedProducts[0].price}</span>
+                                </Link>
+                            )}
+                            
                             <button
                                 onClick={handleShare}
                                 className="flex items-center gap-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 px-6 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-700 transition-all shadow-lg"
