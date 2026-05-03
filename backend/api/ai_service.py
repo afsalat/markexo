@@ -31,6 +31,7 @@ class GeminiBlogService:
             "Content-Type": "application/json",
             "HTTP-Referer": "https://vorionmart.com",
             "X-Title": "VorionMart",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         }
 
         max_retries = 3
@@ -47,6 +48,14 @@ class GeminiBlogService:
                     },
                     timeout=120 # Increased timeout for long blog generation
                 )
+                
+                if response.status_code != 200:
+                    logger.warning(f"OpenRouter Attempt {attempt + 1} failed: {response.status_code} {response.reason}")
+                    try:
+                        error_body = response.json()
+                        logger.warning(f"OpenRouter Error Detail: {error_body}")
+                    except:
+                        logger.warning(f"OpenRouter Raw Body: {response.text}")
                 
                 if response.status_code == 429:
                     wait_time = (attempt + 1) * 10
