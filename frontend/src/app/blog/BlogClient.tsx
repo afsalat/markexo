@@ -25,7 +25,7 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
 
     // Filter posts based on search and category
     useEffect(() => {
-        let filtered = blogPosts;
+        let filtered = blogPosts || [];
 
         if (selectedCategory !== 'all') {
             filtered = filtered.filter(post => post.category === selectedCategory);
@@ -33,8 +33,8 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
 
         if (searchTerm) {
             filtered = filtered.filter(post =>
-                post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 post.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
             );
         }
@@ -43,7 +43,9 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
     }, [searchTerm, selectedCategory, blogPosts]);
 
     const formatDate = (dateString: string) => {
+        if (!dateString) return 'Pending Publication';
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Draft';
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -52,9 +54,10 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
     };
 
     const calculateReadTime = (content: string) => {
+        if (!content) return 1;
         const wordsPerMinute = 200;
-        const words = content.split(/\s+/).length;
-        return Math.ceil(words / wordsPerMinute);
+        const words = content.trim().split(/\s+/).length;
+        return Math.max(1, Math.ceil(words / wordsPerMinute));
     };
 
     return (
@@ -163,7 +166,7 @@ export default function BlogClient({ blogPosts }: BlogClientProps) {
 
                                         {/* Excerpt */}
                                         <p className="text-gray-600 dark:text-silver-400 mb-4 line-clamp-3 leading-relaxed">
-                                            {post.excerpt || post.content.slice(0, 150).replace(/\n/g, ' ')}...
+                                            {post.excerpt || (post.content ? post.content.slice(0, 150).replace(/\n/g, ' ') : 'Read our latest blog post...')}...
                                         </p>
 
                                         {/* Tags */}
