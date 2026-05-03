@@ -151,8 +151,8 @@ class GeminiBlogService:
                - Use bullet points and bold text for readability.
             7. Product Context: Explicitly refer to "{product_name}" available on VorionMart.
             8. Internal Linking: Add 2-3 suggestions like "Check our latest collection" or "View more from this category".
-            - FAQs Section: You MUST include a 'Frequently Asked Questions (FAQs)' section at the end. For this section, provide at least 5 detailed questions and answers that potential buyers usually ask about this product. Format the questions as <strong>Question:</strong> and answers as a clear paragraph below.
-            - Call to Action: End with a strong closing statement and a 'Shop Now' recommendation.
+            9. FAQ Section (MANDATORY): Include exactly 5 questions and answers at the end of the content body. Use <h3> for questions and <p> for answers.
+            10. Conclusion: Strong summary with a clear CTA (Buy Now / Explore Products).
 
             ========================
 
@@ -172,7 +172,7 @@ class GeminiBlogService:
               "meta_description": "Meta description here",
               "slug": "url-slug-here",
               "excerpt": "Short excerpt here",
-              "content": "Full HTML formatted blog content using <h2>, <h3>, <p>, <ul>, <li> tags. DO NOT use markdown code blocks inside this string.",
+              "content": "Full HTML formatted blog content using <h2>, <h3>, <p>, <ul>, <li> tags. Include the FAQ section inside this content string. DO NOT use markdown code blocks inside this string.",
               "faqs": [
                 {{"question": "Q1", "answer": "A1"}},
                 {{"question": "Q2", "answer": "A2"}}
