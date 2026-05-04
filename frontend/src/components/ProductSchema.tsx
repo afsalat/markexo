@@ -15,6 +15,10 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
     const availability = product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
     const sku = String(product.sku || `VM-${product.id}`);
     const productUrl = `https://vorionmart.com/products/${product.slug}`;
+    const allImages = [
+        product.image,
+        ...(product.images || []).map((img: any) => img.image)
+    ].filter(Boolean);
     
     // Generate structured data for SEO
     const schemaData: any = {
@@ -22,14 +26,22 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
         "@type": "Product",
         "@id": `${productUrl}#product`,
         name: product.name,
-        image: product.image || (product.images && product.images.length > 0 ? product.images[0].image : undefined),
-        description: product.description,
+        image: allImages,
+        description: product.description?.substring(0, 5000),
         sku: sku,
         mpn: sku,
         category: product.category?.name,
         brand: {
             "@type": "Brand",
             name: "VorionMart"
+        },
+        hasMerchantReturnPolicy: {
+            "@type": "MerchantReturnPolicy",
+            applicableCountry: "IN",
+            returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnPeriod",
+            merchantReturnDays: 7,
+            returnMethod: "https://schema.org/ReturnByMail",
+            returnFees: "https://schema.org/FreeReturn"
         },
         offers: {
             "@type": "Offer",
