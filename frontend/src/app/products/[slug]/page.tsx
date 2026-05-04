@@ -47,6 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 description: `Shop ${product.name} - Premium ${category.toLowerCase()} with cash on delivery. Fast shipping across India.`,
                 images: product.image ? [product.image] : [],
             },
+            alternates: {
+                canonical: `https://vorionmart.com/products/${product.slug}`,
+            },
         };
     } catch {
         return {

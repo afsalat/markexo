@@ -13,24 +13,27 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
     const price = product.current_price || product.price || product.our_price || 0;
     const availability = product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
     const sku = product.sku || `VM-${product.id}`;
+    const productUrl = `https://vorionmart.com/products/${product.slug}`;
     
     // Generate structured data for SEO
     const schemaData: any = {
         "@context": "https://schema.org/",
         "@type": "Product",
+        "@id": `${productUrl}#product`,
         name: product.name,
         image: product.image || (product.images && product.images.length > 0 ? product.images[0].image : undefined),
         description: product.description,
         sku: sku,
         mpn: sku,
-        gtin13: sku.length >= 8 && /^\d+$/.test(sku) ? sku : undefined, // Only include if it looks like a GTIN
+        category: product.category?.name,
         brand: {
             "@type": "Brand",
             name: "VorionMart"
         },
         offers: {
             "@type": "Offer",
-            url: `https://vorionmart.com/products/${product.slug}`,
+            "@id": `${productUrl}#offer`,
+            url: productUrl,
             priceCurrency: "INR",
             price: price,
             priceValidUntil: "2026-12-31",
@@ -38,7 +41,9 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
             availability: availability,
             seller: {
                 "@type": "Organization",
-                name: "VorionMart"
+                name: "VorionMart",
+                url: "https://vorionmart.com",
+                logo: "https://vorionmart.com/logo.png"
             },
             shippingDetails: {
                 "@type": "OfferShippingDetails",
@@ -78,6 +83,11 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
         },
     };
 
+    // Add identifier if it looks like a GTIN
+    if (sku.length >= 8 && /^\d+$/.test(sku)) {
+        schemaData.gtin13 = sku;
+    }
+
     // Handle Reviews and AggregateRating
     if (reviews && reviews.length > 0) {
         const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
@@ -106,7 +116,7 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
             reviewBody: review.comment,
             datePublished: review.created_at
         }));
-    } else if (product.rating && product.rating > 0 && product.review_count > 0) {
+    } else if (product.rating && product.rating > 0 && (product.review_count ?? 0) > 0) {
         // Fallback to product level rating ONLY if review_count is also > 0
         schemaData.aggregateRating = {
             "@type": "AggregateRating",
