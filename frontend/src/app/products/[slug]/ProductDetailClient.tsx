@@ -10,7 +10,6 @@ import {
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { fetchProduct, fetchProducts, fetchReviews, createReview, Product, Review } from '@/lib/api';
-import ProductSchema from '@/components/ProductSchema';
 import ProductBenefits from '@/components/ProductBenefits';
 
 type RelatedProductCard = {
@@ -490,11 +489,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
     return (
         <div className="min-h-screen bg-white">
-                {/* Product Schema for SEO */}
-                <ProductSchema
-                    product={productData}
-                    faqs={productData.faq || []}
-                />
+                {/* Breadcrumb */}
 
                 {/* Breadcrumb */}
                 <div className="hidden lg:block bg-gray-50 border-b border-gray-100" data-aos="fade-down" data-aos-delay="0">

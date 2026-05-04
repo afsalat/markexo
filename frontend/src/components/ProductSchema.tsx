@@ -1,61 +1,121 @@
-'use client';
-
-import { Product } from '@/lib/api';
+import { Product, Review } from '@/lib/api';
 
 interface ProductSchemaProps {
     product: Product;
+    reviews?: Review[];
     faqs?: Array<{
         question: string;
         answer: string;
     }>;
 }
 
-export default function ProductSchema({ product, faqs = [] }: ProductSchemaProps) {
+export default function ProductSchema({ product, reviews = [], faqs = [] }: ProductSchemaProps) {
+    const price = product.current_price || product.price || product.our_price || 0;
+    const availability = product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+    const sku = product.sku || `VM-${product.id}`;
+    
     // Generate structured data for SEO
-    const schemaData = {
+    const schemaData: any = {
         "@context": "https://schema.org/",
         "@type": "Product",
         name: product.name,
-        image: product.image || product.images?.[0]?.image,
+        image: product.image || (product.images && product.images.length > 0 ? product.images[0].image : undefined),
         description: product.description,
+        sku: sku,
+        mpn: sku,
+        gtin13: sku.length >= 8 && /^\d+$/.test(sku) ? sku : undefined, // Only include if it looks like a GTIN
         brand: {
             "@type": "Brand",
             name: "VorionMart"
         },
         offers: {
             "@type": "Offer",
+            url: `https://vorionmart.com/products/${product.slug}`,
             priceCurrency: "INR",
-            price: product.current_price || product.price,
-            availability: product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-            priceValidUntil: product.discount_percent > 0 ? undefined : undefined,
+            price: price,
+            priceValidUntil: "2026-12-31",
+            itemCondition: "https://schema.org/NewCondition",
+            availability: availability,
             seller: {
                 "@type": "Organization",
                 name: "VorionMart"
+            },
+            shippingDetails: {
+                "@type": "OfferShippingDetails",
+                shippingRate: {
+                    "@type": "MonetaryAmount",
+                    value: 0,
+                    currency: "INR"
+                },
+                shippingDestination: {
+                    "@type": "DefinedRegion",
+                    addressCountry: "IN"
+                },
+                deliveryTime: {
+                    "@type": "ShippingDeliveryTime",
+                    handlingTime: {
+                        "@type": "QuantitativeValue",
+                        minValue: 0,
+                        maxValue: 1,
+                        unitCode: "d"
+                    },
+                    transitTime: {
+                        "@type": "QuantitativeValue",
+                        minValue: 3,
+                        maxValue: 7,
+                        unitCode: "d"
+                    }
+                }
+            },
+            hasMerchantReturnPolicy: {
+                "@type": "MerchantReturnPolicy",
+                applicableCountry: "IN",
+                returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnPeriod",
+                merchantReturnDays: 7,
+                returnMethod: "https://schema.org/ReturnByMail",
+                returnFees: "https://schema.org/FreeReturn"
             }
         },
-        aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: product.rating || 0,
-            reviewCount: product.review_count || 0,
-            bestRating: "5",
-            worstRating: "1"
-        },
-        additionalProperty: [
-            ...(product.benefits?.map((benefit, index) => ({
-                "@type": "PropertyValue",
-                name: `Benefit ${index + 1}`,
-                value: benefit
-            })) || []),
-            ...(faqs?.map((faq, index) => ({
-                "@type": "Question",
-                name: `FAQ ${index + 1}`,
-                acceptedAnswer: {
-                    "@type": "Answer",
-                    text: faq.answer
-                }
-            })) || [])
-        ]
     };
+
+    // Handle Reviews and AggregateRating
+    if (reviews && reviews.length > 0) {
+        const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+        const avgRating = Number((totalRating / reviews.length).toFixed(1));
+
+        schemaData.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: avgRating,
+            reviewCount: reviews.length,
+            bestRating: 5,
+            worstRating: 1
+        };
+
+        schemaData.review = reviews.slice(0, 5).map(review => ({
+            "@type": "Review",
+            reviewRating: {
+                "@type": "Rating",
+                ratingValue: review.rating,
+                bestRating: 5,
+                worstRating: 1
+            },
+            author: {
+                "@type": "Person",
+                name: review.customer_name || "Verified Customer"
+            },
+            reviewBody: review.comment,
+            datePublished: review.created_at
+        }));
+    } else if (product.rating && product.rating > 0 && product.review_count > 0) {
+        // Fallback to product level rating ONLY if review_count is also > 0
+        schemaData.aggregateRating = {
+            "@type": "AggregateRating",
+            ratingValue: product.rating,
+            reviewCount: product.review_count,
+            bestRating: 5,
+            worstRating: 1
+        };
+    }
 
     return (
         <>

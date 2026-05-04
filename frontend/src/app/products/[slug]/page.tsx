@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
-import { fetchProduct, Product } from '@/lib/api';
+import { fetchProduct, fetchReviews, Product } from '@/lib/api';
 import ProductDetailClient from './ProductDetailClient';
+import ProductSchema from '@/components/ProductSchema';
 import { Metadata } from 'next';
 
 type Props = {
@@ -57,12 +58,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductDetailPage({ params }: Props) {
     let product: Product;
+    let reviews: any[] = [];
 
     try {
         product = await fetchProduct(params.slug);
+        
+        // Pre-fetch reviews on server for Schema.org
+        try {
+            const reviewsRes = await fetchReviews(product.id);
+            reviews = Array.isArray(reviewsRes) ? reviewsRes : (reviewsRes.results || []);
+        } catch (err) {
+            console.error('Error fetching reviews on server:', err);
+        }
     } catch {
         notFound();
     }
 
-    return <ProductDetailClient slug={params.slug} initialProduct={product} />;
+    return (
+        <>
+            <ProductSchema 
+                product={product} 
+                reviews={reviews} 
+                faqs={product.faq || []} 
+            />
+            <ProductDetailClient slug={params.slug} initialProduct={product} />
+        </>
+    );
 }
