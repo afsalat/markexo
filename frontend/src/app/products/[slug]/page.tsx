@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         
         // Extract category for better targeting
         const category = product.category?.name || 'Premium Products';
-        const price = product.price || '0';
+        const displayPrice = product.current_price || product.price || 0;
         const discountText = product.discount_percent > 0 ? ` | ${product.discount_percent}% OFF` : '';
         
         // Include benefits in description for SEO
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             : '';
         
         return {
-            title: `Buy ${product.name} Online | ${category} | ₹${price}${discountText} | COD Available`,
+            title: `Buy ${product.name} Online | ${category} | ₹${displayPrice}${discountText} | COD Available`,
             description: `${product.name} - Premium quality ${category.toLowerCase()} at best price${benefitsText}. Cash on delivery available across India. Fast shipping & easy returns.`,
             keywords: [
                 product.name,
@@ -37,13 +37,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                 ...(product.benefits || []).slice(0, 5)
             ],
             openGraph: {
-                title: `${product.name} | ${category} | ₹${price}${discountText}`,
+                title: `${product.name} | ${category} | ₹${displayPrice}${discountText}`,
                 description: `Shop ${product.name} - Premium ${category.toLowerCase()} with cash on delivery. Fast shipping across India.`,
                 images: product.image ? [product.image] : [],
             },
             twitter: {
                 card: 'summary_large_image',
-                title: `${product.name} | ${category} | ₹${price}${discountText}`,
+                title: `${product.name} | ${category} | ₹${displayPrice}${discountText}`,
                 description: `Shop ${product.name} - Premium ${category.toLowerCase()} with cash on delivery. Fast shipping across India.`,
                 images: product.image ? [product.image] : [],
             },
