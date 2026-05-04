@@ -10,8 +10,8 @@ interface ProductSchemaProps {
 }
 
 export default function ProductSchema({ product, reviews = [], faqs = [] }: ProductSchemaProps) {
-    const price = Number(product.current_price || product.our_price || product.price || 0);
-    const mrp = Number(product.mrp || product.price || price);
+    const priceValue = Number(product.current_price || product.our_price || product.price || 0);
+    const mrp = Number(product.mrp || product.price || priceValue);
     const availability = product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
     const sku = String(product.sku || `VM-${product.id}`);
     const productUrl = `https://vorionmart.com/products/${product.slug}`;
@@ -25,78 +25,89 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
         "@context": "https://schema.org/",
         "@type": "Product",
         "@id": `${productUrl}#product`,
-        name: product.name,
-        image: allImages,
-        description: product.description?.substring(0, 5000),
-        sku: sku,
-        mpn: sku,
-        category: product.category?.name,
-        brand: {
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": productUrl
+        },
+        "url": productUrl,
+        "name": product.name,
+        "image": allImages,
+        "description": product.description?.replace(/<[^>]*>?/gm, '').substring(0, 5000), // Clean HTML and truncate
+        "sku": sku,
+        "mpn": sku,
+        "category": product.category?.name,
+        "brand": {
             "@type": "Brand",
-            name: "VorionMart"
+            "name": "VorionMart"
         },
-        hasMerchantReturnPolicy: {
+        "hasMerchantReturnPolicy": {
             "@type": "MerchantReturnPolicy",
-            applicableCountry: "IN",
-            returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnPeriod",
-            merchantReturnDays: 7,
-            returnMethod: "https://schema.org/ReturnByMail",
-            returnFees: "https://schema.org/FreeReturn"
+            "applicableCountry": "IN",
+            "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnPeriod",
+            "merchantReturnDays": 7,
+            "returnMethod": "https://schema.org/ReturnByMail",
+            "returnFees: ": "https://schema.org/FreeReturn"
         },
-        offers: {
+        "offers": {
             "@type": "Offer",
             "@id": `${productUrl}#offer`,
-            url: productUrl,
-            priceCurrency: "INR",
-            price: price,
-            priceValidUntil: "2026-12-31",
-            itemCondition: "https://schema.org/NewCondition",
-            availability: availability,
-            seller: {
+            "url": productUrl,
+            "priceCurrency": "INR",
+            "price": priceValue.toFixed(2),
+            "priceValidUntil": "2026-12-31",
+            "itemCondition": "https://schema.org/NewCondition",
+            "availability": availability,
+            "seller": {
                 "@type": "Organization",
-                name: "VorionMart",
-                url: "https://vorionmart.com",
-                logo: "https://vorionmart.com/logo.png"
+                "name": "VorionMart",
+                "url": "https://vorionmart.com",
+                "logo": "https://vorionmart.com/logo.png"
             },
-            shippingDetails: {
+            "priceSpecification": {
+                "@type": "PriceSpecification",
+                "price": priceValue.toFixed(2),
+                "priceCurrency": "INR",
+                "valueAddedTaxIncluded": true
+            },
+            "shippingDetails": {
                 "@type": "OfferShippingDetails",
-                shippingRate: {
+                "shippingRate": {
                     "@type": "MonetaryAmount",
-                    value: 0,
-                    currency: "INR"
+                    "value": "0.00",
+                    "currency": "INR"
                 },
-                shippingDestination: {
+                "shippingDestination": {
                     "@type": "DefinedRegion",
-                    addressCountry: "IN"
+                    "addressCountry": "IN"
                 },
-                deliveryTime: {
+                "deliveryTime": {
                     "@type": "ShippingDeliveryTime",
-                    handlingTime: {
+                    "handlingTime": {
                         "@type": "QuantitativeValue",
-                        minValue: 0,
-                        maxValue: 1,
-                        unitCode: "d"
+                        "minValue": 0,
+                        "maxValue": 1,
+                        "unitCode": "d"
                     },
-                    transitTime: {
+                    "transitTime: ": {
                         "@type": "QuantitativeValue",
-                        minValue: 3,
-                        maxValue: 7,
-                        unitCode: "d"
+                        "minValue": 3,
+                        "maxValue": 7,
+                        "unitCode: ": "d"
                     }
                 }
             },
-            hasMerchantReturnPolicy: {
+            "hasMerchantReturnPolicy": {
                 "@type": "MerchantReturnPolicy",
-                applicableCountry: "IN",
-                returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnPeriod",
-                merchantReturnDays: 7,
-                returnMethod: "https://schema.org/ReturnByMail",
-                returnFees: "https://schema.org/FreeReturn"
+                "applicableCountry: ": "IN",
+                "returnPolicyCategory: ": "https://schema.org/MerchantReturnFiniteReturnPeriod",
+                "merchantReturnDays: ": 7,
+                "returnMethod: ": "https://schema.org/ReturnByMail",
+                "returnFees: ": "https://schema.org/FreeReturn"
             }
         },
     };
 
-    // Add identifier if it looks like a GTIN
+    // Add GTIN fallback if SKU looks like one
     if (sku.length >= 8 && /^\d+$/.test(sku)) {
         schemaData.gtin13 = sku;
     }
@@ -111,35 +122,34 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
 
         schemaData.aggregateRating = {
             "@type": "AggregateRating",
-            ratingValue: avgRating,
-            reviewCount: reviews.length,
-            bestRating: 5,
-            worstRating: 1
+            "ratingValue": avgRating,
+            "reviewCount": reviews.length,
+            "bestRating": 5,
+            "worstRating": 1
         };
 
         schemaData.review = reviews.slice(0, 5).map(review => ({
             "@type": "Review",
-            reviewRating: {
+            "reviewRating": {
                 "@type": "Rating",
-                ratingValue: review.rating,
-                bestRating: 5,
-                worstRating: 1
+                "ratingValue": review.rating,
+                "bestRating": 5,
+                "worstRating": 1
             },
-            author: {
+            "author": {
                 "@type": "Person",
-                name: review.customer_name || "Verified Customer"
+                "name": review.customer_name || "Verified Customer"
             },
-            reviewBody: review.comment,
-            datePublished: review.created_at
+            "reviewBody": review.comment,
+            "datePublished": review.created_at
         }));
     } else if (productRating > 0 && productReviewCount > 0) {
-        // Fallback to product level rating ONLY if review_count is also > 0
         schemaData.aggregateRating = {
             "@type": "AggregateRating",
-            ratingValue: productRating,
-            reviewCount: productReviewCount,
-            bestRating: 5,
-            worstRating: 1
+            "ratingValue": productRating,
+            "reviewCount": productReviewCount,
+            "bestRating": 5,
+            "worstRating": 1
         };
     }
 
