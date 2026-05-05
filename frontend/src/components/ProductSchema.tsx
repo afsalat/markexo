@@ -1,4 +1,5 @@
 import { Product, Review } from '@/lib/api';
+import { APP_URL } from '@/config/siteConfig';
 
 interface ProductSchemaProps {
     product: Product;
@@ -14,7 +15,7 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
     const mrp = Number(product.mrp || product.price || priceValue);
     const availability = product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
     const sku = String(product.sku || `VM-${product.id}`);
-    const productUrl = `https://vorionmart.com/products/${product.slug}`;
+    const productUrl = `${APP_URL}/products/${product.slug}`;
     const allImages = [
         product.image,
         ...(product.images || []).map((img: any) => img.image)
@@ -52,8 +53,8 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
             "seller": {
                 "@type": "Organization",
                 "name": "VorionMart",
-                "url": "https://vorionmart.com",
-                "logo": "https://vorionmart.com/logo.png"
+                "url": APP_URL,
+                "logo": `${APP_URL}/logo.png`
             },
             "priceSpecification": {
                 "@type": "PriceSpecification",
@@ -95,7 +96,7 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
                 "merchantReturnDays": 7,
                 "returnMethod": "https://schema.org/ReturnByMail",
                 "returnFees": "https://schema.org/FreeReturn",
-                "url": "https://vorionmart.com/return-refund-policy"
+                "url": `${APP_URL}/return-refund-policy`
             }
         },
     };
