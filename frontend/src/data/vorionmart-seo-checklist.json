@@ -115,7 +115,7 @@
           "description": "Add breadcrumb UI and BreadcrumbList JSON-LD schema on all product and category pages. Format: Home > Category > Subcategory > Product Name. Ensure each breadcrumb item has a valid URL.",
           "category": "technical-seo",
           "priority": "High",
-          "status": "Not Started",
+          "status": "Done",
           "assignee": "Frontend SEO",
           "estimated_impact": "Traffic",
           "difficulty": "Medium"
@@ -263,7 +263,7 @@
           "description": "Add complete Product structured data: name, image, description, sku, brand, offers (price, priceCurrency: INR, availability, url), aggregateRating (only if real reviews exist). Validate each page with Google's Rich Results Test.",
           "category": "product-seo",
           "priority": "Critical",
-          "status": "Not Started",
+          "status": "Done",
           "assignee": "Frontend SEO",
           "estimated_impact": "Indexing",
           "difficulty": "Medium"
@@ -274,7 +274,7 @@
           "description": "Include Offer schema with: price, priceCurrency (INR), availability (InStock/OutOfStock), seller (Vorionmart), itemCondition (NewCondition), priceValidUntil, and shippingDetails. Update availability dynamically based on actual stock.",
           "category": "product-seo",
           "priority": "High",
-          "status": "Not Started",
+          "status": "Done",
           "assignee": "Frontend SEO",
           "estimated_impact": "Traffic",
           "difficulty": "Medium"
@@ -847,7 +847,7 @@
           "description": "Ensure all products have: correct pricing in INR, availability status, product images meeting Google's requirements, and GTIN/MPN when available. Submit product feed to Google Merchant Center for free listing eligibility.",
           "category": "growth-tasks",
           "priority": "Critical",
-          "status": "Not Started",
+          "status": "Done",
           "assignee": "Growth + Backend",
           "estimated_impact": "Traffic",
           "difficulty": "Hard"

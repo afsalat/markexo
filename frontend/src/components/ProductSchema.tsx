@@ -40,21 +40,13 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
             "@type": "Brand",
             "name": "VorionMart"
         },
-        "hasMerchantReturnPolicy": {
-            "@type": "MerchantReturnPolicy",
-            "applicableCountry": "IN",
-            "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnPeriod",
-            "merchantReturnDays": 7,
-            "returnMethod": "https://schema.org/ReturnByMail",
-            "returnFees: ": "https://schema.org/FreeReturn"
-        },
         "offers": {
             "@type": "Offer",
             "@id": `${productUrl}#offer`,
             "url": productUrl,
             "priceCurrency": "INR",
             "price": priceValue.toFixed(2),
-            "priceValidUntil": "2026-12-31",
+            "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
             "itemCondition": "https://schema.org/NewCondition",
             "availability": availability,
             "seller": {
@@ -73,7 +65,7 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
                 "@type": "OfferShippingDetails",
                 "shippingRate": {
                     "@type": "MonetaryAmount",
-                    "value": "0.00",
+                    "value": (priceValue >= 500 ? 0 : 49).toFixed(2),
                     "currency": "INR"
                 },
                 "shippingDestination": {
@@ -88,21 +80,22 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
                         "maxValue": 1,
                         "unitCode": "d"
                     },
-                    "transitTime: ": {
+                    "transitTime": {
                         "@type": "QuantitativeValue",
                         "minValue": 3,
                         "maxValue": 7,
-                        "unitCode: ": "d"
+                        "unitCode": "DAY"
                     }
                 }
             },
             "hasMerchantReturnPolicy": {
                 "@type": "MerchantReturnPolicy",
-                "applicableCountry: ": "IN",
-                "returnPolicyCategory: ": "https://schema.org/MerchantReturnFiniteReturnPeriod",
-                "merchantReturnDays: ": 7,
-                "returnMethod: ": "https://schema.org/ReturnByMail",
-                "returnFees: ": "https://schema.org/FreeReturn"
+                "applicableCountry": "IN",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                "merchantReturnDays": 7,
+                "returnMethod": "https://schema.org/ReturnByMail",
+                "returnFees": "https://schema.org/FreeReturn",
+                "url": "https://vorionmart.com/return-refund-policy"
             }
         },
     };

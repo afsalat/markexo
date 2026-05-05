@@ -9,7 +9,7 @@
     <g:id>{{ product.id }}</g:id>
     <g:title>{{ product.name }}</g:title>
     <g:description>{{ product.description|default:product.name|striptags }}</g:description>
-    <g:link>{{ frontend_url }}/product/{{ product.slug }}</g:link>
+    <g:link>{{ frontend_url }}/products/{{ product.slug }}</g:link>
     {% if product.image %}
     <g:image_link>{{ base_url }}{{ product.image.url }}</g:image_link>
     {% endif %}
