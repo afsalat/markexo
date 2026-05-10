@@ -16,8 +16,15 @@ class GeminiBlogService:
         self.backup_model = "deepseek/deepseek-chat"
         self.url = "https://openrouter.ai/api/v1/chat/completions"
 
-    def _call_openrouter(self, messages, model=None):
-        """Helper to make OpenRouter API calls with retry logic."""
+    # Ordered list of free fallback models to try when paid models fail
+    FREE_MODELS = [
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "google/gemma-4-31b-it:free",
+        "deepseek/deepseek-r1:free",
+    ]
+
+    def _call_openrouter(self, messages, model=None, _is_fallback=False):
+        """Helper to make OpenRouter API calls with retry logic and smart fallback."""
         if not self.api_key:
             return None, "OpenRouter API Key not configured."
 
@@ -53,6 +60,16 @@ class GeminiBlogService:
                     except:
                         logger.warning(f"OpenRouter Raw Body: {response.text}")
                 
+                # --- 402 Payment Required: skip retries, go straight to free models ---
+                if response.status_code == 402:
+                    logger.warning("OpenRouter: Insufficient credits (402). Falling back to free models.")
+                    return self._try_free_models(messages)
+                
+                # --- 404 Not Found: model doesn't exist, skip retries ---
+                if response.status_code == 404:
+                    logger.warning(f"OpenRouter: Model '{target_model}' not found (404). Skipping.")
+                    break  # exit retry loop, fall through to fallback logic below
+
                 if response.status_code == 429:
                     wait_time = (attempt + 1) * 10
                     logger.warning(f"OpenRouter Rate Limited. Retrying in {wait_time}s...")
@@ -68,21 +85,41 @@ class GeminiBlogService:
                 response.raise_for_status()
                 return response.json(), None
 
+            except requests.exceptions.HTTPError as e:
+                logger.warning(f"OpenRouter Attempt {attempt + 1} HTTP error: {str(e)}")
+                # Don't retry on 402/404 — already handled above
+                if attempt == max_retries - 1:
+                    break
+                time.sleep(5)
+
             except Exception as e:
                 logger.warning(f"OpenRouter Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == max_retries - 1:
-                    # Try backup model on last attempt if primary fails
-                    if target_model == self.model:
-                        logger.info(f"Switching to backup model: {self.backup_model}")
-                        return self._call_openrouter(messages, model=self.backup_model)
-                    elif target_model == self.backup_model:
-                        free_model = "mistralai/mistral-7b-instruct:free"
-                        logger.info(f"Switching to free model: {free_model}")
-                        return self._call_openrouter(messages, model=free_model)
-                    return None, f"OpenRouter Error: {str(e)}"
+                    break
                 time.sleep(5)
         
-        return None, "Failed after max retries."
+        # --- Fallback chain (only if this wasn't already a fallback call) ---
+        if _is_fallback:
+            return None, f"OpenRouter Error: Free model '{target_model}' also failed."
+
+        if target_model == self.model:
+            logger.info(f"Primary model failed. Switching to backup: {self.backup_model}")
+            return self._call_openrouter(messages, model=self.backup_model)
+        elif target_model == self.backup_model:
+            logger.info("Backup model failed. Trying free models...")
+            return self._try_free_models(messages)
+        
+        return None, "All models failed after max retries."
+
+    def _try_free_models(self, messages):
+        """Try each free model in order until one succeeds."""
+        for free_model in self.FREE_MODELS:
+            logger.info(f"Trying free model: {free_model}")
+            result, error = self._call_openrouter(messages, model=free_model, _is_fallback=True)
+            if result is not None:
+                return result, None
+            logger.warning(f"Free model {free_model} failed: {error}")
+        return None, "All models (paid + free) exhausted. Please add OpenRouter credits or check model availability."
 
     def generate_keywords_and_outline(self, product_name, description, category):
         """Generates target topic and primary keyword from product info."""
