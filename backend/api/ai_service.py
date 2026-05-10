@@ -71,6 +71,11 @@ class GeminiBlogService:
                     break  # exit retry loop, fall through to fallback logic below
 
                 if response.status_code == 429:
+                    # If this is a free fallback model, don't waste time retrying —
+                    # skip immediately to the next free model in the list
+                    if _is_fallback:
+                        logger.warning(f"OpenRouter: Free model '{target_model}' rate-limited (429). Skipping to next.")
+                        break
                     wait_time = (attempt + 1) * 10
                     logger.warning(f"OpenRouter Rate Limited. Retrying in {wait_time}s...")
                     time.sleep(wait_time)
