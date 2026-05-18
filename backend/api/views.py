@@ -1955,6 +1955,26 @@ class BlogPostViewSet(viewsets.ModelViewSet):
     serializer_class = BlogPostSerializer
     lookup_field = 'slug'
 
+    def get_queryset(self):
+        queryset = BlogPost.objects.all()
+
+        product_id = self.request.query_params.get('product_id') or self.request.query_params.get('related_product')
+        if product_id:
+            queryset = queryset.filter(related_products__id=product_id)
+
+        is_published = self.request.query_params.get('is_published')
+        if is_published is not None:
+            queryset = queryset.filter(is_published=is_published.lower() in ['1', 'true', 'yes'])
+
+        limit = self.request.query_params.get('limit')
+        if limit:
+            try:
+                return queryset[:max(0, int(limit))]
+            except (TypeError, ValueError):
+                pass
+
+        return queryset
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
@@ -1988,7 +2008,8 @@ class BlogPostViewSet(viewsets.ModelViewSet):
                 meta_title=blog_data['title'],
                 meta_description=blog_data.get('meta_description', ''),
                 keywords=blog_data.get('keywords', []),
-                ai_generated=True
+                ai_generated=True,
+                is_published=True
             )
             blog_post.related_products.add(product)
             
@@ -1997,4 +2018,3 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Blog generation error for product {product_id}: {str(e)}", exc_info=True)
             return Response({"error": f"Blog generation failed: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-

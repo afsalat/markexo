@@ -23,13 +23,16 @@ interface FAQ {
 }
 
 interface BlogPost {
+    id?: number;
+    slug?: string;
     title: string;
     content: string;
-    products: string[];
-    category?: string;
+    keywords?: string[];
     tags?: string[];
     meta_title?: string;
     meta_description?: string;
+    is_published?: boolean;
+    ai_generated?: boolean;
 }
 
 type QuickAddPanel = 'shop' | 'category' | null;
@@ -243,7 +246,7 @@ export default function ProductForm({
     const [openDropdown, setOpenDropdown] = useState<SearchDropdown>(null);
     const [quickFillInput, setQuickFillInput] = useState('');
     const [quickFillMessage, setQuickFillMessage] = useState<QuickFillMessage | null>(null);
-    const [blogPost, setBlogPost] = useState<BlogPost>({ title: '', content: '', products: [], tags: [] });
+    const [blogPost, setBlogPost] = useState<BlogPost>({ title: '', content: '', tags: [] });
     const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([{ question: '', answer: '' }]);
 
     const [formData, setFormData] = useState({
@@ -320,6 +323,110 @@ export default function ProductForm({
 
                 return acc;
             }, {} as Record<string, string>);
+    };
+
+    const escapeHtml = (value: string) => (
+        value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+    );
+
+    const getCompletedFaqs = () => (
+        faqs
+            .map((faq) => ({
+                question: faq.question.trim(),
+                answer: faq.answer.trim(),
+            }))
+            .filter((faq) => faq.question && faq.answer)
+    );
+
+    const buildBlogContent = () => {
+        const completedFaqs = getCompletedFaqs();
+        const trimmedContent = blogPost.content.trim();
+
+        if (completedFaqs.length === 0) {
+            return trimmedContent;
+        }
+
+        const faqHtml = completedFaqs
+            .map((faq) => `<h3>${escapeHtml(faq.question)}</h3>\n<p>${escapeHtml(faq.answer)}</p>`)
+            .join('\n');
+
+        return `${trimmedContent}\n\n<h2>FAQ Section</h2>\n${faqHtml}`;
+    };
+
+    const buildBlogExcerpt = (content: string) => {
+        const plainText = content
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        return plainText.slice(0, 180);
+    };
+
+    const hasBlogPostContent = () => Boolean(blogPost.title.trim() && blogPost.content.trim());
+
+    const saveProductBlogPost = async (product: Product) => {
+        const content = buildBlogContent();
+        const blogPayload = {
+            title: blogPost.title.trim(),
+            content,
+            excerpt: buildBlogExcerpt(content),
+            meta_title: blogPost.meta_title?.trim() || blogPost.title.trim(),
+            meta_description: blogPost.meta_description?.trim() || buildBlogExcerpt(content),
+            keywords: blogPost.tags || blogPost.keywords || [],
+            related_products: [product.id],
+            is_published: true,
+            ai_generated: blogPost.ai_generated ?? false,
+        };
+        const response = await fetch(blogPost.slug ? `${API_BASE_URL}/blog/${blogPost.slug}/` : `${API_BASE_URL}/blog/`, {
+            method: blogPost.slug ? 'PATCH' : 'POST',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(blogPayload),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(typeof payload === 'string' ? payload : JSON.stringify(payload));
+        }
+
+        return payload;
+    };
+
+    const loadProductBlogPost = async (nextProductId: number) => {
+        const response = await fetch(`${API_BASE_URL}/blog/?product_id=${nextProductId}&limit=1`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            console.error('Failed to fetch linked blog:', response.status);
+            return;
+        }
+
+        const payload = await response.json();
+        const blogs = extractList<BlogPost>(payload);
+        const linkedBlog = blogs[0];
+
+        if (!linkedBlog) {
+            setBlogPost({ title: '', content: '', tags: [] });
+            return;
+        }
+
+        setBlogPost({
+            ...linkedBlog,
+            title: linkedBlog.title || '',
+            content: linkedBlog.content || '',
+            tags: linkedBlog.tags || linkedBlog.keywords || [],
+        });
     };
 
     const getSelectedCategoryLabel = () => {
@@ -437,6 +544,8 @@ export default function ProductForm({
                     gallery_images: [],
                     specificationsText: stringifySpecifications((product as Product & { specifications?: Record<string, unknown> }).specifications),
                 });
+
+                await loadProductBlogPost(product.id);
             } catch (error) {
                 console.error('Error loading product:', error);
             }
@@ -627,7 +736,17 @@ export default function ProductForm({
             });
 
             if (response.ok) {
-                alert(productId ? 'Product updated successfully!' : 'Product created successfully!');
+                const savedProduct: Product = await response.json();
+                const saveBlog = hasBlogPostContent();
+
+                if (saveBlog) {
+                    await saveProductBlogPost(savedProduct);
+                }
+
+                alert(saveBlog
+                    ? `${productId ? 'Product updated' : 'Product created'} and blog published successfully!`
+                    : `${productId ? 'Product updated' : 'Product created'} successfully!`
+                );
                 onSuccess();
             } else {
                 const errorData = await response.json().catch(() => ({}));

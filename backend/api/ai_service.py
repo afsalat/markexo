@@ -158,20 +158,39 @@ class GeminiBlogService:
     def generate_complete_blog(self, product):
         """Main method to generate a full blog using the Master Prompt."""
         try:
+            # Gather product details for the prompt
+            product_name = product.name
+            product_slug = getattr(product, 'slug', '')
+            product_price = getattr(product, 'selling_price', None) or getattr(product, 'price', '')
+            product_description = product.description or ''
+            product_category = product.category.name if product.category else "General"
+            product_url = f"https://vorionmart.com/products/{product_slug}" if product_slug else ""
+
             # Step 1: Get Topic and Keyword
             topic, keyword, error = self.generate_keywords_and_outline(
-                product.name, product.description, product.category.name if product.category else "General"
+                product_name, product_description, product_category
             )
             
             if error:
                 return None, f"Keyword generation failed: {error}"
 
-            # Step 2: Use Master Prompt
+            # Step 2: Use Master Prompt with full product context
             master_prompt_template = """
-            You are an expert SEO content writer for an eCommerce website (VorionMart).
-            Write a high-quality, human-like, and VERY DETAILED blog article based on the details below.
+            You are an expert SEO content writer for an eCommerce website called VorionMart (https://vorionmart.com).
+            Write a high-quality, human-like, and VERY DETAILED blog article that prominently features a specific product.
 
-            🔹 Topic: {topic}
+            ========================
+            📦 PRODUCT DETAILS (USE THESE THROUGHOUT THE BLOG):
+
+            - Product Name: "{product_name}"
+            - Category: {product_category}
+            - Price: ₹{product_price}
+            - Product Page URL: {product_url}
+            - Description: {product_description}
+
+            ========================
+
+            🔹 Blog Topic: {topic}
             🔹 Target Audience: Indian online shoppers
             🔹 Language: English (simple, engaging)
             🔹 Tone: Professional + friendly
@@ -179,28 +198,43 @@ class GeminiBlogService:
 
             ========================
 
-            📌 REQUIREMENTS:
+            📌 CRITICAL — PRODUCT MENTION RULES:
 
-            1. SEO Optimized Title (max 60 characters)
-            2. Meta Description (150–160 characters)
-            3. URL Slug (SEO friendly)
-            4. Excerpt: A 2-sentence catchy summary for the blog listing page.
-            5. Introduction: Engaging, hook-based, identifying the shopper's pain points.
+            ⚠️ The blog MUST prominently mention "{product_name}" by its EXACT name. This is NOT optional.
+            - The blog TITLE must include the product name "{product_name}" or a close reference.
+            - The INTRODUCTION must name-drop "{product_name}" within the first 2 paragraphs.
+            - Include a dedicated PRODUCT SPOTLIGHT section (H2 heading) that:
+              • Describes "{product_name}" in detail using the product description above.
+              • Mentions the price (₹{product_price}).
+              • Includes a clear call-to-action link: <a href="{product_url}">Buy {product_name} on VorionMart</a>
+            - The CONCLUSION must mention "{product_name}" with a final CTA to buy it.
+            - Throughout the article, naturally mention "{product_name}" by name at least 5 times.
+            - DO NOT write a generic article. This blog is specifically about THIS product.
+
+            ========================
+
+            📌 CONTENT REQUIREMENTS:
+
+            1. SEO Optimized Title (max 60 characters) — must include the product name.
+            2. Meta Description (150–160 characters) — must mention "{product_name}" and VorionMart.
+            3. URL Slug (SEO friendly, include product name).
+            4. Excerpt: A 2-sentence catchy summary mentioning the product.
+            5. Introduction: Engaging, hook-based, identifying the shopper's pain points, then introduce "{product_name}" as the solution.
             6. Content Body: 
                - Use proper H2 & H3 headings.
-               - Deeply analyze the features and benefits of the product.
-               - Include a "Buying Guide" or "Why this matters" section.
+               - Include a "Product Spotlight" or "Why {product_name} Stands Out" section.
+               - Deeply analyze the features and benefits specific to this product.
+               - Include a "Buying Guide" or "Why This Product Matters" section.
                - Use bullet points and bold text for readability.
-            7. Product Context: Explicitly refer to "{product_name}" available on VorionMart.
-            8. Internal Linking: Add 2-3 suggestions like "Check our latest collection" or "View more from this category".
-            9. FAQ Section (MANDATORY): Include exactly 5 questions and answers at the end of the content body. Use <h3> for questions and <p> for answers.
-            10. Conclusion: Strong summary with a clear CTA (Buy Now / Explore Products).
+            7. Internal Linking: Include a link to the product page ({product_url}). Add 2-3 suggestions like "Explore more in {product_category}" or "Check our latest collection on VorionMart".
+            8. FAQ Section (MANDATORY): Include exactly 5 questions and answers about "{product_name}" at the end of the content body. Use <h3> for questions and <p> for answers.
+            9. Conclusion: Strong summary recommending "{product_name}" with a CTA linking to {product_url}.
 
             ========================
 
             📌 SEO RULES:
 
-            - Use primary keyword: {keyword}
+            - Primary keyword: {keyword}
             - Maintain keyword density naturally.
             - Add related keywords.
             - Write 100% unique content.
@@ -210,14 +244,14 @@ class GeminiBlogService:
             📌 OUTPUT FORMAT (STRICT JSON):
 
             {{
-              "title": "SEO Title",
-              "meta_description": "Meta description here",
-              "slug": "url-slug-here",
-              "excerpt": "Short excerpt here",
-              "content": "Full HTML formatted blog content using <h2>, <h3>, <p>, <ul>, <li> tags. Include the FAQ section inside this content string. DO NOT use markdown code blocks inside this string.",
+              "title": "SEO Title mentioning the product",
+              "meta_description": "Meta description mentioning the product and VorionMart",
+              "slug": "url-slug-with-product-name",
+              "excerpt": "Short excerpt mentioning the product",
+              "content": "Full HTML formatted blog content using <h2>, <h3>, <p>, <ul>, <li>, <a> tags. Include the product spotlight and FAQ sections inside this content string. DO NOT use markdown code blocks inside this string.",
               "faqs": [
-                {{"question": "Q1", "answer": "A1"}},
-                {{"question": "Q2", "answer": "A2"}}
+                {{"question": "Q1 about the product", "answer": "A1"}},
+                {{"question": "Q2 about the product", "answer": "A2"}}
               ]
             }}
             """
@@ -225,7 +259,11 @@ class GeminiBlogService:
             final_prompt = master_prompt_template.format(
                 topic=topic,
                 keyword=keyword,
-                product_name=product.name
+                product_name=product_name,
+                product_category=product_category,
+                product_price=product_price,
+                product_url=product_url,
+                product_description=product_description[:500]  # Truncate to avoid token overflow
             )
 
             result, error = self._call_openrouter([{"role": "user", "content": final_prompt}])

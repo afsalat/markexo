@@ -52,9 +52,19 @@ export default function Footer() {
                         </p>
                         <div className="flex gap-3">
                             <a
-                                href="https://www.instagram.com/vorionnexus"
+                                href="https://www.facebook.com/vorionmart"
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                aria-label="VorionMart on Facebook"
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
+                            >
+                                <Facebook size={18} />
+                            </a>
+                            <a
+                                href="https://www.instagram.com/vorionmart"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="VorionMart on Instagram"
                                 className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
                             >
                                 <Instagram size={18} />

@@ -99,6 +99,7 @@ export interface BlogPost {
     is_published: boolean;
     meta_title?: string;
     meta_description?: string;
+    keywords?: string[];
     products?: string[]; // Array of product slugs
     related_products?: string[]; // Backend name
     category?: string;
@@ -715,4 +716,3 @@ export async function deleteBlogPost(id: number) {
     });
     if (!res.ok) throw new Error('Failed to delete blog post');
 }
-

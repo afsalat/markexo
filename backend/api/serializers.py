@@ -1269,13 +1269,15 @@ class BlogPostSerializer(serializers.ModelSerializer):
     """Serializer for blog posts."""
     featured_image_url = serializers.SerializerMethodField()
     related_products_data = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
+    products = serializers.SerializerMethodField()
 
     class Meta:
         model = BlogPost
         fields = [
             'id', 'title', 'slug', 'content', 'excerpt', 'meta_title', 
             'meta_description', 'keywords', 'featured_image', 'featured_image_url',
-            'related_products', 'related_products_data', 'author', 'is_published', 
+            'related_products', 'related_products_data', 'products', 'tags', 'author', 'is_published', 
             'ai_generated', 'views', 'created_at', 'updated_at', 'published_at'
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'published_at']
@@ -1290,3 +1292,9 @@ class BlogPostSerializer(serializers.ModelSerializer):
         from .serializers import ProductListSerializer
         serializer = ProductListSerializer(obj.related_products.all(), many=True, context=self.context)
         return serializer.data
+
+    def get_tags(self, obj):
+        return obj.keywords or []
+
+    def get_products(self, obj):
+        return list(obj.related_products.values_list('slug', flat=True))
