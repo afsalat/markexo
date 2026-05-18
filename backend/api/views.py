@@ -1962,6 +1962,15 @@ class BlogPostViewSet(viewsets.ModelViewSet):
         if product_id:
             queryset = queryset.filter(related_products__id=product_id)
 
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(excerpt__icontains=search) |
+                Q(keywords__icontains=search)
+            )
+
         is_published = self.request.query_params.get('is_published')
         if is_published is not None:
             queryset = queryset.filter(is_published=is_published.lower() in ['1', 'true', 'yes'])

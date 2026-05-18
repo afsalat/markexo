@@ -495,25 +495,43 @@ export default function ProductForm({
     };
 
     const loadProductBlogPost = async (product: Product) => {
-        const response = await fetch(`${API_BASE_URL}/blog/?product_id=${product.id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const headers = {
+            Authorization: `Bearer ${token}`,
+        };
+        const normalizedProductName = normalizeSearchText(product.name || '');
+        const blogResponses = await Promise.all([
+            fetch(`${API_BASE_URL}/blog/?product_id=${product.id}`, { headers }),
+            normalizedProductName
+                ? fetch(`${API_BASE_URL}/blog/?search=${encodeURIComponent(product.name)}&limit=20`, { headers })
+                : Promise.resolve(null),
+        ]);
+        const failedResponse = blogResponses.find((response) => response && !response.ok);
 
-        if (!response.ok) {
-            console.error('Failed to fetch linked blog:', response.status);
+        if (failedResponse) {
+            console.error('Failed to fetch product blogs:', failedResponse.status);
             return;
         }
 
-        const payload = await response.json();
-        const blogs = extractList<BlogPost>(payload)
-            .filter((blog) => Array.isArray(blog.related_products)
-                ? blog.related_products.includes(product.id)
-                : true
-            );
-        const normalizedProductName = normalizeSearchText(product.name || '');
-        const linkedBlog = blogs.find((blog) => normalizeSearchText(blog.title || '').includes(normalizedProductName))
+        const blogPayloads = await Promise.all(blogResponses.map((response) => (
+            response ? response.json() : Promise.resolve([])
+        )));
+        const blogMap = new Map<string | number, BlogPost>();
+
+        blogPayloads
+            .flatMap((payload) => extractList<BlogPost>(payload))
+            .forEach((blog) => {
+                const isLinked = Array.isArray(blog.related_products) && blog.related_products.includes(product.id);
+                const matchesProduct = normalizeSearchText(blog.title || '').includes(normalizedProductName)
+                    || normalizeSearchText(blog.content || '').includes(normalizedProductName);
+
+                if (isLinked || matchesProduct) {
+                    blogMap.set(blog.slug || blog.id || blog.title, blog);
+                }
+            });
+
+        const blogs = Array.from(blogMap.values());
+        const linkedBlog = blogs.find((blog) => Array.isArray(blog.related_products) && blog.related_products.includes(product.id))
+            || blogs.find((blog) => normalizeSearchText(blog.title || '').includes(normalizedProductName))
             || blogs.sort((a, b) => {
                 const aDate = new Date(a.updated_at || '').getTime() || 0;
                 const bDate = new Date(b.updated_at || '').getTime() || 0;
