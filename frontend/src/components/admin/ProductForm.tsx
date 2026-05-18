@@ -28,11 +28,13 @@ interface BlogPost {
     title: string;
     content: string;
     keywords?: string[];
+    related_products?: number[];
     tags?: string[];
     meta_title?: string;
     meta_description?: string;
     is_published?: boolean;
     ai_generated?: boolean;
+    updated_at?: string;
 }
 
 type QuickAddPanel = 'shop' | 'category' | null;
@@ -247,6 +249,7 @@ export default function ProductForm({
     const [quickFillInput, setQuickFillInput] = useState('');
     const [quickFillMessage, setQuickFillMessage] = useState<QuickFillMessage | null>(null);
     const [blogPost, setBlogPost] = useState<BlogPost>({ title: '', content: '', tags: [] });
+    const [linkedBlogs, setLinkedBlogs] = useState<BlogPost[]>([]);
     const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([{ question: '', answer: '' }]);
 
     const [formData, setFormData] = useState({
@@ -334,6 +337,59 @@ export default function ProductForm({
             .replace(/'/g, '&#39;')
     );
 
+    const decodeHtml = (value: string) => {
+        if (typeof window === 'undefined') {
+            return value
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = value;
+        return textarea.value;
+    };
+
+    const stripHtml = (value: string) => decodeHtml(
+        value
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .trim()
+    );
+
+    const splitBlogContentAndFaqs = (content: string) => {
+        const faqHeadingMatch = content.match(/<h2[^>]*>\s*FAQ(?:\s+Section)?\s*<\/h2>/i);
+
+        if (!faqHeadingMatch || faqHeadingMatch.index === undefined) {
+            return {
+                mainContent: content,
+                parsedFaqs: [{ question: '', answer: '' }],
+            };
+        }
+
+        const faqStart = faqHeadingMatch.index;
+        const afterHeadingIndex = faqStart + faqHeadingMatch[0].length;
+        const afterHeading = content.slice(afterHeadingIndex);
+        const nextH2Match = afterHeading.match(/<h2[^>]*>/i);
+        const faqBody = nextH2Match ? afterHeading.slice(0, nextH2Match.index) : afterHeading;
+        const remainingContent = nextH2Match ? afterHeading.slice(nextH2Match.index) : '';
+        const parsedFaqs = Array.from(faqBody.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/gi))
+            .map((match) => ({
+                question: stripHtml(match[1]),
+                answer: stripHtml(match[2]),
+            }))
+            .filter((faq) => faq.question && faq.answer);
+
+        return {
+            mainContent: `${content.slice(0, faqStart).trim()}${remainingContent ? `\n\n${remainingContent.trim()}` : ''}`.trim(),
+            parsedFaqs: parsedFaqs.length > 0 ? parsedFaqs : [{ question: '', answer: '' }],
+        };
+    };
+
     const getCompletedFaqs = () => (
         faqs
             .map((faq) => ({
@@ -345,17 +401,17 @@ export default function ProductForm({
 
     const buildBlogContent = () => {
         const completedFaqs = getCompletedFaqs();
-        const trimmedContent = blogPost.content.trim();
+        const { mainContent } = splitBlogContentAndFaqs(blogPost.content.trim());
 
         if (completedFaqs.length === 0) {
-            return trimmedContent;
+            return mainContent;
         }
 
         const faqHtml = completedFaqs
             .map((faq) => `<h3>${escapeHtml(faq.question)}</h3>\n<p>${escapeHtml(faq.answer)}</p>`)
             .join('\n');
 
-        return `${trimmedContent}\n\n<h2>FAQ Section</h2>\n${faqHtml}`;
+        return `${mainContent}\n\n<h2>FAQ Section</h2>\n${faqHtml}`;
     };
 
     const buildBlogExcerpt = (content: string) => {
@@ -367,7 +423,19 @@ export default function ProductForm({
         return plainText.slice(0, 180);
     };
 
-    const hasBlogPostContent = () => Boolean(blogPost.title.trim() && blogPost.content.trim());
+    const hasBlogPostContent = () => Boolean(blogPost.title.trim() && (blogPost.content.trim() || getCompletedFaqs().length > 0));
+
+    const applyLinkedBlogToForm = (linkedBlog: BlogPost) => {
+        const { mainContent, parsedFaqs } = splitBlogContentAndFaqs(linkedBlog.content || '');
+
+        setBlogPost({
+            ...linkedBlog,
+            title: linkedBlog.title || '',
+            content: mainContent,
+            tags: linkedBlog.tags || linkedBlog.keywords || [],
+        });
+        setFaqs(parsedFaqs);
+    };
 
     const saveProductBlogPost = async (product: Product) => {
         const content = buildBlogContent();
@@ -397,11 +465,37 @@ export default function ProductForm({
             throw new Error(typeof payload === 'string' ? payload : JSON.stringify(payload));
         }
 
+        const { mainContent, parsedFaqs } = splitBlogContentAndFaqs(payload.content || content);
+        setBlogPost({
+            ...payload,
+            title: payload.title || blogPost.title,
+            content: mainContent,
+            tags: payload.tags || payload.keywords || blogPost.tags || [],
+        });
+        setFaqs(parsedFaqs);
+        setLinkedBlogs((currentBlogs) => {
+            const savedBlog = {
+                ...payload,
+                title: payload.title || blogPost.title,
+                content: payload.content || content,
+                tags: payload.tags || payload.keywords || blogPost.tags || [],
+            };
+            const existingIndex = currentBlogs.findIndex((blog) => (
+                (payload.slug && blog.slug === payload.slug) || (payload.id && blog.id === payload.id)
+            ));
+
+            if (existingIndex === -1) {
+                return [...currentBlogs, savedBlog];
+            }
+
+            return currentBlogs.map((blog, index) => (index === existingIndex ? savedBlog : blog));
+        });
+
         return payload;
     };
 
-    const loadProductBlogPost = async (nextProductId: number) => {
-        const response = await fetch(`${API_BASE_URL}/blog/?product_id=${nextProductId}&limit=1`, {
+    const loadProductBlogPost = async (product: Product) => {
+        const response = await fetch(`${API_BASE_URL}/blog/?product_id=${product.id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -413,20 +507,28 @@ export default function ProductForm({
         }
 
         const payload = await response.json();
-        const blogs = extractList<BlogPost>(payload);
-        const linkedBlog = blogs[0];
+        const blogs = extractList<BlogPost>(payload)
+            .filter((blog) => Array.isArray(blog.related_products)
+                ? blog.related_products.includes(product.id)
+                : true
+            );
+        const normalizedProductName = normalizeSearchText(product.name || '');
+        const linkedBlog = blogs.find((blog) => normalizeSearchText(blog.title || '').includes(normalizedProductName))
+            || blogs.sort((a, b) => {
+                const aDate = new Date(a.updated_at || '').getTime() || 0;
+                const bDate = new Date(b.updated_at || '').getTime() || 0;
+                return bDate - aDate;
+            })[0];
 
         if (!linkedBlog) {
             setBlogPost({ title: '', content: '', tags: [] });
+            setLinkedBlogs([]);
+            setFaqs([{ question: '', answer: '' }]);
             return;
         }
 
-        setBlogPost({
-            ...linkedBlog,
-            title: linkedBlog.title || '',
-            content: linkedBlog.content || '',
-            tags: linkedBlog.tags || linkedBlog.keywords || [],
-        });
+        setLinkedBlogs(blogs);
+        applyLinkedBlogToForm(linkedBlog);
     };
 
     const getSelectedCategoryLabel = () => {
@@ -545,7 +647,7 @@ export default function ProductForm({
                     specificationsText: stringifySpecifications((product as Product & { specifications?: Record<string, unknown> }).specifications),
                 });
 
-                await loadProductBlogPost(product.id);
+                await loadProductBlogPost(product);
             } catch (error) {
                 console.error('Error loading product:', error);
             }
@@ -1672,6 +1774,31 @@ Country of Origin: India`}
                         </div>
                         
                         <div className="space-y-4">
+                            {linkedBlogs.length > 1 && (
+                                <div>
+                                    <label className="block text-sm font-medium text-silver-300 mb-1">Select Linked Blog</label>
+                                    <select
+                                        value={blogPost.slug || ''}
+                                        onChange={(e) => {
+                                            const selectedBlog = linkedBlogs.find((blog) => blog.slug === e.target.value);
+                                            if (selectedBlog) {
+                                                applyLinkedBlogToForm(selectedBlog);
+                                            }
+                                        }}
+                                        className="w-full px-4 py-2 border border-dark-600 rounded-lg outline-none text-white bg-dark-700"
+                                    >
+                                        {linkedBlogs.map((blog) => (
+                                            <option key={blog.slug || blog.id} value={blog.slug || ''}>
+                                                {blog.title || `Blog #${blog.id}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="mt-1 text-xs text-silver-500">
+                                        This product has multiple linked blogs. Choose the one you want to edit.
+                                    </p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium text-silver-300 mb-1">Blog Title</label>
                                 <input
