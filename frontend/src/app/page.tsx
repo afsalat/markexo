@@ -4,7 +4,7 @@ import HomePage from './HomeClient';
 export const metadata: Metadata = {
     title: 'VorionMart - Premium D2C Store | Pay on Delivery',
     description: 'Shop premium products with Cash on Delivery. Trusted, secure, and delivered to your doorstep. Pay when you receive. No hassle, pure convenience.',
-    keywords: ['ecommerce', 'cash on delivery', 'COD shopping', 'online store', 'premium products', 'pay on delivery', 'trusted shopping', 'India delivery'],
+    keywords: ['VorionMart', 'Vorion Mart', 'ecommerce', 'cash on delivery', 'COD shopping', 'online store', 'premium products', 'pay on delivery', 'trusted shopping', 'India delivery'],
     alternates: {
         canonical: '/',
     },
