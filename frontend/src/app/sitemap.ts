@@ -90,7 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         // === Feed Routes (for AI discovery) ===
         routes.push(
-            { url: `${APP_URL}/product-feed.xml`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+            { url: `${APP_URL}/google-feed.xml`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
             { url: `${APP_URL}/rss.xml`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
             { url: `${APP_URL}/llms.txt`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
         );
