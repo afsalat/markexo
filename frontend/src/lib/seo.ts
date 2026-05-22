@@ -32,6 +32,15 @@ export function buildCanonicalMetadata({
 }: CanonicalMetadataInput): Metadata {
     const images = image ? [image] : undefined;
 
+    const defaultRobots = {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+        },
+    };
+
     return {
         title,
         description,
@@ -39,7 +48,7 @@ export function buildCanonicalMetadata({
         alternates: {
             canonical: path,
         },
-        ...(robots ? { robots } : {}),
+        robots: robots || defaultRobots,
         openGraph: {
             title,
             description,

@@ -246,8 +246,8 @@ export default function AboutPage() {
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Mail size={18} className="text-accent-400 shrink-0" />
-                                        <a href="mailto:vorionnexustech@gmail.com" className="hover:text-accent-400 transition-colors font-semibold">
-                                            vorionnexustech@gmail.com
+                                        <a href="mailto:vorionmart@gmail.com" className="hover:text-accent-400 transition-colors font-semibold">
+                                            vorionmart@gmail.com
                                         </a>
                                     </li>
                                     <li className="flex items-center gap-3">

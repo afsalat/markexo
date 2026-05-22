@@ -99,7 +99,7 @@ export default function ShippingPolicyPage() {
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Contact for Shipping Queries</h2>
                         <div className="text-gray-700 dark:text-silver-300">
                             <p>📞 Phone: <span className="text-primary-600 dark:text-accent-500 font-semibold">7356216468</span></p>
-                            <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionnexustech@gmail.com</span></p>
+                            <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionmart@gmail.com</span></p>
                         </div>
                     </section>
 

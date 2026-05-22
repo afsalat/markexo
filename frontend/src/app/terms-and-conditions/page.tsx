@@ -83,7 +83,7 @@ export default function TermsAndConditionsPage() {
                         </p>
                         <div className="mt-3 text-gray-700 dark:text-silver-300">
                             <p>📞 Phone: <span className="text-primary-600 dark:text-accent-500 font-semibold">7356216468</span></p>
-                            <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionnexustech@gmail.com</span></p>
+                            <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionmart@gmail.com</span></p>
                         </div>
                     </section>
 

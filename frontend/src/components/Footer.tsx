@@ -178,13 +178,13 @@ export default function Footer() {
                                 </a>
                             </li>
                             <li>
-                                <a href="mailto:vorionnexustech@gmail.com" className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-500 hover:text-accent-600">
+                                <a href="mailto:vorionmart@gmail.com" className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-500 hover:text-accent-600">
                                     <div
                                         className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-gray-50"
                                     >
                                         <Mail size={16} className="text-accent-500" />
                                     </div>
-                                    <span className="group-hover:underline break-all">vorionnexustech@gmail.com</span>
+                                    <span className="group-hover:underline break-all">vorionmart@gmail.com</span>
                                 </a>
                             </li>
                             <li className="flex items-start gap-3 text-sm text-gray-500">

@@ -27,7 +27,7 @@ export default function TermsPage() {
                             <div className="mt-4 p-4 bg-gray-50 dark:bg-dark-700/50 rounded-xl border border-gray-100 dark:border-dark-600">
                                 <p className="font-semibold text-gray-900 dark:text-white mb-2">VorionMart Platform</p>
                                 <p>📞 Phone: 7356216468</p>
-                                <p>📧 Email: vorionnexustech@gmail.com</p>
+                                <p>📧 Email: vorionmart@gmail.com</p>
                                 <p className="mt-2 text-sm text-gray-500 dark:text-silver-500">Powered by Vorion Nexus Technology</p>
                             </div>
                         </section>
@@ -167,7 +167,7 @@ export default function TermsPage() {
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">15. Contact Information</h2>
                             <p className="mb-2">For any queries, support, or concerns:</p>
                             <p>📞 Phone: 7356216468</p>
-                            <p>📧 Email: vorionnexustech@gmail.com</p>
+                            <p>📧 Email: vorionmart@gmail.com</p>
                             <p className="mt-2 text-sm text-gray-500 dark:text-silver-500">Customer support is available during standard business hours.</p>
                         </section>
 

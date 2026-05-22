@@ -41,7 +41,7 @@ export default function ReturnsPage() {
                             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Contact</h2>
                             <div className="p-4 bg-gray-50 dark:bg-dark-700/50 rounded-xl border border-gray-100 dark:border-dark-600">
                                 <p>📞 Phone: 7356216468</p>
-                                <p>📧 Email: vorionnexustech@gmail.com</p>
+                                <p>📧 Email: vorionmart@gmail.com</p>
                             </div>
                         </section>
                     </div>

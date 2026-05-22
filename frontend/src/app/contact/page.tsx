@@ -89,8 +89,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                                        <a href="mailto:vorionnexustech@gmail.com" className="text-primary-600 hover:underline">
-                                            vorionnexustech@gmail.com
+                                        <a href="mailto:vorionmart@gmail.com" className="text-primary-600 hover:underline">
+                                            vorionmart@gmail.com
                                         </a>
                                     </div>
                                 </div>

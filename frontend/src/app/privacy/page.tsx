@@ -62,7 +62,7 @@ export default function PrivacyPage() {
                                 <li>Contact us via email for privacy-related concerns.</li>
                             </ul>
                             <div className="mt-4 p-4 bg-gray-50 dark:bg-dark-700/50 rounded-xl border border-gray-100 dark:border-dark-600">
-                                <p>📧 Email: vorionnexustech@gmail.com</p>
+                                <p>📧 Email: vorionmart@gmail.com</p>
                             </div>
                         </section>
                     </div>

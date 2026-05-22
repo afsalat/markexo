@@ -54,13 +54,16 @@ export default function ReturnRefundPolicyPage() {
                     </section>
 
                     <section className="bg-white dark:bg-dark-800 border border-gray-100 dark:border-dark-700 rounded-xl p-6 shadow-sm">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Return Process</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Return Process & Shipping Fee</h2>
+                        <p className="text-gray-700 dark:text-silver-300 mb-4">
+                            <strong>Return Shipping Fee:</strong> We offer <strong>100% Free Returns</strong>. There are no return shipping charges or hidden fees. We will arrange a reverse pickup from your delivery address at no extra cost to you.
+                        </p>
                         <ol className="text-gray-600 dark:text-silver-400 space-y-3 list-decimal list-inside">
-                            <li>Contact us within 7 days of delivery with order ID</li>
-                            <li>Share photos/videos of the product issue</li>
-                            <li>Our team will verify and approve the return</li>
-                            <li>Pickup will be arranged from your address</li>
-                            <li>Replacement or refund processed within 5-7 days</li>
+                            <li>Contact us within 7 days of delivery with your order ID</li>
+                            <li>Share photos/videos showing the product issue or defect</li>
+                            <li>Our support team will verify your request and approve the return</li>
+                            <li>A free reverse pickup will be arranged from your delivery address</li>
+                            <li>A replacement or refund will be processed within 5-7 business days of verification</li>
                         </ol>
                     </section>
 
@@ -68,16 +71,18 @@ export default function ReturnRefundPolicyPage() {
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Refund Options</h2>
                         <div className="space-y-4">
                             <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-lg">
-                                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Replacement</h3>
-                                <p className="text-sm text-gray-500 dark:text-silver-400">We will send a new product at no extra cost</p>
+                                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Replacement (Free of Cost)</h3>
+                                <p className="text-sm text-gray-500 dark:text-silver-400">We will ship a brand new replacement item to you at no extra cost.</p>
                             </div>
                             <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-lg">
                                 <h3 className="font-bold text-gray-900 dark:text-white mb-1">Store Credit</h3>
-                                <p className="text-sm text-gray-500 dark:text-silver-400">Credit added to your account for future purchases</p>
+                                <p className="text-sm text-gray-500 dark:text-silver-400">Receive store credit added to your account for any future purchases on VorionMart.</p>
                             </div>
                             <div className="p-4 bg-gray-50 dark:bg-dark-700 rounded-lg">
-                                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Bank Refund</h3>
-                                <p className="text-sm text-gray-500 dark:text-silver-400">Refund to bank account within 7-10 business days</p>
+                                <h3 className="font-bold text-gray-900 dark:text-white mb-1">Bank or UPI Refund (For COD Orders)</h3>
+                                <p className="text-sm text-gray-500 dark:text-silver-400">
+                                    Since all orders are Cash on Delivery (COD), refunds will be processed via bank transfer or UPI (GPay/PhonePe/Paytm). Once the return is received and inspected at our warehouse, our support team will contact you to securely collect your bank details or UPI ID, and the refund will be credited within 7-10 business days.
+                                </p>
                             </div>
                         </div>
                     </section>
@@ -100,7 +105,7 @@ export default function ReturnRefundPolicyPage() {
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Contact for Returns</h2>
                         <div className="text-gray-700 dark:text-silver-300">
                             <p>📞 Phone: <span className="text-primary-600 dark:text-accent-500 font-semibold">7356216468</span></p>
-                            <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionnexustech@gmail.com</span></p>
+                            <p>📧 Email: <span className="text-primary-600 dark:text-accent-500 font-semibold">vorionmart@gmail.com</span></p>
                             <p className="text-sm text-gray-500 dark:text-silver-500 mt-2 font-medium">Available: Mon-Sat, 10 AM - 7 PM</p>
                         </div>
                     </section>
