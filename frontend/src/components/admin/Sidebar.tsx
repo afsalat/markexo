@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
     LayoutDashboard, ShoppingCart, Package, CreditCard,
-    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe
+    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe, Search
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -32,6 +32,7 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         { id: 'user-management', label: 'User Management', icon: Shield, permission: 'view_user' },
         { id: 'suppliers', label: 'Suppliers', icon: Zap, permission: 'view_sitesetting' },
         { id: 'google-merchant', label: 'Google Merchant', icon: Globe, permission: 'view_sitesetting' },
+        { id: 'seo-reports', label: 'SEO Reports', icon: Search, permission: 'view_sitesetting' },
         { id: 'system-logs', label: 'System Logs', icon: TerminalSquare, permission: 'view_sitesetting' },
 
         { id: 'banners', label: 'Banners', icon: Image, permission: 'view_banner' },
