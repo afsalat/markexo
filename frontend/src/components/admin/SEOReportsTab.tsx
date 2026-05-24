@@ -321,7 +321,7 @@ export default function SEOReportsTab() {
                             <td className="px-6 py-4">{issue.url}</td>
                             <td className="px-6 py-4">
                               <div className="flex flex-wrap gap-1">
-                                {issue.issues.map((iss: str, i: number) => (
+                                {issue.issues.map((iss: string, i: number) => (
                                   <span key={i} className="px-2 py-1 bg-red-500/10 text-red-400 text-xs rounded border border-red-500/20">{iss}</span>
                                 ))}
                               </div>
