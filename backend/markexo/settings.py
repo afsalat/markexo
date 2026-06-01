@@ -8,6 +8,14 @@ from pathlib import Path
 import os
 from urllib.parse import urlparse
 
+# Load environment variables from .env files if present
+try:
+    import dotenv
+    dotenv.load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+    dotenv.load_dotenv(Path(__file__).resolve().parent.parent.parent / '.env')
+except ImportError:
+    pass
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = BASE_DIR / 'logs'
@@ -156,12 +164,36 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'markexo.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Database configuration - Dynamically choose SQLite or a live production database (MySQL/PostgreSQL) based on environment
+DB_ENGINE = os.environ.get('DB_ENGINE', '').strip()
+DB_NAME = os.environ.get('DB_NAME', '').strip()
+
+if DB_ENGINE and DB_NAME:
+    DATABASES = {
+        'default': {
+            'ENGINE': DB_ENGINE,
+            'NAME': DB_NAME,
+            'USER': os.environ.get('DB_USER', '').strip(),
+            'PASSWORD': os.environ.get('DB_PASSWORD', '').strip(),
+            'HOST': os.environ.get('DB_HOST', 'localhost').strip(),
+            'PORT': os.environ.get('DB_PORT', '').strip(),
+        }
     }
-}
+    # If using MySQL or PostgreSQL, configure encoding optimizations
+    if 'mysql' in DB_ENGINE:
+        DATABASES['default']['OPTIONS'] = {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+else:
+    # Fallback to local SQLite development database
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
