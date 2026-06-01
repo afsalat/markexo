@@ -44,23 +44,14 @@ export function generateMetadata({ searchParams }: ProductsPageProps): Metadata 
         alternates: {
             canonical: canonicalPath,
         },
-        robots: isCategory || !hasVariant
-            ? {
+        robots: {
+            index: true,
+            follow: true,
+            googleBot: {
                 index: true,
                 follow: true,
-                googleBot: {
-                    index: true,
-                    follow: true,
-                },
-            }
-            : {
-                index: false,
-                follow: true,
-                googleBot: {
-                    index: false,
-                    follow: true,
-                },
             },
+        },
         openGraph: {
             title,
             description,

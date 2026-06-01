@@ -2054,3 +2054,53 @@ class AdminSEOReportView(APIView):
             return Response(data)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+
+class AdminGoogleMerchantView(APIView):
+    permission_classes = [IsAuthenticated, AdminDashboardPermission]
+
+    def get(self, request):
+        return Response({"message": "Google Merchant settings here."})
+
+    def post(self, request):
+        return Response({"message": "Syncing to Merchant Center..."})
+
+import xml.etree.ElementTree as ET
+from django.http import HttpResponse
+
+class GoogleMerchantFeedView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        products = Product.objects.filter(is_active=True, stock__gt=0)
+        
+        rss = ET.Element("rss", version="2.0")
+        rss.set("xmlns:g", "http://base.google.com/ns/1.0")
+        channel = ET.SubElement(rss, "channel")
+        
+        ET.SubElement(channel, "title").text = "VorionMart Product Feed"
+        ET.SubElement(channel, "link").text = "https://vorionmart.com"
+        ET.SubElement(channel, "description").text = "Premium products from VorionMart"
+
+        base_url = "https://vorionmart.com"
+
+        for p in products:
+            item = ET.SubElement(channel, "item")
+            ET.SubElement(item, "g:id").text = str(p.id)
+            ET.SubElement(item, "g:title").text = str(p.name)[:150]
+            ET.SubElement(item, "g:description").text = str(p.description)[:5000] if p.description else "Premium quality product"
+            ET.SubElement(item, "g:link").text = f"{base_url}/products/{p.slug}"
+            if p.image:
+                ET.SubElement(item, "g:image_link").text = f"{base_url}{p.image.url}"
+            
+            ET.SubElement(item, "g:condition").text = "new"
+            ET.SubElement(item, "g:availability").text = "in_stock" if p.stock > 0 else "out_of_stock"
+            
+            price = p.current_price or p.price or 0
+            ET.SubElement(item, "g:price").text = f"{price} INR"
+            ET.SubElement(item, "g:brand").text = "VorionMart"
+            
+            # Additional fields
+            ET.SubElement(item, "g:identifier_exists").text = "no"
+
+        xml_str = ET.tostring(rss, encoding='utf-8', method='xml')
+        return HttpResponse(xml_str, content_type='application/xml')

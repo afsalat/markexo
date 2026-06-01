@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw,
-    Award, ChevronRight, ChevronLeft, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X
+    Award, ChevronRight, ChevronLeft, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X, MessageSquare
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
@@ -724,6 +724,17 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 >
                                     Buy Now — Pay on Delivery
                                 </button>
+
+                                {/* WhatsApp Support/Order Button */}
+                                <a
+                                    href={`https://wa.me/917356216468?text=${encodeURIComponent(`Hi, I'm interested in buying ${productData.name} (₹${displaySalePrice}). Can you help me?`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hidden lg:flex w-full py-4 bg-[#25D366] text-white rounded-xl font-bold text-lg hover:bg-[#128C7E] transition-all shadow-lg active:scale-[0.98] items-center justify-center gap-2"
+                                >
+                                    <MessageSquare size={22} />
+                                    Order via WhatsApp
+                                </a>
                             </div>
 
                             {/* Trust Features Grid */}
@@ -795,6 +806,10 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                         </div>
                                     </div>
                                 )}
+
+                                <div className="mt-6">
+                                    <ProductBenefits benefits={productData.benefits || []} />
+                                </div>
 
                                 {productData.features && productData.features.length > 0 && (
                                     <div>
