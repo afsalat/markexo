@@ -2,25 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Calendar, Clock, User, ShoppingCart, Heart, Star, CheckCircle, Share2 } from 'lucide-react';
-import { BlogPost, Product } from '@/lib/api';
-import { useCart } from '@/lib/cart';
-import { useCustomerAuth } from '@/context/CustomerAuthContext';
+import Image from 'next/image';
+import { Calendar, Clock, User, ArrowLeft, ArrowRight, Share2 } from 'lucide-react';
+import { StaticBlogPost, getRelatedStaticBlogPosts, getPreviousAndNextPosts } from '@/lib/staticBlog';
+import RelatedProductCard from '@/components/blog/RelatedProductCard';
+import BlogStructuredData from '@/components/blog/BlogStructuredData';
 
 interface BlogPostClientProps {
-    blogPost: BlogPost;
-    linkedProducts: Product[];
+    blogPost: StaticBlogPost;
 }
 
-export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostClientProps) {
-    const { addItem } = useCart();
-    const { addToWishlist, isWishlisted, isAuthenticated } = useCustomerAuth();
+export default function BlogPostClient({ blogPost }: BlogPostClientProps) {
     const [shareMessage, setShareMessage] = useState<string | null>(null);
 
+    const relatedPosts = getRelatedStaticBlogPosts(blogPost.slug, blogPost.category);
+    const { previous, next } = getPreviousAndNextPosts(blogPost.slug);
+
     const formatDate = (dateString: string) => {
-        if (!dateString) return 'Pending Publication';
         const date = new Date(dateString);
-        if (isNaN(date.getTime())) return 'Draft';
+        if (isNaN(date.getTime())) return dateString;
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -28,360 +28,213 @@ export default function BlogPostClient({ blogPost, linkedProducts }: BlogPostCli
         });
     };
 
-    const calculateReadTime = (content: string) => {
-        if (!content) return 1;
-        const wordsPerMinute = 200;
-        const words = content.trim().split(/\s+/).length;
-        return Math.max(1, Math.ceil(words / wordsPerMinute));
-    };
-
     const handleShare = async () => {
+        const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
         if (navigator.share) {
             try {
                 await navigator.share({
                     title: blogPost.title,
-                    text: blogPost.excerpt || blogPost.content.slice(0, 150),
-                    url: window.location.href,
+                    text: blogPost.excerpt,
+                    url: shareUrl,
                 });
             } catch (error) {
-                // Fallback to copying link
-                copyToClipboard(window.location.href);
+                copyToClipboard(shareUrl);
             }
         } else {
-            copyToClipboard(window.location.href);
+            copyToClipboard(shareUrl);
         }
     };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
-            setShareMessage('Link copied to clipboard!');
+            setShareMessage('Article link copied to clipboard!');
             setTimeout(() => setShareMessage(null), 3000);
         });
     };
 
-    const handleAddToCart = (product: Product) => {
-        if (!isAuthenticated) {
-            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-            return;
-        }
-        addItem(product, 1);
-    };
-
-    const renderContent = (content: string) => {
-        if (!content) return '';
-        
-        // Replace product slugs with actual product links
-        let processedContent = content;
-        
-        const productSlugs = blogPost.products || blogPost.related_products || [];
-        if (productSlugs && Array.isArray(productSlugs)) {
-            productSlugs.forEach((productSlug: string) => {
-                const product = linkedProducts?.find(p => p.slug === productSlug);
-                if (product) {
-                    const productLink = `[👉 Buy Best ${product.name}](/products/${product.slug})`;
-                    const escapedSlug = productSlug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    processedContent = processedContent.replace(
-                        new RegExp(escapedSlug, 'g'),
-                        productLink
-                    );
-                }
-            });
-        }
-        
-        // If the content doesn't contain HTML tags, treat it as markdown/plain text
-        if (!/<[a-z][\s\S]*>/i.test(processedContent)) {
-            // Convert markdown-style links to HTML
-            processedContent = processedContent.replace(
-                /\[([^\]]+)\]\(([^)]+)\)/g,
-                '<a href="$2" class="text-accent-500 hover:text-accent-600 font-bold underline">$1</a>'
-            );
-
-            // Convert newlines to paragraphs
-            processedContent = processedContent.split('\n').map((line: string) => {
-                const trimmed = line.trim();
-                if (!trimmed) return '';
-                // Simple header detection
-                if (trimmed.length < 100 && !trimmed.endsWith('.') && !trimmed.endsWith('!') && !trimmed.endsWith('?')) {
-                    return `<h2 class="text-2xl font-bold text-gray-900 dark:text-white mt-8 mb-4">${trimmed}</h2>`;
-                }
-                return `<p class="mb-6 text-gray-700 dark:text-silver-300 leading-relaxed text-lg">${trimmed}</p>`;
-            }).join('');
-        }
-        
-        return processedContent;
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
-            {/* Hero Section */}
-            <section className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-br from-accent-500/10 via-white to-primary-500/5 dark:from-accent-500/5 dark:via-dark-900 dark:to-primary-500/10">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+            {/* Structured Schema Injected Dynamically */}
+            <BlogStructuredData post={blogPost} />
+
+            {/* Toast Notification for share action */}
+            {shareMessage && (
+                <div className="fixed bottom-6 right-6 z-50 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white shadow-xl animate-fade-in-up">
+                    {shareMessage}
+                </div>
+            )}
+
+            {/* Back to Blog Button */}
+            <div className="container mx-auto px-4 pt-10">
+                <Link
+                    href="/blog"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition-colors hover:text-emerald-500 dark:text-emerald-400"
+                >
+                    <ArrowLeft size={16} />
+                    Back to all guides
+                </Link>
+            </div>
+
+            {/* Hero Header Section */}
+            <header className="py-12 md:py-16">
                 <div className="container mx-auto px-4">
-                    <div className="max-w-4xl mx-auto">
-                        {/* Breadcrumb */}
-                        <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-silver-500 mb-6">
-                            <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
-                            <span>/</span>
-                            <Link href="/blog" className="hover:text-accent-500 transition-colors">Blog</Link>
-                            <span>/</span>
-                            <span className="text-gray-900 dark:text-white">{blogPost.title}</span>
-                        </nav>
-
-                        {/* Featured Image */}
-                        {blogPost.featured_image && (
-                            <div className="relative aspect-[16/9] rounded-3xl overflow-hidden mb-8 shadow-2xl">
-                                <img
-                                    src={blogPost.featured_image}
-                                    alt={blogPost.title}
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                                
-                                {/* Category Badge */}
-                                {blogPost.category && (
-                                    <div className="absolute top-6 left-6 bg-accent-500 text-white px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider">
-                                        {blogPost.category}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Title and Meta */}
-                        <div className="text-center mb-8">
-                            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-                                {blogPost.title}
-                            </h1>
-                            
-                            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500 dark:text-silver-500">
-                                <div className="flex items-center gap-2">
-                                    <Calendar size={16} />
-                                    <span>{formatDate(blogPost.published_at)}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Clock size={16} />
-                                    <span>{blogPost.read_time || calculateReadTime(blogPost.content)} min read</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <User size={16} />
-                                    <span>{blogPost.author}</span>
-                                </div>
-                            </div>
+                    <div className="mx-auto max-w-4xl">
+                        {/* Tags list */}
+                        <div className="flex flex-wrap gap-2">
+                            {blogPost.tags?.map(tag => (
+                                <span
+                                    key={tag}
+                                    className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
+                                >
+                                    {tag}
+                                </span>
+                            ))}
                         </div>
 
-                        {/* Tags */}
-                        {blogPost.tags && blogPost.tags.length > 0 && (
-                            <div className="flex flex-wrap justify-center gap-2 mb-8">
-                                {blogPost.tags.map(tag => (
-                                    <span
-                                        key={tag}
-                                        className="bg-gray-100 dark:bg-dark-700 text-gray-600 dark:text-silver-400 px-3 py-1 rounded-full text-xs font-medium"
-                                    >
-                                        #{tag}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
+                        {/* Title */}
+                        <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white md:text-5xl lg:text-5xl leading-tight">
+                            {blogPost.title}
+                        </h1>
 
-                        {/* Action Buttons */}
-                        <div className="flex flex-wrap justify-center gap-4 mb-8">
-                            {linkedProducts && linkedProducts.length > 0 && (
-                                <Link
-                                    href={`/products/${linkedProducts[0].slug}`}
-                                    className="flex items-center gap-2 bg-accent-500 text-white px-8 py-3 rounded-2xl hover:bg-accent-600 transition-all shadow-lg font-bold"
-                                >
-                                    <ShoppingCart size={18} />
-                                    <span>Buy {linkedProducts[0].name} - ₹{linkedProducts[0].price}</span>
-                                </Link>
-                            )}
-                            
+                        {/* Meta values */}
+                        <div className="mt-6 flex flex-wrap items-center gap-6 border-y border-gray-150 py-4 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-400">
+                            <div className="flex items-center gap-1.5">
+                                <User size={16} className="text-emerald-500" />
+                                <span className="font-semibold text-gray-900 dark:text-white">{blogPost.author}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Calendar size={16} />
+                                <span>{formatDate(blogPost.publish_date)}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Clock size={16} />
+                                <span>{blogPost.reading_time}</span>
+                            </div>
+
+                            {/* Share button */}
                             <button
                                 onClick={handleShare}
-                                className="flex items-center gap-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 px-6 py-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-dark-700 transition-all shadow-lg"
+                                className="ml-auto inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2 text-xs font-bold text-gray-700 transition-all hover:bg-gray-50 dark:border-gray-850 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 shadow-xs"
                             >
-                                <Share2 size={18} />
-                                <span className="font-medium">Share Article</span>
+                                <Share2 size={14} />
+                                Share Article
                             </button>
                         </div>
-
-                        {shareMessage && (
-                            <div className="fixed top-4 right-4 bg-accent-500 text-white px-4 py-2 rounded-xl shadow-lg z-50 animate-slide-in">
-                                {shareMessage}
-                            </div>
-                        )}
                     </div>
                 </div>
-            </section>
+            </header>
 
-            {/* Content */}
-            <section className="py-16 bg-white dark:bg-dark-800/50">
-                <div className="container mx-auto px-4">
-                    <div className="max-w-4xl mx-auto">
-                        <style jsx global>{`
-                            .blog-content h2 {
-                                font-size: 1.875rem;
-                                font-weight: 700;
-                                color: #111827;
-                                margin-top: 2.5rem;
-                                margin-bottom: 1.25rem;
-                                line-height: 1.25;
-                            }
-                            .blog-content h3 {
-                                font-size: 1.5rem;
-                                font-weight: 600;
-                                color: #111827;
-                                margin-top: 2rem;
-                                margin-bottom: 1rem;
-                                line-height: 1.25;
-                            }
-                            .blog-content p {
-                                font-size: 1.125rem;
-                                line-height: 1.8;
-                                color: #374151;
-                                margin-bottom: 1.5rem;
-                            }
-                            .blog-content ul, .blog-content ol {
-                                margin-bottom: 1.5rem;
-                                padding-left: 1.5rem;
-                            }
-                            .blog-content li {
-                                font-size: 1.125rem;
-                                line-height: 1.8;
-                                color: #374151;
-                                margin-bottom: 0.5rem;
-                                list-style-type: disc;
-                            }
-                            .dark .blog-content h2, .dark .blog-content h3 {
-                                color: #ffffff;
-                            }
-                            .dark .blog-content p, .dark .blog-content li {
-                                color: #9ca3af;
-                            }
-                        `}</style>
-                        <article className="prose prose-lg dark:prose-invert max-w-none">
-                            <div
-                                dangerouslySetInnerHTML={{
-                                    __html: renderContent(blogPost.content)
-                                }}
-                                className="blog-content"
-                            />
-                        </article>
-                    </div>
-                </div>
-            </section>
-
-            {/* Suggested Products Section */}
-            {linkedProducts.length > 0 && (
-                <section className="py-16 bg-white dark:bg-dark-800">
-                    <div className="container mx-auto px-4">
-                        <div className="max-w-6xl mx-auto">
-                            <div className="text-center mb-12">
-                                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                                    Suggested Products
-                                </h2>
-                                <p className="text-xl text-gray-600 dark:text-silver-400">
-                                    Products selected to match this article
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                                {linkedProducts.map((product, index) => (
-                                    <div
-                                        key={product.id}
-                                        className="bg-gray-50 dark:bg-dark-900 rounded-3xl overflow-hidden border border-gray-200 dark:border-dark-700 hover:border-accent-500/30 transition-all duration-500 group"
-                                    >
-                                        {/* Product Image */}
-                                        <div className="aspect-square bg-white dark:bg-dark-800 p-4">
-                                            {product.image ? (
-                                                <img
-                                                    src={product.image}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full bg-gray-100 dark:bg-dark-700 rounded-xl flex items-center justify-center">
-                                                    <span className="text-4xl">📦</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Product Info */}
-                                        <div className="p-6">
-                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-accent-500 transition-colors">
-                                                {product.name}
-                                            </h3>
-                                            
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <span className="text-2xl font-bold text-accent-500">₹{product.price}</span>
-                                                {product.discount_percent > 0 && (
-                                                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                                                        {product.discount_percent}% OFF
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {/* Rating */}
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <div className="flex items-center">
-                                                    {[...Array(5)].map((_, i) => (
-                                                        <Star
-                                                            key={i}
-                                                            size={16}
-                                                            className={i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <span className="text-sm text-gray-500 dark:text-silver-500">
-                                                    ({product.review_count || 0} reviews)
-                                                </span>
-                                            </div>
-
-                                            {/* Action Buttons */}
-                                            <div className="flex gap-3">
-                                                <Link
-                                                    href={`/products/${product.slug}`}
-                                                    className="flex-1 flex items-center justify-center gap-2 bg-accent-500 text-white px-4 py-3 rounded-xl hover:bg-accent-600 transition-colors font-bold"
-                                                >
-                                                    <ShoppingCart size={18} />
-                                                    View Product
-                                                </Link>
-                                                
-                                                {isAuthenticated && (
-                                                    <button
-                                                        onClick={() => addToWishlist(product)}
-                                                        className={`p-3 rounded-xl border transition-colors ${
-                                                            isWishlisted(product.id)
-                                                                ? 'bg-accent-500 text-white border-accent-500'
-                                                                : 'bg-white dark:bg-dark-800 border-gray-200 dark:border-dark-700 hover:border-accent-500 text-gray-600 dark:text-silver-400'
-                                                        }`}
-                                                    >
-                                                        <Heart size={18} className={isWishlisted(product.id) ? 'fill-current' : ''} />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* CTA Section */}
-                            <div className="text-center mt-16 p-8 bg-gradient-to-r from-accent-500/10 to-primary-500/10 rounded-3xl border border-accent-500/20">
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                                    Ready to Shop?
-                                </h3>
-                                <p className="text-gray-600 dark:text-silver-400 mb-6 max-w-2xl mx-auto">
-                                    Get these premium products with cash on delivery across India
-                                </p>
-                                <Link
-                                    href="/products"
-                                    className="inline-flex items-center gap-2 bg-accent-500 text-white px-8 py-4 rounded-xl hover:bg-accent-600 transition-colors font-bold text-lg"
-                                >
-                                    Browse All Products
-                                    <ArrowRight size={20} />
-                                </Link>
-                            </div>
-                        </div>
+            {/* Featured Image Section */}
+            {blogPost.featured_image && (
+                <section className="container mx-auto px-4 pb-12">
+                    <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl shadow-lg relative aspect-[21/9]">
+                        <Image
+                            src={blogPost.featured_image}
+                            alt={blogPost.title}
+                            fill
+                            priority
+                            className="object-cover"
+                        />
                     </div>
                 </section>
             )}
+
+            {/* Main Content Layout */}
+            <main className="container mx-auto px-4 pb-20">
+                <div className="mx-auto max-w-4xl bg-white rounded-3xl border border-gray-100 p-8 shadow-xs dark:border-gray-850 dark:bg-gray-900 md:p-12">
+                    <article className="prose prose-emerald lg:prose-xl max-w-none dark:prose-invert">
+                        <div
+                            dangerouslySetInnerHTML={{ __html: blogPost.content }}
+                            className="blog-rich-content text-gray-850 dark:text-gray-300 leading-relaxed text-lg"
+                        />
+                    </article>
+
+                    {/* Integrated Product Recommendation Cards */}
+                    {blogPost.related_products && blogPost.related_products.length > 0 && (
+                        <div className="mt-12 border-t border-gray-100 pt-10 dark:border-gray-800">
+                            <h3 className="text-xl font-bold text-gray-950 dark:text-white mb-6">
+                                Recommended Sourced Products
+                            </h3>
+                            {blogPost.related_products.map((prod, index) => (
+                                <RelatedProductCard key={index} product={prod} />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Next / Previous Article Internal Linking Navigation */}
+                    {(previous || next) && (
+                        <div className="mt-12 flex flex-col gap-6 border-t border-gray-100 pt-8 dark:border-gray-800 md:flex-row justify-between">
+                            {previous ? (
+                                <Link
+                                    href={`/blog/${previous.slug}`}
+                                    className="flex flex-1 flex-col rounded-2xl border border-gray-50 bg-gray-50/50 p-5 transition-all hover:bg-emerald-500/5 hover:border-emerald-500/20 dark:border-gray-850 dark:bg-gray-950 dark:hover:bg-emerald-950/10"
+                                >
+                                    <span className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                        <ArrowLeft size={12} />
+                                        Previous Article
+                                    </span>
+                                    <span className="mt-2 font-bold text-gray-950 dark:text-white line-clamp-1">
+                                        {previous.title}
+                                    </span>
+                                </Link>
+                            ) : (
+                                <div className="flex-1" />
+                            )}
+                            {next ? (
+                                <Link
+                                    href={`/blog/${next.slug}`}
+                                    className="flex flex-1 flex-col text-right rounded-2xl border border-gray-50 bg-gray-50/50 p-5 transition-all hover:bg-emerald-500/5 hover:border-emerald-500/20 dark:border-gray-850 dark:bg-gray-950 dark:hover:bg-emerald-950/10"
+                                >
+                                    <span className="flex items-center justify-end gap-1 text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                                        Next Article
+                                        <ArrowRight size={12} />
+                                    </span>
+                                    <span className="mt-2 font-bold text-gray-950 dark:text-white line-clamp-1">
+                                        {next.title}
+                                    </span>
+                                </Link>
+                            ) : (
+                                <div className="flex-1" />
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Related Blogs Section */}
+                {relatedPosts.length > 0 && (
+                    <section className="mx-auto max-w-4xl mt-16">
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+                            Keep Reading: Related Guides
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {relatedPosts.map(post => (
+                                <article
+                                    key={post.id}
+                                    className="group overflow-hidden rounded-2xl border border-gray-100 bg-white p-5 shadow-xs transition-all duration-300 hover:shadow-md dark:border-gray-850 dark:bg-gray-900"
+                                >
+                                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-50 dark:bg-gray-800">
+                                        <Image
+                                            src={post.featured_image}
+                                            alt={post.title}
+                                            fill
+                                            sizes="(max-width: 768px) 100vw, 400px"
+                                            className="object-cover transition-transform duration-500 group-hover:scale-103"
+                                        />
+                                    </div>
+                                    <h4 className="mt-4 font-bold text-gray-950 group-hover:text-emerald-600 transition-colors line-clamp-2 dark:text-white">
+                                        <Link href={`/blog/${post.slug}`}>
+                                            {post.title}
+                                        </Link>
+                                    </h4>
+                                    <p className="mt-2 text-sm text-gray-600 line-clamp-2 dark:text-gray-400">
+                                        {post.excerpt}
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </main>
         </div>
     );
 }

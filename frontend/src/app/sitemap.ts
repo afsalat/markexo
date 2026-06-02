@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
-import { fetchProducts, fetchCategories, fetchBlogPosts } from '@/lib/api';
+import { fetchProducts, fetchCategories } from '@/lib/api';
+import { getStaticBlogPosts } from '@/lib/staticBlog';
 import { APP_URL } from '@/config/siteConfig';
 
 /**
@@ -35,15 +36,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
     try {
-        const [productsRes, categoriesRes, blogRes] = await Promise.all([
+        const [productsRes, categoriesRes] = await Promise.all([
             fetchProducts().catch(() => []),
             fetchCategories({ flat: 'true' }).catch(() => []),
-            fetchBlogPosts({ is_published: 'true' }).catch(() => []),
         ]);
 
         const products = Array.isArray(productsRes) ? productsRes : (productsRes.results || []);
         const categories = Array.isArray(categoriesRes) ? categoriesRes : (categoriesRes.results || []);
-        const blogPosts = Array.isArray(blogRes) ? blogRes : (blogRes.results || []);
+        const blogPosts = getStaticBlogPosts();
 
         const routes: MetadataRoute.Sitemap = [...baseRoutes];
 
@@ -78,10 +78,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         // === Blog Routes ===
         blogPosts.forEach((blogPost: any) => {
-            if (blogPost.slug && blogPost.is_published) {
+            if (blogPost.slug) {
                 routes.push({
                     url: `${APP_URL}/blog/${blogPost.slug}`,
-                    lastModified: blogPost.updated_at ? new Date(blogPost.updated_at) : (blogPost.published_at ? new Date(blogPost.published_at) : now),
+                    lastModified: new Date(blogPost.publish_date),
                     changeFrequency: 'weekly',
                     priority: 0.8,
                 });

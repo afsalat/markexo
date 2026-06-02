@@ -1,63 +1,49 @@
 import { Metadata } from 'next';
-import { fetchBlogPosts } from '@/lib/api';
+import { getStaticBlogPosts } from '@/lib/staticBlog';
 import BlogClient from './BlogClient';
 
 export async function generateMetadata(): Promise<Metadata> {
-    try {
-        const blogResponse = await fetchBlogPosts({ is_published: 'true', limit: '10' });
-        const blogPosts = Array.isArray(blogResponse) ? blogResponse : (blogResponse.results || []);
-        
-        const totalPosts = blogPosts.length;
-        const latestPost = blogPosts[0];
-        
-        return {
-            title: 'VorionMart Blog - Expert Shopping Guides & Product Reviews',
-            description: `Discover expert shopping guides, product reviews, and lifestyle tips at VorionMart. ${totalPosts}+ articles on premium products with COD delivery across India.`,
-            keywords: [
-                'online shopping blog',
-                'product reviews',
-                'shopping guides',
-                'COD shopping tips',
-                'premium products India',
-                'lifestyle blog',
-                'product recommendations',
-                'best products India'
-            ],
-            openGraph: {
-                title: 'VorionMart Blog - Expert Shopping Guides',
-                description: `Expert shopping guides and product reviews. ${totalPosts}+ articles on premium products with cash on delivery.`,
-                images: latestPost?.featured_image ? [latestPost.featured_image] : [],
-            },
-            twitter: {
-                card: 'summary_large_image',
-                title: 'VorionMart Blog - Expert Shopping Guides',
-                description: 'Expert shopping guides and product reviews on premium products with COD delivery.',
-            },
-            alternates: {
-                canonical: '/blog',
-            },
-            robots: {
-                index: true,
-                follow: true,
-            },
-        };
-    } catch {
-        return {
-            title: 'VorionMart Blog - Shopping Guides & Reviews',
-            description: 'Discover expert shopping guides, product reviews, and lifestyle tips at VorionMart.',
-        };
-    }
+    const blogPosts = getStaticBlogPosts();
+    const totalPosts = blogPosts.length;
+    const latestPost = blogPosts[0];
+    
+    return {
+        title: 'VorionMart Blog | Expert Shopping Guides & Product Reviews',
+        description: `Discover expert shopping guides, deep product reviews, and lifestyle tips at VorionMart. Read ${totalPosts}+ articles with cash on delivery across India.`,
+        keywords: [
+            'online shopping blog',
+            'product reviews',
+            'shopping guides',
+            'COD shopping tips',
+            'premium products India',
+            'lifestyle blog',
+            'product recommendations',
+            'best products India'
+        ],
+        openGraph: {
+            title: 'VorionMart Blog | Expert Shopping Guides & Reviews',
+            description: `Expert shopping guides and product reviews. Read ${totalPosts}+ helpful articles on premium products.`,
+            images: latestPost?.featured_image ? [latestPost.featured_image] : [],
+            url: 'https://vorionmart.com/blog',
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: 'VorionMart Blog | Expert Shopping Guides',
+            description: 'Expert shopping guides and product reviews on premium products with COD delivery.',
+            images: latestPost?.featured_image ? [latestPost.featured_image] : [],
+        },
+        alternates: {
+            canonical: '/blog',
+        },
+        robots: {
+            index: true,
+            follow: true,
+        },
+    };
 }
 
-export default async function BlogPage() {
-    let blogPosts = [];
-    try {
-        const blogResponse = await fetchBlogPosts({ is_published: 'true', limit: '20' });
-        blogPosts = Array.isArray(blogResponse) ? blogResponse : (blogResponse.results || []);
-    } catch {
-        // Fail gracefully during static generation when API is unreachable
-    }
-
-    // Pass data to client component
+export default function BlogPage() {
+    const blogPosts = getStaticBlogPosts();
     return <BlogClient blogPosts={blogPosts} />;
 }

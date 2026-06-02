@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchBlogPosts } from '@/lib/api';
+import { getStaticBlogPosts } from '@/lib/staticBlog';
 import { APP_URL } from '@/config/siteConfig';
 
 /**
@@ -8,12 +8,11 @@ import { APP_URL } from '@/config/siteConfig';
  */
 export async function GET() {
     try {
-        const blogRes = await fetchBlogPosts({ is_published: 'true' });
-        const blogPosts = Array.isArray(blogRes) ? blogRes : (blogRes.results || []);
+        const blogPosts = getStaticBlogPosts();
 
         const urls = blogPosts
-            .filter((post: any) => post.slug && post.is_published)
-            .map((post: any) => {
+            .filter((post) => post.slug)
+            .map((post) => {
                 const imageXml = post.featured_image
                     ? `
       <image:image>
@@ -25,7 +24,7 @@ export async function GET() {
                 return `
   <url>
     <loc>${APP_URL}/blog/${post.slug}</loc>
-    <lastmod>${post.updated_at || post.published_at || new Date().toISOString()}</lastmod>
+    <lastmod>${new Date(post.publish_date).toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>${imageXml}
   </url>`;
