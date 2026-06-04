@@ -687,3 +687,121 @@ input:-webkit-autofill:active {
 .active-filter-tag {
   @apply inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-50 text-accent-600 rounded-lg text-xs font-semibold border border-accent-100 transition-all hover:bg-accent-100;
 }
+
+/* ============================================
+   BLOG RICH CONTENT TYPOGRAPHY
+   ============================================ */
+.blog-rich-content h2 {
+  font-family: 'Space Grotesk', 'Outfit', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+html.dark .blog-rich-content h2 {
+  color: #f9fafb;
+}
+
+.blog-rich-content h3 {
+  font-family: 'Space Grotesk', 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: #1f2937;
+}
+html.dark .blog-rich-content h3 {
+  color: #f3f4f6;
+}
+
+.blog-rich-content h4 {
+  font-family: 'Space Grotesk', 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+html.dark .blog-rich-content h4 {
+  color: #e5e7eb;
+}
+
+.blog-rich-content p {
+  margin-bottom: 1.25rem;
+  line-height: 1.8;
+  color: #374151;
+}
+html.dark .blog-rich-content p {
+  color: #cbd5e1;
+}
+
+.blog-rich-content ul {
+  list-style-type: disc;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.blog-rich-content ol {
+  list-style-type: decimal;
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.blog-rich-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.blog-rich-content strong {
+  font-weight: 700;
+  color: #111827;
+}
+html.dark .blog-rich-content strong {
+  color: #ffffff;
+}
+
+.blog-rich-content a {
+  color: #059669; /* Emerald 600 */
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+.blog-rich-content a:hover {
+  color: #047857; /* Emerald 700 */
+}
+html.dark .blog-rich-content a {
+  color: #34d399; /* Emerald 400 */
+}
+html.dark .blog-rich-content a:hover {
+  color: #6ee7b7; /* Emerald 300 */
+}
+
+.blog-rich-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+.blog-rich-content th, 
+.blog-rich-content td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+html.dark .blog-rich-content th,
+html.dark .blog-rich-content td {
+  border-bottom: 1px solid #374151;
+}
+
+.blog-rich-content th {
+  font-weight: 700;
+  background-color: #f9fafb;
+  color: #111827;
+}
+html.dark .blog-rich-content th {
+  background-color: #1f2937;
+  color: #ffffff;
+}
+
