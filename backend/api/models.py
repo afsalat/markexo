@@ -49,8 +49,7 @@ class Shop(models.Model):
     contact_person = models.CharField(max_length=100, blank=True)
     whatsapp_number = models.CharField(max_length=20, blank=True)
     notes = models.TextField(blank=True)
-    image = models.ImageField(upload_to='shops/', blank=True, null=True)
-    image = models.ImageField(upload_to='shops/', blank=True, null=True)
+    image = models.ImageField(upload_to='shops/', max_length=255, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     
     # Legacy partner ownership fields retained for backward compatibility.
@@ -101,7 +100,7 @@ class Partner(models.Model):
     # Personal Info
     phone = models.CharField(max_length=20)
     alternate_phone = models.CharField(max_length=20, blank=True)
-    profile_image = models.ImageField(upload_to='partners/', blank=True, null=True)
+    profile_image = models.ImageField(upload_to='partners/', max_length=255, blank=True, null=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     pincode = models.CharField(max_length=10, blank=True)
@@ -151,7 +150,7 @@ class Category(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True, blank=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    image = models.ImageField(upload_to='categories/', max_length=255, blank=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -190,7 +189,7 @@ class Product(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_products')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
-    image = models.ImageField(upload_to='products/', blank=True, null=True)
+    image = models.ImageField(upload_to='products/', max_length=255, blank=True, null=True)
     meesho_url = models.URLField(blank=True, help_text="Internal reference for sourcing")
     specifications = models.JSONField(default=dict, blank=True, help_text="Key-value pairs for product specs")
     is_featured = models.BooleanField(default=False)
@@ -271,7 +270,7 @@ class Product(models.Model):
 class ProductImage(models.Model):
     """Additional product images."""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='products/')
+    image = models.ImageField(upload_to='products/', max_length=255)
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -459,7 +458,7 @@ class Banner(models.Model):
     title = models.CharField(max_length=200)
     subtitle = models.CharField(max_length=300, blank=True)
     section = models.CharField(max_length=30, choices=SECTION_CHOICES, default=SECTION_HOME_HERO)
-    image = models.ImageField(upload_to='banners/')
+    image = models.ImageField(upload_to='banners/', max_length=255)
     link = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=0)
@@ -476,7 +475,7 @@ class SiteSetting(models.Model):
     """Site settings model."""
     site_name = models.CharField(max_length=200, default='VorionMart')
     site_tagline = models.CharField(max_length=300, blank=True)
-    logo = models.ImageField(upload_to='site/', blank=True, null=True)
+    logo = models.ImageField(upload_to='site/', max_length=255, blank=True, null=True)
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
@@ -735,7 +734,7 @@ class Review(models.Model):
 class ReviewImage(models.Model):
     """Images attached to a product review."""
     review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='reviews/')
+    image = models.ImageField(upload_to='reviews/', max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -779,7 +778,7 @@ class BlogPost(models.Model):
     meta_title = models.CharField(max_length=255, blank=True)
     meta_description = models.TextField(blank=True)
     keywords = models.JSONField(default=list, blank=True)
-    featured_image = models.ImageField(upload_to='blog/', null=True, blank=True)
+    featured_image = models.ImageField(upload_to='blog/', max_length=255, null=True, blank=True)
     featured_image_url = models.URLField(max_length=500, blank=True, null=True, help_text="External image URL if not uploaded")
     
     # Relationships

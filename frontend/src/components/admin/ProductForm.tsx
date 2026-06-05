@@ -55,7 +55,7 @@ type QuickFillMessage = {
     text: string;
 };
 
-const MAX_UPLOAD_FILENAME_LENGTH = 100;
+const MAX_UPLOAD_FILENAME_LENGTH = 80;
 
 function normalizeSearchText(value: string) {
     return value
