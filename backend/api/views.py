@@ -2078,10 +2078,9 @@ class GoogleMerchantFeedView(APIView):
         channel = ET.SubElement(rss, "channel")
         
         ET.SubElement(channel, "title").text = "VorionMart Product Feed"
-        ET.SubElement(channel, "link").text = "https://vorionmart.com"
+        base_url = getattr(settings, 'APP_URL', 'https://vorionmart.com').rstrip('/')
+        ET.SubElement(channel, "link").text = base_url
         ET.SubElement(channel, "description").text = "Premium products from VorionMart"
-
-        base_url = "https://vorionmart.com"
 
         for p in products:
             item = ET.SubElement(channel, "item")

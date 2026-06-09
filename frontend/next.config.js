@@ -14,7 +14,15 @@ function getHostname(value) {
     }
 }
 
-const imageHosts = [...new Set([appUrl, apiUrl, mediaUrl].map(getHostname).filter(Boolean))];
+const imageHosts = [...new Set([
+    appUrl, 
+    apiUrl, 
+    mediaUrl,
+    'https://vorionmart.com',
+    'https://www.vorionmart.com',
+    'http://localhost',
+    'http://127.0.0.1'
+].map(getHostname).filter(Boolean))];
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
