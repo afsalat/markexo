@@ -1,6 +1,4 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,12 +13,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
 
 // Initialize Analytics only in client-side
 export const initAnalytics = async () => {
     if (typeof window !== 'undefined') {
+        const { getAnalytics, isSupported } = await import('firebase/analytics');
         const supported = await isSupported();
         if (supported) {
             return getAnalytics(app);
@@ -29,4 +26,4 @@ export const initAnalytics = async () => {
     return null;
 };
 
-export { auth, googleProvider, app };
+export { app };

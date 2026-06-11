@@ -11,7 +11,7 @@ export default function AdminHeader({ sidebarOpen, setSidebarOpen }: AdminHeader
         <div className="lg:hidden bg-dark-900 border-b border-dark-800 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
             <Link href="/admin" className="flex items-center gap-2">
                 <img
-                    src="/logo-white-text.png"
+                    src="/logo-white-text.webp"
                     alt="VorionMart Logo"
                     className="h-10 sm:h-12 w-auto object-contain"
                 />

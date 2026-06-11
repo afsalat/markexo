@@ -45,7 +45,19 @@ const resolveAssetUrl = (value: string | null | undefined) => {
     return `${BASE_URL}${value.startsWith('/') ? value : `/${value}`}`;
 };
 
-
+const ProductCardSkeleton = () => (
+    <div className="product-grid-card bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm p-3 h-full animate-pulse">
+        <div className="relative aspect-[4/5] bg-slate-100 rounded-xl mb-3" />
+        <div className="h-3 bg-slate-100 rounded w-1/3 mb-2" />
+        <div className="h-4 bg-slate-100 rounded w-3/4 mb-2" />
+        <div className="h-3 bg-slate-100 rounded w-1/2 mb-3" />
+        <div className="h-4 bg-slate-100 rounded w-1/4 mb-4" />
+        <div className="grid grid-cols-2 gap-2">
+            <div className="h-8 bg-slate-100 rounded-xl" />
+            <div className="h-8 bg-slate-100 rounded-xl" />
+        </div>
+    </div>
+);
 
 export default function HomePage() {
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -569,15 +581,15 @@ export default function HomePage() {
 
 
 
-            <section className="relative overflow-hidden bg-white">
-                <div className="relative z-10 w-full py-0">
+            <section className="relative overflow-hidden bg-white min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
+                <div className="relative z-10 w-full py-0 min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
                     <div
                         data-aos="fade-up"
                         data-aos-delay="120"
-                        className="relative overflow-hidden"
+                        className="relative overflow-hidden min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]"
                     >
                         <div
-                            className={`flex ${isDragging ? '' : 'transition-transform duration-700 ease-in-out'} cursor-grab active:cursor-grabbing`}
+                            className={`flex ${isDragging ? '' : 'transition-transform duration-700 ease-in-out'} cursor-grab active:cursor-grabbing min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]`}
                             style={{ transform: `translateX(calc(-${currentOfferIndex * 100}% + ${dragOffset}px))` }}
                             onMouseDown={handleDragStart}
                             onMouseMove={handleDragMove}
@@ -601,6 +613,7 @@ export default function HomePage() {
                                             fill
                                             sizes="100vw"
                                             priority={index === 0}
+                                            quality={60}
                                             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
                                             draggable={false}
                                         />
@@ -727,10 +740,16 @@ export default function HomePage() {
                         </Link>
                     </div>
 
-                    <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                        {trendingProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                    <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 min-h-[350px] md:min-h-[420px]">
+                        {trendingProducts.length > 0 ? (
+                            trendingProducts.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            Array.from({ length: 4 }).map((_, idx) => (
+                                <ProductCardSkeleton key={`trending-skeleton-${idx}`} />
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
@@ -750,10 +769,16 @@ export default function HomePage() {
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                        {featuredProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 min-h-[350px] md:min-h-[420px]">
+                        {featuredProducts.length > 0 ? (
+                            featuredProducts.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            Array.from({ length: 4 }).map((_, idx) => (
+                                <ProductCardSkeleton key={`featured-skeleton-${idx}`} />
+                            ))
+                        )}
                     </div>
                 </div>
             </section>

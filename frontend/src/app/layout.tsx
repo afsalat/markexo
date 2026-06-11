@@ -65,7 +65,7 @@ export default function RootLayout({
         '@type': 'Organization',
         'name': 'VorionMart',
         'url': APP_URL || 'https://vorionmart.com',
-        'logo': `${APP_URL || 'https://vorionmart.com'}/logo-black-text.png`,
+        'logo': `${APP_URL || 'https://vorionmart.com'}/logo-black-text.webp`,
         'sameAs': [
             'https://www.instagram.com/vorionmart',
             'https://www.facebook.com/vorionmart',

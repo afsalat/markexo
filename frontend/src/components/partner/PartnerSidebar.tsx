@@ -28,7 +28,7 @@ export default function PartnerSidebar({ sidebarOpen, setSidebarOpen }: PartnerS
             <div className="px-4 py-4 sm:px-6 border-b border-gray-800 flex justify-center shrink-0">
                 <Link href="/" className="flex items-center gap-3">
                     <img
-                        src="/logo-white-text.png"
+                        src="/logo-white-text.webp"
                         alt="VorionMart Logo"
                         className="h-10 sm:h-12 w-auto object-contain"
                     />

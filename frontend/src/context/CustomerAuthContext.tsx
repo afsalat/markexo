@@ -3,8 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginUser, fetchCustomerOrders, Product, socialLogin } from '@/lib/api';
-import { auth, googleProvider } from '@/lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
 
 export interface Customer {
     id: string;
@@ -158,6 +156,10 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
     const loginWithGoogle = async () => {
         setIsLoading(true);
         try {
+            const { signInWithPopup, GoogleAuthProvider, getAuth } = await import('firebase/auth');
+            const { app } = await import('@/lib/firebase');
+            const auth = getAuth(app);
+            const googleProvider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, googleProvider);
             const idToken = await result.user.getIdToken();
             

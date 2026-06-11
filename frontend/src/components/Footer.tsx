@@ -41,7 +41,7 @@ export default function Footer() {
                     <div className="lg:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
                         <Link href="/" className="inline-flex items-center group mb-4 md:mb-6">
                             <img
-                                src="/logo-black-text.png"
+                                src="/logo-black-text.webp"
                                 alt="VorionMart"
                                 className="h-12 md:h-16 w-auto object-contain"
                             />
