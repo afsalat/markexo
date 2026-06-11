@@ -29,7 +29,7 @@ export function generateMetadata({ searchParams }: ProductsPageProps): Metadata 
         const categoryName = category.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
         title = `${categoryName} - Shop Online | VorionMart`;
         description = `Shop the best ${categoryName} products online at VorionMart. Premium quality, verified sellers, and Cash on Delivery available across India.`;
-        canonicalPath = `/products?category=${category}`;
+        canonicalPath = `https://vorionmart.com/category/${category}`;
     } else if (featured) {
         title = 'Trending Products';
         description = 'Browse trending and featured products on VorionMart.';

@@ -141,7 +141,7 @@ export default async function ProductDetailLayout({
                                 '@type': 'ListItem',
                                 position: 3,
                                 name: product.category.name,
-                                item: `${APP_URL}/products?category=${product.category.slug}`,
+                                item: `${APP_URL}/category/${product.category.slug}`,
                             }]
                             : []),
                         {

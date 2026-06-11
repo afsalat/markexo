@@ -134,7 +134,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                             {featuredCategories.map((cat, idx) => (
                                 <Link
                                     key={cat.id}
-                                    href={`/products?category=${cat.slug}`}
+                                    href={`/category/${cat.slug}`}
                                     data-aos="fade-up"
                                     data-aos-delay={idx * 100}
                                     className="group relative block shrink-0 w-[280px] md:w-auto snap-center h-[200px] md:h-[400px] overflow-hidden rounded-2xl md:rounded-3xl border border-gray-200 dark:border-dark-700 hover:border-accent-500/50 transition-all duration-500 shadow-lg md:shadow-2xl"
@@ -250,7 +250,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                 </div>
                                             </div>
                                             <Link
-                                                href={`/products?category=${cat.slug}`}
+                                                href={`/category/${cat.slug}`}
                                                 className="p-2 hover:bg-accent-500/10 rounded-lg text-gray-400 dark:text-silver-500 hover:text-accent-500 transition-all flex items-center"
                                             >
                                                 <ChevronRight size={18} className="-rotate-90" />
@@ -264,7 +264,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                 {cat.children.map((child: Category) => (
                                                     <Link
                                                         key={child.id}
-                                                        href={`/products?category=${child.slug}`}
+                                                        href={`/category/${child.slug}`}
                                                         className="group flex flex-row items-center gap-4 p-3 rounded-xl bg-gray-50/50 dark:bg-dark-800/40 border border-gray-200 dark:border-dark-700/50 hover:border-accent-500 transition-all hover:shadow-lg relative"
                                                     >
                                                         <div className="absolute -left-8 top-1/2 -translate-y-1/2 w-8 h-px bg-gray-200 dark:bg-dark-700" />
@@ -324,7 +324,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                 </div>
                                             </div>
                                             <Link
-                                                href={`/products?category=${cat.slug}`}
+                                                href={`/category/${cat.slug}`}
                                                 className="p-2 hover:bg-accent-500/10 rounded-lg text-accent-500 transition-all flex items-center"
                                             >
                                                 <span className="text-xs font-semibold mr-1">View</span>
@@ -380,7 +380,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                 
                                                 <div className="grid grid-cols-3 gap-y-6 gap-x-2">
                                                     {activeCat.children?.map(sub => (
-                                                        <Link href={`/products?category=${sub.slug}`} key={sub.id} className="flex flex-col items-center gap-2 group">
+                                                        <Link href={`/category/${sub.slug}`} key={sub.id} className="flex flex-col items-center gap-2 group">
                                                             <div className="w-14 h-14 rounded-full bg-[#f8f9fb] flex items-center justify-center overflow-hidden border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] p-1">
                                                                 {sub.image ? (
                                                                     <img src={sub.image} className="w-full h-full object-cover rounded-full" />
@@ -395,7 +395,7 @@ export default function CategoriesClient({ categories, banners }: CategoriesClie
                                                     ))}
                                                     
                                                     {/* View All */}
-                                                    <Link href={`/products?category=${activeCat.slug}`} className="flex flex-col items-center gap-2 group">
+                                                    <Link href={`/category/${activeCat.slug}`} className="flex flex-col items-center gap-2 group">
                                                         <div className="w-14 h-14 rounded-full bg-accent-50 flex items-center justify-center border border-accent-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] text-accent-600">
                                                             <ChevronRight size={20} />
                                                         </div>

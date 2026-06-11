@@ -24,7 +24,7 @@ export async function GET() {
 
                 return `
   <url>
-    <loc>${APP_URL}/products?category=${category.slug}</loc>
+    <loc>${APP_URL}/category/${category.slug}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.80</priority>${imageXml}

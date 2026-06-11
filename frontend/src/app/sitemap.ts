@@ -68,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         categories.forEach((category: any) => {
             if (category.slug && category.is_active !== false) {
                 routes.push({
-                    url: `${APP_URL}/products?category=${category.slug}`,
+                    url: `${APP_URL}/category/${category.slug}`,
                     lastModified: now,
                     changeFrequency: 'weekly',
                     priority: 0.8,

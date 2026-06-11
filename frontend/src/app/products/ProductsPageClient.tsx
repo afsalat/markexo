@@ -43,11 +43,13 @@ function collectCategorySlugs(category: Category): string[] {
 export default function ProductsPage({ 
     initialFeatured = false, 
     initialSort = '',
-    pageTitle = ''
+    pageTitle = '',
+    categorySlug = ''
 }: { 
     initialFeatured?: boolean, 
     initialSort?: string,
-    pageTitle?: string
+    pageTitle?: string,
+    categorySlug?: string
 }) {
     return (
         <Suspense fallback={
@@ -62,6 +64,7 @@ export default function ProductsPage({
                 initialFeatured={initialFeatured} 
                 initialSort={initialSort} 
                 customPageTitle={pageTitle} 
+                categorySlug={categorySlug}
             />
         </Suspense>
     );
@@ -70,16 +73,18 @@ export default function ProductsPage({
 function ProductsPageContent({ 
     initialFeatured, 
     initialSort, 
-    customPageTitle 
+    customPageTitle,
+    categorySlug
 }: { 
     initialFeatured?: boolean, 
     initialSort?: string,
-    customPageTitle?: string
+    customPageTitle?: string,
+    categorySlug?: string
 }) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const searchQuery = searchParams?.get('search') || '';
-    const categoryParam = searchParams?.get('category');
+    const categoryParam = categorySlug || searchParams?.get('category');
     const featuredParam = searchParams?.get('featured') || searchParams?.get('trending');
     const sortParam = searchParams?.get('sort');
     const isVisualSearch = searchParams?.get('visual') === 'true';

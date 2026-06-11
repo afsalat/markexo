@@ -500,7 +500,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                             <Link href="/products" className="hover:text-accent-500 transition-colors">Products</Link>
                             <ChevronRight size={16} />
                             {categorySlug ? (
-                                <Link href={`/products?category=${categorySlug}`} className="hover:text-accent-500 transition-colors">{categoryName}</Link>
+                                <Link href={`/category/${categorySlug}`} className="hover:text-accent-500 transition-colors">{categoryName}</Link>
                             ) : (
                                 <span>{categoryName}</span>
                             )}

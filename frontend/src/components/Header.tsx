@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShoppingCart, Search, Menu, X, Zap, Sparkles, ChevronDown, Heart } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/lib/cart';
@@ -122,7 +123,7 @@ export default function Header() {
 
     const handleSuggestionClick = (slug: string, type: string = 'product') => {
         if (type === 'category') {
-            router.push(`/products?category=${slug}`);
+            router.push(`/category/${slug}`);
         } else {
             router.push(`/products/${slug}`);
         }
@@ -158,9 +159,11 @@ export default function Header() {
                                 >
                                     <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-gray-100">
                                         {item.image ? (
-                                            <img
+                                            <Image
                                                 src={item.image}
                                                 alt={item.name}
+                                                width={44}
+                                                height={44}
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (
@@ -206,11 +209,14 @@ export default function Header() {
             <div className="container mx-auto px-4">
                 <div className="flex min-h-[64px] md:min-h-[80px] items-center gap-3 lg:gap-6">
                     <Link href="/" className="ml-2 mr-3 shrink-0 md:ml-4 md:mr-6" onClick={closeMenus}>
-                        <img
-                            src="/logo-black-text.png"
-                            alt="VorionMart"
-                            className="h-12 w-auto object-contain md:h-16"
-                        />
+                                            <Image
+                                                src="/logo-black-text.webp"
+                                                alt="VorionMart"
+                                                width={173}
+                                                height={160}
+                                                priority
+                                                className="h-12 w-auto object-contain md:h-16"
+                                            />
                     </Link>
 
                     <nav className="hidden items-center gap-7 lg:flex">
@@ -249,7 +255,7 @@ export default function Header() {
                                                 <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-6 gap-8">
                                                     {categories.map((category) => (
                                                         <div key={category.id} className="break-inside-avoid mb-8">
-                                                            <Link href={`/products?category=${category.slug}`} className="group inline-block mb-4">
+                                                            <Link href={`/category/${category.slug}`} className="group inline-block mb-4">
                                                                 <h3 className="text-gray-900 text-[12px] font-bold uppercase tracking-wider relative inline-block pb-1">
                                                                     {category.name}
                                                                     <span className="absolute bottom-0 left-0 w-8 h-[2px] bg-accent-500 transition-all group-hover:w-full"></span>
@@ -261,7 +267,7 @@ export default function Header() {
                                                                     {category.children.map((child: any) => (
                                                                         <li key={child.id}>
                                                                             <Link 
-                                                                                href={`/products?category=${child.slug}`}
+                                                                                href={`/category/${child.slug}`}
                                                                                 className="text-gray-600 text-[13px] hover:text-accent-600 transition-colors"
                                                                             >
                                                                                 {child.name}
@@ -325,6 +331,7 @@ export default function Header() {
 
                         <Link
                             href="/profile?tab=wishlist"
+                            aria-label="Wishlist"
                             className="relative flex h-11 items-center gap-2 rounded-full border border-gray-200 px-4 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
                         >
                             <Heart size={18} />

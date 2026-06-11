@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Truck, Shield, Clock, Award, ChevronRight, ChevronLeft, Star, ShoppingCart, Heart, Send, CheckCircle, CreditCard, Zap, Package, User, Plus, MapPin, ChevronDown, Search, Camera, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -131,7 +132,7 @@ export default function HomePage() {
 
     const handleSuggestionClick = (slug: string, type: string = 'product') => {
         if (type === 'category') {
-            router.push(`/products?category=${slug}`);
+            router.push(`/category/${slug}`);
         } else {
             router.push(`/products/${slug}`);
         }
@@ -262,43 +263,43 @@ export default function HomePage() {
     const heroCarouselOffers = [
         {
             id: 'local-banner-1',
-            image: '/banner1.png',
+            image: '/banner1.webp',
             link: '/products',
             title: '',
         },
         {
             id: 'local-banner-2',
-            image: '/banner2.png',
+            image: '/banner2.webp',
             link: '/products',
             title: '',
         },
         {
             id: 'local-banner-3',
-            image: '/banner3.png',
+            image: '/banner3.webp',
             link: '/products',
             title: '',
         },
         {
             id: 'local-banner-4',
-            image: '/banner4.png',
+            image: '/banner4.webp',
             link: '/products',
             title: '',
         },
         {
             id: 'local-banner-5',
-            image: '/banner5.png',
+            image: '/banner5.webp',
             link: '/products',
             title: '',
         },
         {
             id: 'local-banner-6',
-            image: '/banner6.png',
+            image: '/banner6.webp',
             link: '/products',
             title: '',
         },
         {
             id: 'local-banner-7',
-            image: '/banner7.png',
+            image: '/banner7.webp',
             link: '/products',
             title: '',
         },
@@ -395,6 +396,7 @@ export default function HomePage() {
                                 <button
                                     type="button"
                                     onClick={() => setSearchQuery('')}
+                                    aria-label="Clear search query"
                                     className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
                                 >
                                     <X size={16} />
@@ -403,6 +405,7 @@ export default function HomePage() {
                             <button
                                 type="button"
                                 onClick={handleCameraClick}
+                                aria-label="Search by image"
                                 className="p-1.5 hover:bg-slate-200 rounded-full transition-colors text-accent-500"
                             >
                                 <Camera size={18} />
@@ -460,12 +463,14 @@ export default function HomePage() {
                                                 onClick={() => handleSuggestionClick(item.slug, item.type)}
                                                 className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
                                             >
-                                                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-slate-100 shrink-0">
+                                                <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-slate-100 shrink-0">
                                                     {item.image ? (
-                                                        <img
+                                                        <Image
                                                             src={item.image}
                                                             alt={item.name}
-                                                            className="h-full w-full object-cover"
+                                                            fill
+                                                            sizes="40px"
+                                                            className="object-cover"
                                                         />
                                                     ) : (
                                                         <span className="text-xs font-bold text-slate-400">
@@ -589,13 +594,17 @@ export default function HomePage() {
                                     className="group relative block min-w-full w-full flex-shrink-0 overflow-hidden bg-black h-[105px] sm:h-[150px] md:h-[280px] lg:h-[450px]"
                                 >
                                     <div className="absolute inset-0 z-10 bg-black/5 group-hover:bg-black/0 transition-colors duration-500" />
-                                    <img
-                                        src={banner.image || ''}
-                                        alt={banner.title || 'Special Offer'}
-                                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
-                                        loading={index === 0 ? "eager" : "lazy"}
-                                        draggable={false}
-                                    />
+                                    {banner.image && (
+                                        <Image
+                                            src={banner.image}
+                                            alt={banner.title || 'Special Offer'}
+                                            fill
+                                            sizes="100vw"
+                                            priority={index === 0}
+                                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                                            draggable={false}
+                                        />
+                                    )}
                                     {/* Desktop Only Caption Overlay */}
                                     {banner.title && (
                                         <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 z-20 flex flex-col gap-3 md:gap-4 max-w-lg">
@@ -629,11 +638,13 @@ export default function HomePage() {
                             {/* "All" Story Circle */}
                             <Link href="/products" className="group flex w-[64px] md:w-[90px] flex-col items-center gap-2">
                                 <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-primary-400 to-accent-500 animate-gradient-xy">
-                                    <div className="flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
-                                        <img
-                                            src="/all-categories.png"
+                                    <div className="relative flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
+                                        <Image
+                                            src="/all-categories.webp"
                                             alt="All Categories"
-                                            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                                            fill
+                                            sizes="(max-width: 768px) 58px, 80px"
+                                            className="object-cover transition duration-700 group-hover:scale-110"
                                         />
                                     </div>
                                 </div>
@@ -643,19 +654,21 @@ export default function HomePage() {
                             {categories.slice(0, 10).map((category, index) => (
                                 <Link
                                     key={category.slug}
-                                    href={`/products?category=${category.slug}`}
+                                    href={`/category/${category.slug}`}
                                     data-aos="fade-up"
                                     data-aos-delay={index * 30}
                                     className="group flex w-[64px] md:w-[90px] flex-col items-center gap-2 transition-all duration-300"
                                 >
                                     {/* Image Container - Story Style Border */}
                                     <div className="relative p-0.5 rounded-full bg-slate-100 transition-all duration-300 group-hover:bg-gradient-to-tr group-hover:from-accent-400 group-hover:to-accent-600">
-                                        <div className="flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
+                                        <div className="relative flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
                                             {category.image ? (
-                                                <img
+                                                <Image
                                                     src={category.image}
                                                     alt={category.name}
-                                                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                                                    fill
+                                                    sizes="(max-width: 768px) 58px, 80px"
+                                                    className="object-cover transition duration-700 group-hover:scale-110"
                                                 />
                                             ) : (
                                                 <div className="flex h-full w-full items-center justify-center bg-gray-50 text-xl transition duration-500 group-hover:scale-110">

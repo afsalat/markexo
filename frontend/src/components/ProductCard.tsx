@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { Product } from '@/lib/api';
@@ -48,9 +49,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {/* Image Container */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
                     {product.image ? (
-                        <img
+                        <Image
                             src={product.image}
                             alt={product.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                             className="object-contain w-full h-full p-2 product-image transition-transform duration-700 group-hover:scale-105"
                         />
                     ) : (

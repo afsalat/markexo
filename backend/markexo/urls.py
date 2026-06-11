@@ -29,4 +29,17 @@ urlpatterns = [
 ]
 
 if settings.DEBUG or getattr(settings, 'SERVE_MEDIA_FILES', False):
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    from django.views.static import serve
+    from django.utils.cache import patch_cache_control
+    from django.urls import re_path
+
+    def cache_served_media(request, path, document_root=None, show_indexes=False):
+        response = serve(request, path, document_root, show_indexes)
+        if response.status_code == 200:
+            patch_cache_control(response, public=True, max_age=2592000, immutable=True)
+        return response
+
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', cache_served_media, {'document_root': settings.MEDIA_ROOT}),
+    ]
+
