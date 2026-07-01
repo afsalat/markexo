@@ -24,11 +24,36 @@ const imageHosts = [...new Set([
     'http://127.0.0.1'
 ].map(getHostname).filter(Boolean))];
 
+// Internal Docker service URL for server-side proxying.
+// In production (Docker Compose) the backend is reachable via its service name.
+// Falls back to the public API origin for local development outside Docker.
+const BACKEND_INTERNAL_URL =
+    process.env.BACKEND_INTERNAL_URL || `http://backend:8000`;
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
     output: 'standalone',
     poweredByHeader: false,
+    async rewrites() {
+        return [
+            // Proxy all /api/* requests to the Django backend
+            {
+                source: '/api/:path*',
+                destination: `${BACKEND_INTERNAL_URL}/api/:path*`,
+            },
+            // Proxy /media/* so images load from the same origin
+            {
+                source: '/media/:path*',
+                destination: `${BACKEND_INTERNAL_URL}/media/:path*`,
+            },
+            // Proxy /static/* (Django static files served by WhiteNoise)
+            {
+                source: '/static/:path*',
+                destination: `${BACKEND_INTERNAL_URL}/static/:path*`,
+            },
+        ];
+    },
     async redirects() {
         return [
             {
