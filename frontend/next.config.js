@@ -15,48 +15,21 @@ function getHostname(value) {
 }
 
 const imageHosts = [...new Set([
-    appUrl, 
-    apiUrl, 
+    appUrl,
+    apiUrl,
     mediaUrl,
     'https://vorionmart.com',
     'https://www.vorionmart.com',
+    'https://api.vorionmart.com',
     'http://localhost',
     'http://127.0.0.1'
 ].map(getHostname).filter(Boolean))];
-
-// Internal Docker service URL for server-side proxying.
-// In production (Docker Compose) the backend is reachable via its service name.
-// Falls back to the public API origin for local development outside Docker.
-const BACKEND_INTERNAL_URL =
-    process.env.BACKEND_INTERNAL_URL || `http://backend:8000`;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
     output: 'standalone',
     poweredByHeader: false,
-    async rewrites() {
-        return {
-            // beforeFiles rewrites run before checking the filesystem/pages
-            beforeFiles: [
-                {
-                    source: '/api/:path*',
-                    destination: `${BACKEND_INTERNAL_URL}/api/:path*`,
-                    has: [{ type: 'header', key: 'host' }],
-                },
-                {
-                    source: '/media/:path*',
-                    destination: `${BACKEND_INTERNAL_URL}/media/:path*`,
-                },
-                {
-                    source: '/static/:path*',
-                    destination: `${BACKEND_INTERNAL_URL}/static/:path*`,
-                },
-            ],
-            afterFiles: [],
-            fallback: [],
-        };
-    },
     async redirects() {
         return [
             {
