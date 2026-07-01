@@ -1,0 +1,42 @@
+# Python
+**/__pycache__
+**/*.py[cod]
+**/*$py.class
+backend/venv/
+backend/.venv/
+backend/db.sqlite3
+backend/logs/
+backend/scratch/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.next-dev*.log
+
+# Git
+.git/
+.gitignore
+
+# Secrets & local env
+**/.env
+**/.env.*
+!frontend/src/config/appConfig.json
+
+# Editor
+.vscode/
+.idea/
+.kilocode/
+.kombai/
+
+# Misc
+docs/
+*.md
+*.txt
+*.json
+!frontend/src/config/appConfig.json
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/next.config.js
+!frontend/postcss.config.js
+!frontend/tailwind.config.js
+!frontend/tsconfig.json
