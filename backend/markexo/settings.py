@@ -104,13 +104,7 @@ HAS_WHITENOISE = importlib.util.find_spec('whitenoise') is not None
 
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 SECRET_KEY = 'J7s!9vK2#pL4@xN6$qR8%tU1&yW3*zC5!mB7@nD9#fG2$hJ4%kL6&pQ8'
-ALLOWED_HOSTS = sorted({
-    *HOST_ALIASES,
-    *LOCAL_HOST_ALIASES,
-    *EXTRA_ALLOWED_HOSTS,
-    urlparse(APP_URL).hostname,
-    urlparse(BACKEND_ORIGIN).hostname,
-})
+ALLOWED_HOSTS = ['*']
 
 
 
