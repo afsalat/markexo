@@ -7,6 +7,8 @@ backend/.venv/
 backend/db.sqlite3
 backend/logs/
 backend/scratch/
+# Keep products_snapshot.json for restore command
+!backend/products_snapshot.json
 
 # Node / Next.js
 frontend/node_modules/
