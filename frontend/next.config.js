@@ -36,23 +36,26 @@ const nextConfig = {
     output: 'standalone',
     poweredByHeader: false,
     async rewrites() {
-        return [
-            // Proxy all /api/* requests to the Django backend
-            {
-                source: '/api/:path*',
-                destination: `${BACKEND_INTERNAL_URL}/api/:path*`,
-            },
-            // Proxy /media/* so images load from the same origin
-            {
-                source: '/media/:path*',
-                destination: `${BACKEND_INTERNAL_URL}/media/:path*`,
-            },
-            // Proxy /static/* (Django static files served by WhiteNoise)
-            {
-                source: '/static/:path*',
-                destination: `${BACKEND_INTERNAL_URL}/static/:path*`,
-            },
-        ];
+        return {
+            // beforeFiles rewrites run before checking the filesystem/pages
+            beforeFiles: [
+                {
+                    source: '/api/:path*',
+                    destination: `${BACKEND_INTERNAL_URL}/api/:path*`,
+                    has: [{ type: 'header', key: 'host' }],
+                },
+                {
+                    source: '/media/:path*',
+                    destination: `${BACKEND_INTERNAL_URL}/media/:path*`,
+                },
+                {
+                    source: '/static/:path*',
+                    destination: `${BACKEND_INTERNAL_URL}/static/:path*`,
+                },
+            ],
+            afterFiles: [],
+            fallback: [],
+        };
     },
     async redirects() {
         return [
