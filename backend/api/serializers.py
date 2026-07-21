@@ -668,6 +668,12 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_details = CategoryListSerializer(source='category', read_only=True)
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        return get_image_url(request, obj.image)
+
 
     class Meta:
         model = Product

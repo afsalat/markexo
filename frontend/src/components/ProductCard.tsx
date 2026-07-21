@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart, Heart, Star } from 'lucide-react';
@@ -12,12 +13,24 @@ interface ProductCardProps {
     product: Product;
 }
 
+const getFormattedImageUrl = (url: string | null | undefined) => {
+    if (!url) return null;
+    if (url.includes('://backend:8000') || url.includes('://backend/')) {
+        return url.replace(/^https?:\/\/backend(:8000)?/, 'https://api.vorionmart.com');
+    }
+    return url;
+};
+
 export default function ProductCard({ product }: ProductCardProps) {
     const { addItem } = useCart();
     const router = useRouter();
     const { addToWishlist, removeFromWishlist, isWishlisted } = useCustomerAuth();
     
+    const [imageLoading, setImageLoading] = useState(true);
+    const [imageError, setImageError] = useState(false);
+
     const displayRating = Number(product.rating) > 0 ? Number(product.rating) : 4.6;
+    const imageUrl = getFormattedImageUrl(product.image);
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -47,20 +60,36 @@ export default function ProductCard({ product }: ProductCardProps) {
             <Link href={`/products/${product.slug}`} className="block h-full">
                 <span className="sr-only">View {product.name} - Premium Quality Product</span>
                 {/* Image Container */}
-                <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-                    {product.image ? (
+                <div className="relative aspect-[4/5] overflow-hidden bg-slate-50">
+                    {/* Fast Skeleton Loading Shimmer Animation */}
+                    {imageLoading && !imageError && imageUrl && (
+                        <div className="absolute inset-0 bg-slate-100 z-10">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200/60 to-transparent animate-shimmer" />
+                        </div>
+                    )}
+
+                    {imageUrl && !imageError ? (
                         <Image
-                            src={product.image}
+                            src={imageUrl}
                             alt={product.name}
                             fill
                             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                            className="object-contain w-full h-full p-2 product-image transition-transform duration-700 group-hover:scale-105"
+                            onLoadingComplete={() => setImageLoading(false)}
+                            onError={() => {
+                                setImageLoading(false);
+                                setImageError(true);
+                            }}
+                            className={`object-contain w-full h-full p-2 product-image transition-all duration-500 group-hover:scale-105 ${
+                                imageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                            }`}
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-200">
-                            <ShoppingCart size={40} strokeWidth={1.2} />
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-300 p-4">
+                            <ShoppingCart size={40} strokeWidth={1.2} className="mb-2 text-slate-300" />
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">VorionMart</span>
                         </div>
                     )}
+
 
                     {/* Hover Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
