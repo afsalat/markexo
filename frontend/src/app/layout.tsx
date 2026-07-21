@@ -144,7 +144,7 @@ export default function RootLayout({
     };
 
     return (
-        <html lang="en" className="light">
+        <html lang="en" className="light" suppressHydrationWarning>
             <head>
                 {/* Global Structured Data for Google Search Sitelinks & Sitelinks Searchbox */}
                 <script

@@ -58,6 +58,7 @@ services:
     depends_on:
       - backend
     environment:
+      DOCKER_ENV: "true"
       NEXT_PUBLIC_API_HOST: ${NEXT_PUBLIC_API_HOST:-api.vorionmart.com}
       NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-}
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}

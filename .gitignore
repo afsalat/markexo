@@ -40,3 +40,5 @@ backend/logs/
 
 # Secrets
 backend/firebase-service-account.json
+.meta-panel-trigger
+meta.bat

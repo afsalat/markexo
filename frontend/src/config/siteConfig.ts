@@ -8,9 +8,11 @@ const isServer = typeof window === 'undefined';
 let resolvedApiOrigin = SITE_ORIGIN;
 
 if (isServer) {
-    // During Server-Side Rendering (SSR), Next.js server calls the backend container directly
-    // inside the Docker network.
-    resolvedApiOrigin = 'http://backend:8000';
+    // During Server-Side Rendering (SSR):
+    // - In Docker: DOCKER_ENV=true, so use the internal container hostname.
+    // - In local dev: use localhost:8000 so SSR fetches can reach the Django dev server.
+    const isDocker = process.env.DOCKER_ENV === 'true';
+    resolvedApiOrigin = isDocker ? 'http://backend:8000' : 'http://localhost:8000';
 } else {
     // In the browser, resolve the API URL based on the current domain
     const hostname = window.location.hostname;
