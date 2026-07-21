@@ -1,6 +1,7 @@
 """
 Serializers for VorionMart API.
 """
+import os
 import logging
 from decimal import Decimal
 
@@ -22,9 +23,21 @@ logger = logging.getLogger(__name__)
 def get_image_url(request, image_field):
     """Returns an absolute URL for an image file for production compatibility."""
     if image_field and hasattr(image_field, 'url'):
+        url_path = image_field.url
         if request:
-            return request.build_absolute_uri(image_field.url)
-        return image_field.url
+            url = request.build_absolute_uri(url_path)
+            # If the request host is an internal Docker container (e.g. backend:8000 during Next.js SSR),
+            # browsers cannot resolve 'backend:8000'. Rewrite it to the public domain.
+            if '://backend' in url or '://127.0.0.1:8000' in url:
+                forwarded_host = request.META.get('HTTP_X_FORWARDED_HOST')
+                if forwarded_host:
+                    host = forwarded_host.split(',')[0].strip()
+                else:
+                    host = os.environ.get('PUBLIC_API_HOST', 'api.vorionmart.com')
+                proto = 'https' if (request.is_secure() or request.META.get('HTTP_X_FORWARDED_PROTO') == 'https') else 'http'
+                return f"{proto}://{host}{url_path}"
+            return url
+        return url_path
     return None
 
 
