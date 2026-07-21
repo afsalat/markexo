@@ -585,10 +585,15 @@ class ProductSerializer(serializers.ModelSerializer):
                 except (ValueError, TypeError):
                     parsed = {}
                 if hasattr(data, '_mutable'):
-                    data = data.copy()
+                    # IMPORTANT: do NOT call data.copy() here.
+                    # QueryDict.copy() calls deepcopy on all values including
+                    # TemporaryUploadedFile objects (backed by _io.BufferedRandom)
+                    # which cannot be pickled -> TypeError: cannot pickle '_io.BufferedRandom'.
+                    # Mutate in-place by toggling _mutable instead.
+                    original_mutable = data._mutable
                     data._mutable = True
                     data['specifications'] = json.dumps(parsed)
-                    data._mutable = False
+                    data._mutable = original_mutable
                 else:
                     data = dict(data)
                     data['specifications'] = parsed
