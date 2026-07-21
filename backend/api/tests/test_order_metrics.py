@@ -133,3 +133,35 @@ class OrderMetricsTests(TestCase):
         self.assertEqual(Decimal(str(partner_stats_response.data['my_earnings'])), Decimal('15.00'))
         self.assertEqual(partner_stats_response.data['total_orders'], 1)
         self.assertEqual(partner_stats_response.data['delivered_orders'], 1)
+
+    def test_admin_partner_stats_include_partner_products_and_ignore_deleted_product_items(self):
+        self.create_order(status='delivered', quantity=1, total_amount='150.00')
+
+        deleted_product_order = Order.objects.create(
+            customer=self.customer,
+            total_amount=Decimal('99.00'),
+            status='delivered',
+            payment_status='received',
+            delivery_address='MG Road',
+            delivery_city='Kochi',
+            delivery_pincode='682001',
+        )
+        OrderItem.objects.create(
+            order=deleted_product_order,
+            product=None,
+            shop=self.shop,
+            product_name='Deleted Product',
+            quantity=1,
+            price=Decimal('99.00'),
+        )
+
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get('/api/admin/partner-stats/')
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(Decimal(str(response.data['total_sales'])), Decimal('150.00'))
+        self.assertEqual(Decimal(str(response.data['my_earnings'])), Decimal('15.00'))
+        self.assertEqual(response.data['total_products'], 1)
+        self.assertEqual(response.data['total_orders'], 1)
+        self.assertEqual(response.data['delivered_orders'], 1)

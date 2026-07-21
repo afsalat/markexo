@@ -15,7 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, action
-from django.db.models import Sum, Count, Q, F, DecimalField, Value
+from django.db.models import Sum, Count, Q, F, DecimalField, Value, ExpressionWrapper
 from django.db.models.functions import Coalesce, TruncDay
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -1698,32 +1698,59 @@ class PartnerDashboardStatsView(APIView):
     """Stats for Partner/Shop Owner Dashboard."""
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        products = get_partner_products(request.user)
+    def get_products_queryset(self, user):
+        if user.is_staff or user.is_superuser:
+            return Product.objects.filter(created_by__isnull=False).distinct()
+        return get_partner_products(user)
 
-        items = OrderItem.objects.filter(
-            product__created_by=request.user
-        ).distinct()
+    def get_items_queryset(self, user):
+        if user.is_staff or user.is_superuser:
+            return OrderItem.objects.filter(product__created_by__isnull=False).distinct()
+        return OrderItem.objects.filter(product__created_by=user).distinct()
+
+    def get(self, request):
+        products = self.get_products_queryset(request.user)
+
+        items = self.get_items_queryset(request.user)
         sales_items = get_sales_order_items_queryset(items)
 
+        item_sales = ExpressionWrapper(
+            F('price') * F('quantity'),
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
         total_sales = sales_items.aggregate(
-            sales=Sum(F('price') * F('quantity'), output_field=DecimalField())
-        )['sales'] or 0
+            sales=Coalesce(
+                Sum(item_sales),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            )
+        )['sales']
 
         # Calculate Earnings (Profit Share)
         # Formula: Sum((Price - SupplierPrice) * Qty * CommissionRate) / 100
-        from django.db.models.functions import Coalesce
-        
+        supplier_price = Coalesce(
+            F('product__supplier_price'),
+            Value(Decimal('0.00')),
+            output_field=DecimalField(max_digits=10, decimal_places=2),
+        )
+        commission_rate = Coalesce(
+            F('product__created_by__partner_profile__commission_rate'),
+            Value(Decimal('30.00')),
+            output_field=DecimalField(max_digits=5, decimal_places=2),
+        )
+        item_earnings = ExpressionWrapper(
+            (F('price') - supplier_price) * F('quantity') * commission_rate,
+            output_field=DecimalField(max_digits=12, decimal_places=2),
+        )
         earnings_agg = sales_items.aggregate(
-            earnings=Sum(
-                (F('price') - Coalesce(F('product__supplier_price'), Value(Decimal('0.00')), output_field=DecimalField())) * 
-                F('quantity') * 
-                Value(Decimal('30.00'), output_field=DecimalField()),
-                output_field=DecimalField(max_digits=12, decimal_places=2)
+            earnings=Coalesce(
+                Sum(item_earnings),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
             )
         )
         # Divide by 100 after summation (or handle safely)
-        raw_earnings = earnings_agg['earnings'] or Decimal('0.00')
+        raw_earnings = earnings_agg['earnings']
         my_earnings = raw_earnings / Decimal('100.00')
 
         recent_order_ids = items.values_list('order', flat=True).distinct()[:10]
