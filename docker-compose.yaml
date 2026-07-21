@@ -44,6 +44,7 @@ services:
       GOOGLE_MERCHANT_ID: ${GOOGLE_MERCHANT_ID:-}
       GOOGLE_SERVICE_ACCOUNT_FILE: ${GOOGLE_SERVICE_ACCOUNT_FILE:-firebase-service-account.json}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SERVE_MEDIA_FILES: "true"
     volumes:
       - backend_media:/app/media
       - backend_logs:/app/logs
@@ -69,22 +70,6 @@ services:
       NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID:-}
     expose:
       - "3000"
-
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    depends_on:
-      - backend
-      - frontend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt/live/vorionmart.com/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
-      - /etc/letsencrypt/live/vorionmart.com/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
-      - /var/www/certbot:/var/www/certbot:ro
-      - backend_media:/app/media:ro
 
 volumes:
   mysql_data:

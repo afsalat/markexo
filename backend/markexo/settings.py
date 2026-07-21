@@ -211,7 +211,14 @@ STATICFILES_STORAGE = (
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-SERVE_MEDIA_FILES = DEBUG or APP_HOST in LOCAL_HOST_ALIASES
+# Allow explicit override via env var; fall back to auto-detection (DEBUG or localhost)
+_serve_media_env = os.environ.get('SERVE_MEDIA_FILES', '').strip().lower()
+if _serve_media_env in ('1', 'true', 'yes', 'on'):
+    SERVE_MEDIA_FILES = True
+elif _serve_media_env in ('0', 'false', 'no', 'off'):
+    SERVE_MEDIA_FILES = False
+else:
+    SERVE_MEDIA_FILES = DEBUG or APP_HOST in LOCAL_HOST_ALIASES
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
