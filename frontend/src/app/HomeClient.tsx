@@ -45,19 +45,46 @@ const resolveAssetUrl = (value: string | null | undefined) => {
     return `${BASE_URL}${value.startsWith('/') ? value : `/${value}`}`;
 };
 
+const HeroBannerSkeleton = () => (
+    <div className="w-full bg-slate-100 rounded-2xl md:rounded-3xl animate-pulse min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200/50 to-transparent animate-shimmer" />
+    </div>
+);
+
+const CategorySkeleton = () => (
+    <div className="flex w-[64px] md:w-[90px] flex-col items-center gap-2 animate-pulse shrink-0">
+        <div className="relative h-[58px] w-[58px] md:h-[80px] md:w-[80px] rounded-full bg-slate-100 p-0.5 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200/50 to-transparent animate-shimmer" />
+        </div>
+        <div className="h-3 w-12 bg-slate-100 rounded-md" />
+    </div>
+);
+
 const ProductCardSkeleton = () => (
-    <div className="product-grid-card bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm p-3 h-full animate-pulse">
-        <div className="relative aspect-[4/5] bg-slate-100 rounded-xl mb-3" />
-        <div className="h-3 bg-slate-100 rounded w-1/3 mb-2" />
-        <div className="h-4 bg-slate-100 rounded w-3/4 mb-2" />
-        <div className="h-3 bg-slate-100 rounded w-1/2 mb-3" />
-        <div className="h-4 bg-slate-100 rounded w-1/4 mb-4" />
-        <div className="grid grid-cols-2 gap-2">
+    <div className="product-grid-card bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm p-3 h-full animate-pulse flex flex-col justify-between">
+        <div>
+            <div className="relative aspect-[4/5] bg-slate-100 rounded-xl mb-3 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200/50 to-transparent animate-shimmer" />
+            </div>
+            <div className="h-2.5 bg-slate-100 rounded-full w-1/3 mb-2" />
+            <div className="h-4 bg-slate-100 rounded-md w-full mb-1.5" />
+            <div className="h-4 bg-slate-100 rounded-md w-2/3 mb-3" />
+            <div className="flex items-center gap-1 mb-3">
+                <div className="h-3 w-12 bg-slate-100 rounded-md" />
+                <div className="h-3 w-8 bg-slate-100 rounded-md" />
+            </div>
+            <div className="flex items-baseline gap-2 mb-3">
+                <div className="h-5 w-16 bg-slate-100 rounded-md" />
+                <div className="h-3.5 w-10 bg-slate-100 rounded-md" />
+            </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-2">
             <div className="h-8 bg-slate-100 rounded-xl" />
             <div className="h-8 bg-slate-100 rounded-xl" />
         </div>
     </div>
 );
+
 
 export default function HomePage() {
     const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
@@ -579,69 +606,70 @@ export default function HomePage() {
                 </div>
             </section>
 
-
-
             <section className="relative overflow-hidden bg-white min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
-                <div className="relative z-10 w-full py-0 min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
-                    <div
-                        data-aos="fade-up"
-                        data-aos-delay="120"
-                        className="relative overflow-hidden min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]"
-                    >
+                {loading ? (
+                    <HeroBannerSkeleton />
+                ) : (
+                    <div className="relative z-10 w-full py-0 min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
                         <div
-                            className={`flex ${isDragging ? '' : 'transition-transform duration-700 ease-in-out'} cursor-grab active:cursor-grabbing min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]`}
-                            style={{ transform: `translateX(calc(-${currentOfferIndex * 100}% + ${dragOffset}px))` }}
-                            onMouseDown={handleDragStart}
-                            onMouseMove={handleDragMove}
-                            onMouseUp={handleDragEnd}
-                            onMouseLeave={handleDragEnd}
-                            onTouchStart={handleDragStart}
-                            onTouchMove={handleDragMove}
-                            onTouchEnd={handleDragEnd}
+                            data-aos="fade-up"
+                            data-aos-delay="120"
+                            className="relative overflow-hidden min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]"
                         >
-                            {heroCarouselOffers.map((banner, index) => (
-                                <Link
-                                    key={banner.id || index}
-                                    href={banner.link || '/products'}
-                                    className="group relative block min-w-full w-full flex-shrink-0 overflow-hidden bg-black h-[105px] sm:h-[150px] md:h-[280px] lg:h-[450px]"
-                                >
-                                    <div className="absolute inset-0 z-10 bg-black/5 group-hover:bg-black/0 transition-colors duration-500" />
-                                    {banner.image && (
-                                        <Image
-                                            src={banner.image}
-                                            alt={banner.title || 'Special Offer'}
-                                            fill
-                                            sizes="100vw"
-                                            priority={index === 0}
-                                            quality={60}
-                                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
-                                            draggable={false}
-                                        />
-                                    )}
-                                    {/* Desktop Only Caption Overlay */}
-                                    {banner.title && (
-                                        <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 z-20 flex flex-col gap-3 md:gap-4 max-w-lg">
-                                            <h2 className="text-xl md:text-5xl font-bold text-white drop-shadow-lg">{banner.title}</h2>
-                                        </div>
-                                    )}
-                                </Link>
-                            ))}
-                        </div>
+                            <div
+                                className={`flex ${isDragging ? '' : 'transition-transform duration-700 ease-in-out'} cursor-grab active:cursor-grabbing min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]`}
+                                style={{ transform: `translateX(calc(-${currentOfferIndex * 100}% + ${dragOffset}px))` }}
+                                onMouseDown={handleDragStart}
+                                onMouseMove={handleDragMove}
+                                onMouseUp={handleDragEnd}
+                                onMouseLeave={handleDragEnd}
+                                onTouchStart={handleDragStart}
+                                onTouchMove={handleDragMove}
+                                onTouchEnd={handleDragEnd}
+                            >
+                                {heroCarouselOffers.map((banner, index) => (
+                                    <Link
+                                        key={banner.id || index}
+                                        href={banner.link || '/products'}
+                                        className="group relative block min-w-full w-full flex-shrink-0 overflow-hidden bg-black h-[105px] sm:h-[150px] md:h-[280px] lg:h-[450px]"
+                                    >
+                                        <div className="absolute inset-0 z-10 bg-black/5 group-hover:bg-black/0 transition-colors duration-500" />
+                                        {banner.image && (
+                                            <Image
+                                                src={banner.image}
+                                                alt={banner.title || 'Special Offer'}
+                                                fill
+                                                sizes="100vw"
+                                                priority={index === 0}
+                                                quality={60}
+                                                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                                                draggable={false}
+                                            />
+                                        )}
+                                        {/* Desktop Only Caption Overlay */}
+                                        {banner.title && (
+                                            <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 z-20 flex flex-col gap-3 md:gap-4 max-w-lg">
+                                                <h2 className="text-xl md:text-5xl font-bold text-white drop-shadow-lg">{banner.title}</h2>
+                                            </div>
+                                        )}
+                                    </Link>
+                                ))}
+                            </div>
 
-                        {/* Pagination Progress Bar (Mobile App Style) */}
-                        <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                            {heroCarouselOffers.map((_, i) => (
-                                <div
-                                    key={i}
-                                    className={`h-1 rounded-full transition-all duration-300 ${i === currentOfferIndex ? 'w-6 bg-accent-500' : 'w-2 bg-white/50'
-                                        }`}
-                                />
-                            ))}
+                            {/* Pagination Progress Bar (Mobile App Style) */}
+                            <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                {heroCarouselOffers.map((_, i) => (
+                                    <div
+                                        key={i}
+                                        className={`h-1 rounded-full transition-all duration-300 ${i === currentOfferIndex ? 'w-6 bg-accent-500' : 'w-2 bg-white/50'
+                                            }`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-                    </section>
-
+                )}
+            </section>
 
             <section className="bg-white pt-6 pb-2 md:pt-8 md:pb-4 border-b border-gray-100">
                 <div className="container mx-auto px-8 md:px-12">
@@ -664,39 +692,45 @@ export default function HomePage() {
                                 <span className="text-center text-xs md:text-sm font-bold text-slate-800 tracking-tight">View All</span>
                             </Link>
 
-                            {categories.slice(0, 10).map((category, index) => (
-                                <Link
-                                    key={category.slug}
-                                    href={`/category/${category.slug}`}
-                                    data-aos="fade-up"
-                                    data-aos-delay={index * 30}
-                                    className="group flex w-[64px] md:w-[90px] flex-col items-center gap-2 transition-all duration-300"
-                                >
-                                    {/* Image Container - Story Style Border */}
-                                    <div className="relative p-0.5 rounded-full bg-slate-100 transition-all duration-300 group-hover:bg-gradient-to-tr group-hover:from-accent-400 group-hover:to-accent-600">
-                                        <div className="relative flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
-                                            {category.image ? (
-                                                <Image
-                                                    src={category.image}
-                                                    alt={category.name}
-                                                    fill
-                                                    sizes="(max-width: 768px) 58px, 80px"
-                                                    className="object-cover transition duration-700 group-hover:scale-110"
-                                                />
-                                            ) : (
-                                                <div className="flex h-full w-full items-center justify-center bg-gray-50 text-xl transition duration-500 group-hover:scale-110">
-                                                    {category.icon || category.name.charAt(0)}
-                                                </div>
-                                            )}
+                            {!loading && categories.length > 0 ? (
+                                categories.slice(0, 10).map((category, index) => (
+                                    <Link
+                                        key={category.slug}
+                                        href={`/category/${category.slug}`}
+                                        data-aos="fade-up"
+                                        data-aos-delay={index * 30}
+                                        className="group flex w-[64px] md:w-[90px] flex-col items-center gap-2 transition-all duration-300"
+                                    >
+                                        {/* Image Container - Story Style Border */}
+                                        <div className="relative p-0.5 rounded-full bg-slate-100 transition-all duration-300 group-hover:bg-gradient-to-tr group-hover:from-accent-400 group-hover:to-accent-600">
+                                            <div className="relative flex h-[58px] w-[58px] md:h-[80px] md:w-[80px] items-center justify-center overflow-hidden rounded-full bg-white border-2 border-white shadow-sm transition-transform duration-500 group-hover:scale-[0.98]">
+                                                {category.image ? (
+                                                    <Image
+                                                        src={category.image}
+                                                        alt={category.name}
+                                                        fill
+                                                        sizes="(max-width: 768px) 58px, 80px"
+                                                        className="object-cover transition duration-700 group-hover:scale-110"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center bg-gray-50 text-xl transition duration-500 group-hover:scale-110">
+                                                        {category.icon || category.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    {/* Text Content */}
-                                    <span className="text-center text-xs md:text-sm font-semibold text-slate-700 group-hover:text-accent-600 transition-colors truncate w-full px-1">
-                                        {category.name}
-                                    </span>
-                                </Link>
-                            ))}
+                                        {/* Text Content */}
+                                        <span className="text-center text-xs md:text-sm font-semibold text-slate-700 group-hover:text-accent-600 transition-colors truncate w-full px-1">
+                                            {category.name}
+                                        </span>
+                                    </Link>
+                                ))
+                            ) : (
+                                Array.from({ length: 8 }).map((_, idx) => (
+                                    <CategorySkeleton key={`cat-skel-${idx}`} />
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>
@@ -741,7 +775,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 min-h-[350px] md:min-h-[420px]">
-                        {trendingProducts.length > 0 ? (
+                        {!loading && trendingProducts.length > 0 ? (
                             trendingProducts.map((product) => (
                                 <ProductCard key={product.id} product={product} />
                             ))
@@ -770,7 +804,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 min-h-[350px] md:min-h-[420px]">
-                        {featuredProducts.length > 0 ? (
+                        {!loading && featuredProducts.length > 0 ? (
                             featuredProducts.map((product) => (
                                 <ProductCard key={product.id} product={product} />
                             ))
@@ -803,10 +837,16 @@ export default function HomePage() {
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
-                        {bestSellers.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 min-h-[350px] md:min-h-[420px]">
+                        {!loading && bestSellers.length > 0 ? (
+                            bestSellers.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            Array.from({ length: 4 }).map((_, idx) => (
+                                <ProductCardSkeleton key={`bestsellers-skel-${idx}`} />
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
@@ -829,10 +869,16 @@ export default function HomePage() {
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {newArrivals.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 min-h-[350px] md:min-h-[420px]">
+                        {!loading && newArrivals.length > 0 ? (
+                            newArrivals.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            Array.from({ length: 4 }).map((_, idx) => (
+                                <ProductCardSkeleton key={`newarrivals-skel-${idx}`} />
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
@@ -878,10 +924,16 @@ export default function HomePage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {dealsOfTheDay.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-h-[350px] md:min-h-[420px]">
+                        {!loading && dealsOfTheDay.length > 0 ? (
+                            dealsOfTheDay.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            Array.from({ length: 4 }).map((_, idx) => (
+                                <ProductCardSkeleton key={`deals-skel-${idx}`} />
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
@@ -901,13 +953,20 @@ export default function HomePage() {
                         <p className="hidden md:block text-gray-400 text-xs font-medium italic">Based on your interests</p>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {suggestedProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 min-h-[350px] md:min-h-[420px]">
+                        {!loading && suggestedProducts.length > 0 ? (
+                            suggestedProducts.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            Array.from({ length: 4 }).map((_, idx) => (
+                                <ProductCardSkeleton key={`suggested-skel-${idx}`} />
+                            ))
+                        )}
                     </div>
                 </div>
             </section>
+
 
             {/* ========================================
                 CUSTOMER TESTIMONIALS
