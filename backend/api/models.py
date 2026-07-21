@@ -4,6 +4,7 @@ Database models for VorionMart marketplace.
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from api.image_utils import convert_image_to_webp
 
 
 def generate_unique_slug(model_class, name, instance_id=None, max_length=200):
@@ -159,6 +160,9 @@ class Category(models.Model):
         if not self.slug:
             self.slug = generate_unique_slug(Category, self.name, instance_id=self.pk, max_length=200)
         super().save(*args, **kwargs)
+        if self.image and not str(self.image.name).endswith('.webp'):
+            if convert_image_to_webp(self.image):
+                Category.objects.filter(pk=self.pk).update(image=self.image.name)
 
     def __str__(self):
         return self.name
@@ -230,6 +234,9 @@ class Product(models.Model):
         elif self.approval_status == 'rejected':
             self.is_active = False
         super().save(*args, **kwargs)
+        if self.image and not str(self.image.name).endswith('.webp'):
+            if convert_image_to_webp(self.image):
+                Product.objects.filter(pk=self.pk).update(image=self.image.name)
 
     @property
     def current_price(self):
@@ -273,6 +280,12 @@ class ProductImage(models.Model):
     image = models.ImageField(upload_to='products/', max_length=255)
     is_primary = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image and not str(self.image.name).endswith('.webp'):
+            if convert_image_to_webp(self.image):
+                ProductImage.objects.filter(pk=self.pk).update(image=self.image.name)
 
     def __str__(self):
         return f"Image for {self.product.name}"
@@ -464,6 +477,12 @@ class Banner(models.Model):
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image and not str(self.image.name).endswith('.webp'):
+            if convert_image_to_webp(self.image):
+                Banner.objects.filter(pk=self.pk).update(image=self.image.name)
+
     def __str__(self):
         return self.title
 
@@ -484,6 +503,12 @@ class SiteSetting(models.Model):
     twitter_url = models.URLField(blank=True)
     whatsapp_number = models.CharField(max_length=20, blank=True)
 
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.logo and not str(self.logo.name).endswith('.webp'):
+            if convert_image_to_webp(self.logo):
+                SiteSetting.objects.filter(pk=self.pk).update(logo=self.logo.name)
 
     def __str__(self):
         return self.site_name
@@ -737,6 +762,12 @@ class ReviewImage(models.Model):
     image = models.ImageField(upload_to='reviews/', max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image and not str(self.image.name).endswith('.webp'):
+            if convert_image_to_webp(self.image):
+                ReviewImage.objects.filter(pk=self.pk).update(image=self.image.name)
+
     def __str__(self):
         return f"Image for review {self.review_id}"
 
@@ -805,6 +836,9 @@ class BlogPost(models.Model):
             self.published_at = timezone.now()
             
         super().save(*args, **kwargs)
+        if self.featured_image and not str(self.featured_image.name).endswith('.webp'):
+            if convert_image_to_webp(self.featured_image):
+                BlogPost.objects.filter(pk=self.pk).update(featured_image=self.featured_image.name)
 
     def __str__(self):
         return self.title
