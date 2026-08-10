@@ -12,6 +12,51 @@ import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { fetchProduct, fetchProducts, fetchReviews, createReview, Product, Review } from '@/lib/api';
 import ProductBenefits from '@/components/ProductBenefits';
 
+const DESCRIPTION_TAGS = new Set([
+    'A', 'BLOCKQUOTE', 'BR', 'CODE', 'EM', 'H2', 'H3', 'H4', 'LI', 'OL', 'P', 'PRE', 'STRONG', 'UL'
+]);
+const DESCRIPTION_BLOCKED_TAGS = new Set([
+    'BUTTON', 'EMBED', 'FORM', 'IFRAME', 'INPUT', 'LINK', 'MATH', 'META', 'OBJECT', 'SCRIPT', 'STYLE', 'SVG', 'TEMPLATE'
+]);
+
+const looksLikeHtml = (value: string) => /<\/?[a-z][^>]*>/i.test(value);
+
+function stripHtml(value: string) {
+    return value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function sanitizeDescription(value: string) {
+    if (typeof window === 'undefined' || typeof DOMParser === 'undefined') return '';
+    const parsed = new DOMParser().parseFromString(value, 'text/html');
+    parsed.body.querySelectorAll('*').forEach((element) => {
+        if (DESCRIPTION_BLOCKED_TAGS.has(element.tagName)) {
+            element.remove();
+            return;
+        }
+        if (!DESCRIPTION_TAGS.has(element.tagName)) {
+            element.replaceWith(...Array.from(element.childNodes));
+            return;
+        }
+
+        const href = element.tagName === 'A' ? element.getAttribute('href') : null;
+        Array.from(element.attributes).forEach((attribute) => element.removeAttribute(attribute.name));
+        if (element.tagName === 'A' && href) {
+            try {
+                const url = new URL(href, window.location.origin);
+                if (['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol)) {
+                    element.setAttribute('href', href);
+                    element.setAttribute('rel', 'noopener noreferrer');
+                    if (url.protocol === 'http:' || url.protocol === 'https:') element.setAttribute('target', '_blank');
+                }
+            } catch {
+                // Invalid links are retained as readable text without a destination.
+            }
+        }
+    });
+    if (!parsed.body.textContent?.trim()) return '';
+    return parsed.body.innerHTML.trim();
+}
+
 type RelatedProductCard = {
     id: number;
     name: string;
@@ -49,6 +94,16 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     const [activeReviewImage, setActiveReviewImage] = useState<{ src: string; alt: string } | null>(null);
     const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>([]);
     const [shareMessage, setShareMessage] = useState<string | null>(null);
+    const descriptionRaw = String(productData?.description || '').trim();
+    const isHtmlDescription = looksLikeHtml(descriptionRaw);
+    const [sanitizedDescription, setSanitizedDescription] = useState<string | null>(null);
+    useEffect(() => {
+        if (!isHtmlDescription) {
+            setSanitizedDescription(null);
+            return;
+        }
+        setSanitizedDescription(sanitizeDescription(descriptionRaw));
+    }, [descriptionRaw, isHtmlDescription]);
     const reviewRedirectPath = `/products/${slug}?review=1#reviews`;
     const loginReviewPath = `/login?redirect=${encodeURIComponent(reviewRedirectPath)}`;
     const reviewIntent = searchParams?.get('review') === '1';
@@ -447,7 +502,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     const displayMrp = Number(productData.mrp ?? productData.price ?? displaySalePrice);
     const hasMrpDiscount = displayMrp > displaySalePrice;
     const savedAmount = hasMrpDiscount ? displayMrp - displaySalePrice : 0;
-    const descriptionLines = String(productData.description || '')
+    const descriptionLines = descriptionRaw
         .split(/\r?\n/)
         .map((line) => line.trim())
         .filter(Boolean);
@@ -770,6 +825,19 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 </h2>
                             </div>
                             <div className="p-4 lg:p-8 space-y-4 lg:space-y-8">
+                                {isHtmlDescription ? (
+                                    sanitizedDescription ? (
+                                        <div
+                                            className="break-words text-sm leading-relaxed text-gray-700 lg:text-lg [&_a]:break-all [&_a]:text-accent-600 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-accent-200 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_h2]:mb-3 [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h3]:mb-2 [&_h3]:mt-5 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:text-gray-900 [&_h4]:mb-2 [&_h4]:mt-4 [&_h4]:font-bold [&_h4]:text-gray-900 [&_li]:ml-5 [&_ol]:my-3 [&_ol_li]:list-decimal [&_p]:my-3 [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-gray-100 [&_pre]:p-3 [&_strong]:font-semibold [&_ul]:my-3 [&_ul_li]:list-disc"
+                                            dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+                                        />
+                                    ) : (
+                                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 lg:text-lg">
+                                            {stripHtml(descriptionRaw) || 'No description provided for this product.'}
+                                        </p>
+                                    )
+                                ) : (
+                                    <>
                                 {descriptionLead && (
                                     <div className="rounded-xl lg:rounded-2xl border border-gray-100 bg-gray-50/50 p-3 lg:p-6">
                                         <p className="text-sm lg:text-lg leading-relaxed text-gray-700">{descriptionLead}</p>
@@ -805,6 +873,8 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                             ))}
                                         </div>
                                     </div>
+                                )}
+                                    </>
                                 )}
 
                                 <div className="mt-6">
