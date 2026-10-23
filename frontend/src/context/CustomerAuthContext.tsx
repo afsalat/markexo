@@ -10,6 +10,8 @@ export interface Customer {
     email: string;
     phone: string;
     avatar?: string;
+    rto_count?: number;
+    order_count?: number;
 }
 
 export interface Order {

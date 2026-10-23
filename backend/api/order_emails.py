@@ -336,7 +336,8 @@ def send_order_email(order, subject: str, intro: str):
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[recipient],
     )
-    message.mixed_subtype = 'related'
+    if hasattr(message, 'mixed_subtype'):
+        message.mixed_subtype = 'related'
     message.attach_alternative(html_body, 'text/html')
     attach_logo_image(message)
 

@@ -381,6 +381,53 @@ class Order(models.Model):
             product.sold_count = max(0, product.sold_count + (delta * item.quantity))
             product.save(update_fields=['sold_count'])
 
+    def sync_inventory_stock(self, previous_status, user=None):
+        previously_counted = self.contributes_to_sales(previous_status)
+        currently_counted = self.contributes_to_sales(self.status)
+
+        if previously_counted == currently_counted:
+            return
+
+        from api.models import StockLog
+
+        for item in self.items.select_related('product').all():
+            if not item.product_id:
+                continue
+            product = item.product
+            prev_stock = product.stock
+
+            if not currently_counted and previously_counted:
+                # Order moved to cancelled / returned / rto: RESTOCK
+                qty = item.quantity
+                product.stock = prev_stock + qty
+                product.save(update_fields=['stock'])
+                log_type = 'return' if self.status in ('returned', 'rto') else 'cancellation'
+                StockLog.objects.create(
+                    product=product,
+                    change_type=log_type,
+                    quantity_change=qty,
+                    previous_stock=prev_stock,
+                    new_stock=product.stock,
+                    reference=self.order_id,
+                    note=f"Order {self.order_id} marked as {self.get_status_display()} - Restocked",
+                    created_by=user,
+                )
+            elif currently_counted and not previously_counted:
+                # Order reactivated from cancelled/returned back to active: STOCKOUT
+                qty = item.quantity
+                product.stock = max(0, prev_stock - qty)
+                product.save(update_fields=['stock'])
+                StockLog.objects.create(
+                    product=product,
+                    change_type='purchase',
+                    quantity_change=-qty,
+                    previous_stock=prev_stock,
+                    new_stock=product.stock,
+                    reference=self.order_id,
+                    note=f"Order {self.order_id} reactivated to {self.get_status_display()} - Stock deducted",
+                    created_by=user,
+                )
+
     def save(self, *args, **kwargs):
         if not self.order_id:
             import random
@@ -402,12 +449,12 @@ class Order(models.Model):
         
         # Create status history entry if status changed or new order
         if is_new or (old_status and old_status != self.status):
-            # Import here to avoid circular import
             from api.models import OrderStatusHistory
             OrderStatusHistory.objects.create(order=self, status=self.status)
 
         if not is_new and old_status and old_status != self.status:
             self.sync_product_sold_counts(old_status)
+            self.sync_inventory_stock(old_status)
 
     def __str__(self):
         return self.order_id
@@ -449,6 +496,38 @@ class OrderItem(models.Model):
         return f"{self.quantity}x {self.product_name}"
 
 
+class StockLog(models.Model):
+    """Inventory movement history tracking stock deductions, restocks, and manual adjustments."""
+    LOG_TYPE_CHOICES = [
+        ('purchase', 'Purchase / Order Stockout'),
+        ('return', 'Return / Restock'),
+        ('cancellation', 'Cancellation Restock'),
+        ('manual_in', 'Manual Stock In'),
+        ('manual_out', 'Manual Stock Out'),
+        ('adjustment', 'Inventory Adjustment'),
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_logs')
+    change_type = models.CharField(max_length=30, choices=LOG_TYPE_CHOICES)
+    quantity_change = models.IntegerField(help_text="Positive for additions/restocks, negative for deductions/purchases")
+    previous_stock = models.PositiveIntegerField(default=0)
+    new_stock = models.PositiveIntegerField(default=0)
+    reference = models.CharField(max_length=100, blank=True, help_text="e.g. Order ID, Reason, or Note")
+    note = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='stock_logs')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        sign = '+' if self.quantity_change > 0 else ''
+        return f"{self.product.name} ({sign}{self.quantity_change}) - {self.get_change_type_display()}"
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+        ]
+
+
 class Banner(models.Model):
     """Homepage banner model."""
     SECTION_HOME_HERO = 'home_hero'
@@ -466,7 +545,7 @@ class Banner(models.Model):
     subtitle = models.CharField(max_length=300, blank=True)
     section = models.CharField(max_length=30, choices=SECTION_CHOICES, default=SECTION_HOME_HERO)
     image = models.ImageField(upload_to='banners/', max_length=255)
-    link = models.URLField(blank=True)
+    link = models.CharField(max_length=500, blank=True)
     is_active = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -479,7 +558,7 @@ class Banner(models.Model):
         return self.title
 
     class Meta:
-        ordering = ['order']
+        ordering = ['order', '-created_at']
 
 
 class SiteSetting(models.Model):
@@ -490,11 +569,42 @@ class SiteSetting(models.Model):
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
-    facebook_url = models.URLField(blank=True)
-    instagram_url = models.URLField(blank=True)
-    twitter_url = models.URLField(blank=True)
+    facebook_url = models.CharField(max_length=500, blank=True)
+    instagram_url = models.CharField(max_length=500, blank=True)
+    twitter_url = models.CharField(max_length=500, blank=True)
     whatsapp_number = models.CharField(max_length=20, blank=True)
 
+    # Auth Management
+    google_client_id = models.CharField(max_length=255, blank=True, help_text="Google OAuth Client ID for customer social sign-in")
+    allow_user_registration = models.BooleanField(default=True)
+    allow_partner_registration = models.BooleanField(default=True)
+    session_timeout_hours = models.PositiveIntegerField(default=24)
+
+    # Email Config Management (SMTP)
+    smtp_host = models.CharField(max_length=200, blank=True, default='smtp.gmail.com')
+    smtp_port = models.PositiveIntegerField(default=587)
+    smtp_user = models.CharField(max_length=200, blank=True, help_text="e.g. your-email@gmail.com")
+    smtp_password = models.CharField(max_length=200, blank=True, help_text="Gmail App Password or SMTP password")
+    smtp_use_tls = models.BooleanField(default=True)
+    smtp_use_ssl = models.BooleanField(default=False)
+    default_from_email = models.CharField(max_length=200, blank=True, help_text="Sender email, e.g. VorionMart <orders@vorionmart.com>")
+
+    # Other APIs Management
+    twilio_account_sid = models.CharField(max_length=200, blank=True)
+    twilio_auth_token = models.CharField(max_length=200, blank=True)
+    twilio_whatsapp_from = models.CharField(max_length=50, blank=True, help_text="Twilio WhatsApp Sender Number, e.g. +14155238886")
+    firebase_project_id = models.CharField(max_length=200, blank=True)
+
+    # Cashfree Payment Gateway Config
+    CASHFREE_MODE_CHOICES = [
+        ('SANDBOX', 'Sandbox / Testing'),
+        ('PRODUCTION', 'Production / Live'),
+    ]
+    cashfree_enabled = models.BooleanField(default=False)
+    cashfree_mode = models.CharField(max_length=20, choices=CASHFREE_MODE_CHOICES, default='SANDBOX')
+    cashfree_app_id = models.CharField(max_length=200, blank=True, help_text="Cashfree Client ID / App ID")
+    cashfree_secret_key = models.CharField(max_length=200, blank=True, help_text="Cashfree Secret Key")
+    cashfree_api_version = models.CharField(max_length=50, default='2023-08-01')
 
     def save(self, *args, **kwargs):
         process_image_upload(self.logo)

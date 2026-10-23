@@ -18,6 +18,8 @@ import {
 } from 'recharts';
 import { fetchAdminAnalytics } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { Download, Loader2 } from 'lucide-react';
+import { exportAnalyticsToExcel } from '@/lib/excelExport';
 
 type AnalyticsProduct = {
     id: number;
@@ -141,7 +143,7 @@ function ChartCard({
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
                 {description ? <p className="mt-1 text-sm text-silver-500">{description}</p> : null}
             </div>
-            <div className="h-[320px]">{children}</div>
+            <div className="h-[320px] w-full min-w-0">{children}</div>
         </div>
     );
 }
@@ -150,6 +152,7 @@ export default function ProductAnalyticsTab() {
     const { token } = useAuth();
     const [data, setData] = useState<AdminAnalyticsResponse | null>(null);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -225,13 +228,44 @@ export default function ProductAnalyticsTab() {
     const lessPerformed = data?.less_performed ?? [];
     const topPartners = data?.top_partners ?? [];
 
+    const handleExportAnalytics = async () => {
+        if (!combinedPerformance || combinedPerformance.length === 0) {
+            alert('No analytics data available to export.');
+            return;
+        }
+        setExporting(true);
+        try {
+            await exportAnalyticsToExcel({
+                products: combinedPerformance,
+                top_partners: topPartners,
+            });
+        } catch (err) {
+            console.error('Failed to export analytics:', err);
+            alert('Failed to export analytics to Excel. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h2 className="text-2xl font-bold text-white">Product Analytics</h2>
-                <p className="mt-2 text-sm text-silver-500">
-                    Better visibility for product visits, orders, revenue, and partner payouts.
-                </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-white">Product Analytics</h2>
+                    <p className="mt-2 text-sm text-silver-500">
+                        Better visibility for product visits, orders, revenue, and partner payouts.
+                    </p>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleExportAnalytics}
+                    disabled={exporting}
+                    className="flex shrink-0 items-center justify-center gap-2 rounded-xl border border-dark-600 bg-dark-700 px-4 py-2 font-medium text-white shadow-sm transition-colors hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Export Analytics to Excel"
+                >
+                    {exporting ? <Loader2 size={18} className="animate-spin text-accent-500" /> : <Download size={18} />}
+                    <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export Analytics'}</span>
+                </button>
             </div>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -240,7 +274,7 @@ export default function ProductAnalyticsTab() {
                     description="Top products ranked by page visits."
                 >
                     {mostClicked.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <BarChart
                                 data={mostClicked}
                                 layout="vertical"
@@ -277,7 +311,7 @@ export default function ProductAnalyticsTab() {
                     description="Top products by confirmed sales quantity."
                 >
                     {mostOrdered.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <BarChart
                                 data={mostOrdered}
                                 layout="vertical"
@@ -316,7 +350,7 @@ export default function ProductAnalyticsTab() {
                     description="Compare visits against confirmed orders for the strongest products."
                 >
                     {combinedPerformance.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <ComposedChart data={combinedPerformance} margin={{ top: 4, right: 16, left: 0, bottom: 8 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#243041" />
                                 <XAxis
@@ -359,7 +393,7 @@ export default function ProductAnalyticsTab() {
                     description="Revenue contribution over the last 6 months."
                 >
                     {partnerRevenue.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                             <AreaChart data={partnerRevenue} margin={{ top: 4, right: 12, left: 0, bottom: 8 }}>
                                 <defs>
                                     <linearGradient id="partnerRevenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -403,7 +437,7 @@ export default function ProductAnalyticsTab() {
                 description="Top paid partners ranked by total payout."
             >
                 {partnerPayouts.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart
                             data={partnerPayouts}
                             layout="vertical"

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Search, Filter, Download, ChevronLeft, ChevronRight, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { CreditCard, Search, Filter, Download, ChevronLeft, ChevronRight, CheckCircle2, XCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { Order } from '@/types/admin';
+import { exportPaymentsToExcel } from '@/lib/excelExport';
 
 interface PaymentsTabProps {
     initialFilter?: string;
@@ -13,6 +14,7 @@ export default function PaymentsTab({ initialFilter = '' }: PaymentsTabProps) {
     const salesExcludedStatuses = new Set(['cancelled', 'returned', 'rto', 'refunded']);
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(initialFilter);
     const [showFilters, setShowFilters] = useState(false);
@@ -28,6 +30,47 @@ export default function PaymentsTab({ initialFilter = '' }: PaymentsTabProps) {
         failed: 0,
         total_revenue: 0
     });
+
+    const handleExportPayments = async () => {
+        setExporting(true);
+        try {
+            const params = new URLSearchParams();
+            if (debouncedSearch) params.append('search', debouncedSearch);
+            if (statusFilter) params.append('payment_status', statusFilter);
+            params.append('page_size', '2000');
+
+            let exportList: Order[] = orders;
+            try {
+                const res = await fetch(`${API_BASE_URL}/admin/orders/?${params.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    exportList = data.results || (Array.isArray(data) ? data : orders);
+                }
+            } catch {
+                exportList = orders;
+            }
+
+            if (!exportList || exportList.length === 0) {
+                alert('No payments found to export.');
+                return;
+            }
+
+            const filterLabel = statusFilter ? `Payment Status: ${statusFilter.toUpperCase()}` : 'All Payments';
+            const searchLabel = debouncedSearch ? `Search: "${debouncedSearch}"` : '';
+            const subtitle = [filterLabel, searchLabel].filter(Boolean).join(' | ');
+
+            await exportPaymentsToExcel(exportList, stats, {
+                subtitle: subtitle || 'Financial and payment audit register',
+            });
+        } catch (err) {
+            console.error('Failed to export payments:', err);
+            alert('Failed to export payment report to Excel. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     // Debounce search input
     useEffect(() => {
@@ -154,9 +197,14 @@ export default function PaymentsTab({ initialFilter = '' }: PaymentsTabProps) {
                     </h2>
                     <p className="text-silver-500 mt-1">Track and manage order payments</p>
                 </div>
-                <button className="bg-accent-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-accent-500 transition-colors flex items-center gap-2 shadow-lg shadow-accent-500/20">
-                    <Download size={18} />
-                    Export Report
+                <button
+                    onClick={handleExportPayments}
+                    disabled={exporting}
+                    className="bg-accent-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-accent-500 transition-colors flex items-center gap-2 shadow-lg shadow-accent-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Export Payments to Excel"
+                >
+                    {exporting ? <Loader2 size={18} className="animate-spin text-dark-900" /> : <Download size={18} />}
+                    <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export Report'}</span>
                 </button>
             </div>
 

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw,
-    Award, ChevronRight, ChevronLeft, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X, MessageSquare
+    Award, ChevronRight, ChevronLeft, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X, MessageSquare, AlertTriangle
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
@@ -527,19 +527,18 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     const categoryName = productData.category?.name || 'Product';
     const categorySlug = productData.category?.slug || '';
 
+    const isOutOfStock = Number(productData?.stock ?? 0) <= 0 || productData?.is_in_stock === false;
+    const isLowStock = !isOutOfStock && Number(productData?.stock ?? 0) <= 5;
+
     const getPurchaseSignal = () => {
         const stock = Number(productData?.stock ?? 0);
-        const variants = [
-            `Only ${Math.max(stock, 1)} left in stock`,
-            'Offer closing soon',
-            'Selling fast right now',
-        ];
-
-        if (stock > 0 && stock <= 10) {
-            return variants[0];
+        if (isOutOfStock) {
+            return 'Currently Out of Stock';
         }
-
-        return variants[2];
+        if (isLowStock) {
+            return `Only ${stock} left in stock - order soon!`;
+        }
+        return 'Selling fast right now';
     };
 
     return (
@@ -720,34 +719,55 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
                             {/* Quantity & Actions */}
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3 lg:gap-4">
-                                    <span className="text-gray-700 text-sm lg:text-base font-medium">Quantity:</span>
-                                    <div className="flex items-center border lg:border-2 border-gray-100 rounded-lg lg:rounded-xl overflow-hidden shadow-sm">
-                                        <button
-                                            onClick={decrementQuantity}
-                                            className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"
-                                        >
-                                            <Minus size={16} className="lg:w-[18px] lg:h-[18px]" />
-                                        </button>
-                                        <span className="w-12 lg:w-16 h-10 lg:h-12 flex items-center justify-center font-bold text-base lg:text-lg border-x lg:border-x-2 border-gray-100 text-gray-900">
-                                            {quantity}
+                                {isOutOfStock ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/30 bg-red-50 px-4 py-2.5 text-sm font-bold text-red-600">
+                                            <AlertTriangle size={18} /> Currently Out of Stock
                                         </span>
-                                        <button
-                                            onClick={incrementQuantity}
-                                            className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600 hover:text-accent-500"
-                                        >
-                                            <Plus size={16} className="lg:w-[18px] lg:h-[18px]" />
-                                        </button>
                                     </div>
-                                    <span className="text-xs lg:text-sm text-gray-500">({productData.stock} available)</span>
-                                </div>
+                                ) : (
+                                    <div className="flex items-center gap-3 lg:gap-4">
+                                        <span className="text-gray-700 text-sm lg:text-base font-medium">Quantity:</span>
+                                        <div className="flex items-center border lg:border-2 border-gray-100 rounded-lg lg:rounded-xl overflow-hidden shadow-sm">
+                                            <button
+                                                onClick={decrementQuantity}
+                                                className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"
+                                            >
+                                                <Minus size={16} className="lg:w-[18px] lg:h-[18px]" />
+                                            </button>
+                                            <span className="w-12 lg:w-16 h-10 lg:h-12 flex items-center justify-center font-bold text-base lg:text-lg border-x lg:border-x-2 border-gray-100 text-gray-900">
+                                                {quantity}
+                                            </span>
+                                            <button
+                                                onClick={incrementQuantity}
+                                                className="w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600 hover:text-accent-500"
+                                            >
+                                                <Plus size={16} className="lg:w-[18px] lg:h-[18px]" />
+                                            </button>
+                                        </div>
+                                        {isLowStock ? (
+                                            <span className="text-xs lg:text-sm font-bold text-amber-600 flex items-center gap-1">
+                                                <AlertTriangle size={15} /> Only {productData.stock} left in stock!
+                                            </span>
+                                        ) : (
+                                            <span className="text-xs lg:text-sm text-gray-500">({productData.stock} available)</span>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="hidden lg:flex gap-3">
                                     <button
-                                        onClick={handleAddToCart}
-                                        className="flex-1 btn-primary py-4 text-lg font-bold flex items-center justify-center gap-2"
+                                        onClick={isOutOfStock ? undefined : handleAddToCart}
+                                        disabled={isOutOfStock}
+                                        className={`flex-1 py-4 text-lg font-bold flex items-center justify-center gap-2 rounded-xl transition-all ${
+                                            isOutOfStock
+                                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                                                : 'btn-primary'
+                                        }`}
                                     >
-                                        {addedToCart ? (
+                                        {isOutOfStock ? (
+                                            'Out of Stock'
+                                        ) : addedToCart ? (
                                             <>
                                                 <Check size={22} />
                                                 Added to Cart!
@@ -773,12 +793,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                     <p className="hidden lg:block text-sm text-accent-600 font-medium">{shareMessage}</p>
                                 )}
 
-                                <button
-                                    onClick={handleBuyNow}
-                                    className="hidden lg:block w-full py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-bold text-lg hover:from-primary-500 hover:to-primary-600 transition-all shadow-lg active:scale-[0.98]"
-                                >
-                                    Buy Now — Pay on Delivery
-                                </button>
+                                {!isOutOfStock && (
+                                    <button
+                                        onClick={handleBuyNow}
+                                        className="hidden lg:block w-full py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-bold text-lg hover:from-primary-500 hover:to-primary-600 transition-all shadow-lg active:scale-[0.98]"
+                                    >
+                                        Buy Now — Pay on Delivery
+                                    </button>
+                                )}
 
                                 {/* WhatsApp Support/Order Button */}
                                 <a
@@ -1230,19 +1252,27 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                 {/* Sticky Mobile CTA */}
                 <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] p-4 pb-6 bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
                     <div className="flex gap-3 max-w-lg mx-auto">
-                        <button
-                            onClick={handleAddToCart}
-                            className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
-                        >
-                            <ShoppingCart size={20} />
-                            Add to Cart
-                        </button>
-                        <button
-                            onClick={handleBuyNow}
-                            className="flex-1 bg-accent-600 hover:bg-accent-500 text-white py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-accent-600/20"
-                        >
-                            Buy Now
-                        </button>
+                        {isOutOfStock ? (
+                            <div className="w-full bg-red-50 text-red-600 border border-red-200 py-3.5 rounded-2xl font-bold text-center text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                                <AlertTriangle size={18} /> Currently Out of Stock
+                            </div>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={handleAddToCart}
+                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                                >
+                                    <ShoppingCart size={20} />
+                                    Add to Cart
+                                </button>
+                                <button
+                                    onClick={handleBuyNow}
+                                    className="flex-1 bg-accent-600 hover:bg-accent-500 text-white py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-accent-600/20"
+                                >
+                                    Buy Now
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RotateCcw, Search, Filter, CheckCircle, XCircle, Clock, Package, AlertCircle, Eye, Download, Edit3 } from 'lucide-react';
+import { RotateCcw, Search, Filter, CheckCircle, XCircle, Clock, Package, AlertCircle, Eye, Download, Edit3, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { exportReturnsToExcel } from '@/lib/excelExport';
 
 interface ReturnRequest {
     id: string;
@@ -30,11 +31,36 @@ export default function ReturnsTab() {
     const { token } = useAuth();
     const [returns, setReturns] = useState<ReturnRequest[]>([]);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [selectedReturn, setSelectedReturn] = useState<ReturnRequest | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+
+    const handleExportReturns = async () => {
+        setExporting(true);
+        try {
+            const listToExport = filteredReturns.length > 0 ? filteredReturns : returns;
+            if (!listToExport || listToExport.length === 0) {
+                alert('No return requests found to export.');
+                return;
+            }
+
+            const filterLabel = statusFilter !== 'all' ? `Status: ${statusFilter.toUpperCase()}` : 'All Return Statuses';
+            const searchLabel = searchTerm ? `Search: "${searchTerm}"` : '';
+            const subtitle = [filterLabel, searchLabel].filter(Boolean).join(' | ');
+
+            await exportReturnsToExcel(listToExport, {
+                subtitle: subtitle || 'Customer return requests and refund tracking register',
+            });
+        } catch (err) {
+            console.error('Failed to export returns:', err);
+            alert('Failed to export returns to Excel. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     const handleUpdatePaymentStatus = async (returnId: string, newStatus: string) => {
         setEditingPaymentId(null);
@@ -262,9 +288,14 @@ export default function ReturnsTab() {
                     </h2>
                     <p className="text-silver-500 mt-1">Manage product returns and refunds</p>
                 </div>
-                <button className="bg-accent-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-accent-500 transition-colors flex items-center gap-2 shadow-lg shadow-accent-500/20">
-                    <Download size={18} />
-                    Export Returns
+                <button
+                    onClick={handleExportReturns}
+                    disabled={exporting}
+                    className="bg-accent-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-accent-500 transition-colors flex items-center gap-2 shadow-lg shadow-accent-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Export Returns to Excel"
+                >
+                    {exporting ? <Loader2 size={18} className="animate-spin text-dark-900" /> : <Download size={18} />}
+                    <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export Returns'}</span>
                 </button>
             </div>
 

@@ -45,6 +45,9 @@ export interface Order {
     payment_method?: string;
     supplier_total_cost?: number;
     profit?: number;
+    tracking_number?: string;
+    shipping_charge?: number;
+    discount_amount?: number;
 }
 
 export interface Product {
@@ -89,9 +92,27 @@ export interface Product {
     sold_count?: number;
     rating?: number;
     review_count?: number;
+    stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
+    is_in_stock?: boolean;
     google_merchant_status?: 'pending' | 'synced' | 'failed' | 'not_applicable';
     google_merchant_errors?: string | null;
     last_google_sync?: string | null;
+}
+
+export interface StockLog {
+    id: number;
+    product: number;
+    product_name?: string;
+    product_sku?: string;
+    change_type: 'purchase' | 'return' | 'cancellation' | 'manual_in' | 'manual_out' | 'adjustment';
+    change_type_display?: string;
+    quantity_change: number;
+    previous_stock: number;
+    new_stock: number;
+    reference: string;
+    note: string;
+    created_by_name?: string | null;
+    created_at: string;
 }
 
 
@@ -161,6 +182,7 @@ export interface Banner {
 
 export interface SiteSetting {
     id: number;
+    // Site & Branding
     site_name: string;
     site_tagline?: string;
     logo?: string | null;
@@ -171,6 +193,34 @@ export interface SiteSetting {
     instagram_url: string;
     whatsapp_number?: string;
     twitter_url: string;
+
+    // Auth Management
+    google_oauth_client_id?: string;
+    allow_user_registration?: boolean;
+    allow_partner_registration?: boolean;
+    session_timeout_minutes?: number;
+
+    // Email Config Manage (SMTP / App Password)
+    smtp_host?: string;
+    smtp_port?: number;
+    smtp_user?: string;
+    smtp_password?: string;
+    smtp_use_tls?: boolean;
+    smtp_use_ssl?: boolean;
+    default_from_email?: string;
+
+    // Other APIs Manage
+    twilio_account_sid?: string;
+    twilio_auth_token?: string;
+    twilio_whatsapp_number?: string;
+    firebase_project_id?: string;
+
+    // Cashfree Payment Gateway Config
+    cashfree_enabled?: boolean;
+    cashfree_mode?: 'SANDBOX' | 'PRODUCTION';
+    cashfree_app_id?: string;
+    cashfree_secret_key?: string;
+    cashfree_api_version?: string;
 }
 
 export interface Permission {

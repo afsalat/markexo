@@ -47,6 +47,8 @@ export interface Product {
     review_count: number;
     reviewCount?: number;
     sold_count?: number;
+    stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
+    is_in_stock?: boolean;
     features?: string[];
     specifications?: Record<string, string | number | boolean | null>;
     benefits?: string[];

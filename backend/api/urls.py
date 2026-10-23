@@ -13,11 +13,11 @@ from .views import (
     CategoryViewSet, ProductViewSet, ReviewViewSet,
     BannerListView, SiteSettingView, CreateOrderView, OrderDetailView, CancelOrderView, ReturnOrderView, CreateEnquiryView,
     CartAPIView, RegisterUserView, RegisterPartnerView, CustomTokenObtainPairView, CustomerOrdersView, TwilioWhatsAppWebhookView, SocialLoginView,
+    CashfreeCreateOrderView, CashfreeVerifyPaymentView, CashfreeWebhookView,
     # Admin views
     AdminDashboardStatsView, AdminShopViewSet, AdminCategoryViewSet,
     AdminProductViewSet, AdminOrderViewSet, AdminCustomerViewSet,
-    AdminBannerViewSet, AdminSiteSettingView,
-    AdminBannerViewSet, AdminSiteSettingView,
+    AdminBannerViewSet, AdminSiteSettingView, AdminTestEmailView, AdminTestCashfreeView,
     AdminEnquiryViewSet, AdminUserViewSet, AdminRoleViewSet, PermissionListView, AdminAnalyticsView, AdminSystemLogsView,
     AdminLaunchChecklistView, AdminLaunchChecklistSectionCreateView, AdminLaunchChecklistSectionDetailView,
     AdminLaunchChecklistItemCreateView, AdminLaunchChecklistItemDetailView, AdminLaunchChecklistSeedView,
@@ -66,6 +66,11 @@ urlpatterns = [
     path('enquiries/', CreateEnquiryView.as_view(), name='create-enquiry'),
     path('cart/', CartAPIView.as_view(), name='cart'),
     
+    # Payments API
+    path('payments/cashfree/create-order/', CashfreeCreateOrderView.as_view(), name='cashfree-create-order'),
+    path('payments/cashfree/verify/', CashfreeVerifyPaymentView.as_view(), name='cashfree-verify-payment'),
+    path('payments/cashfree/webhook/', CashfreeWebhookView.as_view(), name='cashfree-webhook'),
+    
     # Auth API
     path('auth/register/', RegisterUserView.as_view(), name='register'),
     path('auth/register-partner/', RegisterPartnerView.as_view(), name='register-partner'),
@@ -85,6 +90,8 @@ urlpatterns = [
     path('admin/partner-stats/', PartnerDashboardStatsView.as_view(), name='admin-partner-stats'),
     path('admin/analytics/', AdminAnalyticsView.as_view(), name='admin-analytics'),
     path('admin/settings/', AdminSiteSettingView.as_view(), name='admin-settings'),
+    path('admin/settings/test-email/', AdminTestEmailView.as_view(), name='admin-settings-test-email'),
+    path('admin/settings/test-cashfree/', AdminTestCashfreeView.as_view(), name='admin-settings-test-cashfree'),
     path('admin/system-logs/', AdminSystemLogsView.as_view(), name='admin-system-logs'),
     path('admin/permissions/', PermissionListView.as_view(), name='admin-permissions'),
     path('admin/launch-checklist/', AdminLaunchChecklistView.as_view(), name='admin-launch-checklist'),

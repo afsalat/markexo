@@ -1,8 +1,9 @@
-import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X, Sparkles } from 'lucide-react';
+import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X, Sparkles, Download, Loader2 } from 'lucide-react';
 import { Product, Category } from '@/types/admin';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { exportProductsToExcel } from '@/lib/excelExport';
 import ProductDetail from './ProductDetail';
 import ProductForm from './ProductForm';
 
@@ -43,6 +44,7 @@ export default function ProductsTab({
     const [editingProductId, setEditingProductId] = useState<number | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+    const [exporting, setExporting] = useState(false);
 
     const handleEdit = (product: Product) => {
         setViewingProduct(null);
@@ -230,6 +232,31 @@ export default function ProductsTab({
         return matchesStatus && matchesCategory && matchesSearch;
     });
 
+    const handleExportProducts = async () => {
+        setExporting(true);
+        try {
+            const listToExport = filteredProducts.length > 0 ? filteredProducts : products;
+            if (!listToExport || listToExport.length === 0) {
+                alert('No products found to export.');
+                return;
+            }
+
+            const statusLabel = filterStatus !== 'all' ? `Status: ${filterStatus.toUpperCase()}` : 'All Products';
+            const catLabel = selectedCategory !== 'all' && categorySearch ? `Category: ${categorySearch}` : '';
+            const searchLabel = searchQuery.trim() ? `Search: "${searchQuery.trim()}"` : '';
+            const subtitle = [statusLabel, catLabel, searchLabel].filter(Boolean).join(' | ');
+
+            await exportProductsToExcel(listToExport, {
+                subtitle: subtitle || 'Complete product catalog, inventory and price master',
+            });
+        } catch (err) {
+            console.error('Failed to export products:', err);
+            alert('Failed to export products to Excel. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     if (showForm) {
         return (
             <ProductForm
@@ -359,6 +386,16 @@ export default function ProductsTab({
                             </button>
                         ))}
                         </div>
+                        <button
+                            type="button"
+                            onClick={handleExportProducts}
+                            disabled={exporting}
+                            className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-dark-600 bg-dark-700 px-4 py-2 font-medium text-white shadow-sm transition-colors hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Export Products to Excel"
+                        >
+                            {exporting ? <Loader2 size={18} className="animate-spin text-accent-500" /> : <Download size={18} />}
+                            <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
+                        </button>
                         {canAdd && (
                             <button
                                 onClick={handleAddNew}
@@ -430,11 +467,29 @@ export default function ProductsTab({
                                                 <span className="text-silver-600">-</span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 align-top whitespace-nowrap text-silver-300">{product.stock}</td>
+                                        <td className="px-6 py-4 align-top whitespace-nowrap">
+                                            {product.stock <= 0 ? (
+                                                <span className="font-bold text-red-400 font-mono">0</span>
+                                            ) : product.stock <= 5 ? (
+                                                <span className="font-bold text-amber-400 font-mono">{product.stock}</span>
+                                            ) : (
+                                                <span className="font-medium text-silver-200 font-mono">{product.stock}</span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 align-top">
-                                            <span className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${product.stock === 0 ? 'border border-red-500/20 bg-red-500/10 text-red-500' : 'border border-green-500/20 bg-green-500/10 text-green-500'}`}>
-                                                {product.stock === 0 ? 'Out of Stock' : 'Active'}
-                                            </span>
+                                            {product.stock <= 0 ? (
+                                                <span className="inline-flex whitespace-nowrap rounded-full border border-red-500/30 bg-red-500/15 px-2.5 py-1 text-xs font-bold text-red-400">
+                                                    Stock Out
+                                                </span>
+                                            ) : product.stock <= 5 ? (
+                                                <span className="inline-flex whitespace-nowrap rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 text-xs font-bold text-amber-400">
+                                                    Only {product.stock} left!
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex whitespace-nowrap rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-400">
+                                                    In Stock
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 align-top">
                                             <span className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium ${product.approval_status === 'approved'

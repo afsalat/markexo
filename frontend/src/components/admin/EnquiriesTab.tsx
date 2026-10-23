@@ -1,7 +1,8 @@
-import { Trash2, Mail, MessageSquare, Calendar, Search, Filter, RefreshCcw } from 'lucide-react';
+import { Trash2, Mail, MessageSquare, Calendar, Search, Filter, RefreshCcw, Download, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { exportEnquiriesToExcel } from '@/lib/excelExport';
 
 interface Enquiry {
     id: number;
@@ -18,11 +19,35 @@ export default function EnquiriesTab() {
     const { token, hasPermission } = useAuth();
     const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
     const canDelete = hasPermission('delete_enquiry');
     const canEdit = hasPermission('change_enquiry');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+
+    const handleExportEnquiries = async () => {
+        setExporting(true);
+        try {
+            if (!enquiries || enquiries.length === 0) {
+                alert('No enquiries found to export.');
+                return;
+            }
+
+            const filterLabel = statusFilter ? `Status: ${statusFilter.toUpperCase()}` : 'All Inquiries';
+            const searchLabel = search ? `Search: "${search}"` : '';
+            const subtitle = [filterLabel, searchLabel].filter(Boolean).join(' | ');
+
+            await exportEnquiriesToExcel(enquiries, {
+                subtitle: subtitle || 'Customer inquiries and support messages',
+            });
+        } catch (err) {
+            console.error('Failed to export enquiries:', err);
+            alert('Failed to export enquiries to Excel. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     useEffect(() => {
         fetchEnquiries();
@@ -154,6 +179,16 @@ export default function EnquiriesTab() {
                         title="Refresh"
                     >
                         <RefreshCcw size={18} />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleExportEnquiries}
+                        disabled={exporting}
+                        className="flex items-center gap-2 px-3 py-2 border border-dark-600 rounded-lg bg-dark-700 text-white hover:bg-dark-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Export Enquiries to Excel"
+                    >
+                        {exporting ? <Loader2 size={18} className="animate-spin text-accent-500" /> : <Download size={18} />}
+                        <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
                     </button>
                 </div>
             </div>

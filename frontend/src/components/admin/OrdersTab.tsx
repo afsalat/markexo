@@ -3,6 +3,7 @@ import { Order } from '@/types/admin';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { exportOrdersToExcel } from '@/lib/excelExport';
 import OrderDetail from './OrderDetail';
 import OrderStats from './OrderStats';
 
@@ -15,6 +16,7 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
     const { token } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
     const [showFilters, setShowFilters] = useState(false);
@@ -35,6 +37,49 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
         returned: 0,
         revenue: 0
     });
+
+    const handleExportOrders = async () => {
+        setExporting(true);
+        try {
+            const params = new URLSearchParams();
+            if (debouncedSearch) params.append('search', debouncedSearch);
+            if (statusFilter) params.append('status', statusFilter);
+            params.append('page', '1');
+            params.append('page_size', '2000');
+
+            const res = await fetch(`${API_BASE_URL}/admin/orders/?${params.toString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            let exportList = orders;
+            if (res.ok) {
+                const data = await res.json();
+                exportList = data.results || (Array.isArray(data) ? data : orders);
+            }
+
+            if (!exportList || exportList.length === 0) {
+                alert('No orders found to export.');
+                return;
+            }
+
+            const filterLabel = statusFilter
+                ? `Status: ${statusFilter.toUpperCase()}`
+                : 'All Order Statuses';
+            const searchLabel = debouncedSearch ? `Search: "${debouncedSearch}"` : '';
+            const subtitleParts = [filterLabel, searchLabel].filter(Boolean).join(' | ');
+
+            await exportOrdersToExcel(exportList, {
+                subtitle: subtitleParts || 'All customer orders',
+            });
+        } catch (err) {
+            console.error('Failed to export orders:', err);
+            alert('Failed to export orders to Excel. Please try again.');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     const handleUpdatePaymentStatus = async (orderId: string, newStatus: string) => {
         setEditingPaymentId(null);
@@ -248,11 +293,17 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                     </button>
 
                     <button
-                        className="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500"
-                        title="Export Orders"
+                        onClick={handleExportOrders}
+                        disabled={exporting}
+                        className="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500 disabled:opacity-50"
+                        title="Export Orders to Excel"
                     >
-                        <Download size={18} />
-                        <span className="hidden sm:inline">Export</span>
+                        {exporting ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                            <Download size={18} />
+                        )}
+                        <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
                     </button>
                 </div>
             </div>

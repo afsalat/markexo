@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus } from 'lucide-react';
+import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus, Zap, Lock, ShieldCheck } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { launchCashfreeCheckout, verifyCashfreePayment } from '@/lib/cashfree';
 
 export default function CheckoutPage() {
     const { items, totalAmount, clearCart, updateQuantity } = useCart();
@@ -20,6 +21,12 @@ export default function CheckoutPage() {
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [useNewAddress, setUseNewAddress] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // Payment Gateway State
+    const [paymentMethod, setPaymentMethod] = useState<'cashfree' | 'cod'>('cashfree');
+    const [cashfreeEnabled, setCashfreeEnabled] = useState<boolean>(true);
+    const [cashfreeMode, setCashfreeMode] = useState<'SANDBOX' | 'PRODUCTION'>('SANDBOX');
+    const [pendingOrderId, setPendingPaymentOrderId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -69,6 +76,33 @@ export default function CheckoutPage() {
             }
         }
     }, [isAuthenticated, customer, addresses.length]);
+
+    // Check payment gateway settings and RTO policies
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/settings/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.cashfree_enabled !== undefined) {
+                    const enabled = Boolean(data.cashfree_enabled);
+                    setCashfreeEnabled(enabled);
+                    if (!enabled) {
+                        setPaymentMethod('cod');
+                    }
+                }
+                if (data.cashfree_mode) {
+                    setCashfreeMode(data.cashfree_mode);
+                }
+            })
+            .catch(err => {
+                console.log('Using default gateway configuration:', err);
+            });
+    }, []);
+
+    useEffect(() => {
+        if (customer && (customer.rto_count ?? 0) >= 2) {
+            setPaymentMethod('cashfree');
+        }
+    }, [customer]);
 
     const handleGoogleQuickLogin = async () => {
         setIsGoogleSigningIn(true);
@@ -154,6 +188,7 @@ export default function CheckoutPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setErrorMessage('');
 
         try {
             // Validate email before submitting
@@ -164,6 +199,7 @@ export default function CheckoutPage() {
             }
 
             // Prepare order data
+            const isCodSelected = paymentMethod === 'cod';
             const orderData = {
                 customer_name: formData.name,
                 customer_email: formData.email,
@@ -172,6 +208,9 @@ export default function CheckoutPage() {
                 delivery_city: formData.city,
                 delivery_pincode: formData.pincode,
                 notes: formData.notes,
+                is_cod: isCodSelected,
+                payment_method: paymentMethod,
+                return_url: typeof window !== 'undefined' ? `${window.location.origin}/track-order?id={order_id}` : undefined,
                 items: items.map(item => ({
                     product_id: item.product.id,
                     quantity: item.quantity
@@ -182,8 +221,6 @@ export default function CheckoutPage() {
 
             // Call API to create order
             const apiUrl = `${API_BASE_URL}/orders/create/`;
-            console.log('🌐 API URL:', apiUrl);
-
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -193,9 +230,7 @@ export default function CheckoutPage() {
             });
 
             console.log('📡 Response status:', response.status);
-
             const responseText = await response.text();
-            console.log('📄 Response body:', responseText);
 
             if (!response.ok) {
                 let errorData;
@@ -206,7 +241,7 @@ export default function CheckoutPage() {
                 }
 
                 // Format validation errors for display
-                let errorMessage = errorData.error || `Server error: ${response.status}`;
+                let errMsg = errorData.error || `Server error: ${response.status}`;
                 if (errorData.details) {
                     const fieldErrors = Object.entries(errorData.details)
                         .map(([field, errors]: [string, any]) => {
@@ -214,18 +249,49 @@ export default function CheckoutPage() {
                             return `${fieldName}: ${Array.isArray(errors) ? errors.join(', ') : errors}`;
                         })
                         .join('\n');
-                    errorMessage = `Please fix the following errors:\n\n${fieldErrors}`;
+                    errMsg = `Please fix the following errors:\n\n${fieldErrors}`;
                 }
 
-                throw new Error(errorMessage);
+                throw new Error(errMsg);
             }
 
             const orderResponse = JSON.parse(responseText);
             console.log('✅ Order created successfully:', orderResponse);
 
-            setOrderId(orderResponse.order_id);
-            setOrderPlaced(true);
-            clearCart();
+            // Online Payment with Cashfree Gateway
+            if (!isCodSelected && orderResponse.cashfree?.payment_session_id) {
+                setPendingPaymentOrderId(orderResponse.order_id);
+                try {
+                    // Launch Cashfree Checkout Modal
+                    await launchCashfreeCheckout({
+                        paymentSessionId: orderResponse.cashfree.payment_session_id,
+                        mode: orderResponse.cashfree.mode || cashfreeMode,
+                        redirectTarget: '_modal',
+                    });
+
+                    // Verify payment confirmation with backend
+                    const verifyRes = await verifyCashfreePayment(orderResponse.order_id);
+                    if (verifyRes.is_paid) {
+                        setOrderId(orderResponse.order_id);
+                        setOrderPlaced(true);
+                        clearCart();
+                    } else {
+                        setPendingPaymentOrderId(orderResponse.order_id);
+                        setErrorMessage(
+                            `Payment verification status: ${verifyRes.payment_status || 'Pending'}.\nYour order #${orderResponse.order_id} has been recorded.\nIf amount was debited, payment will confirm automatically within a few minutes.`
+                        );
+                    }
+                } catch (cfErr: any) {
+                    console.error('❌ Cashfree checkout error:', cfErr);
+                    setPendingPaymentOrderId(orderResponse.order_id);
+                    setErrorMessage(`Payment checkout was interrupted: ${cfErr.message || 'Unknown'}. Order #${orderResponse.order_id} was recorded.`);
+                }
+            } else {
+                // COD Flow
+                setOrderId(orderResponse.order_id);
+                setOrderPlaced(true);
+                clearCart();
+            }
         } catch (error: any) {
             console.error('❌ Order creation error:', error);
             setErrorMessage(error.message || 'Failed to place order. Please try again.');
@@ -260,15 +326,21 @@ export default function CheckoutPage() {
                 <p className="text-base font-bold text-accent-600 mb-8 bg-accent-50 px-4 py-1.5 rounded-full">Order ID: {orderId}</p>
 
                 <div className="w-full max-w-sm space-y-3 mb-8">
-                    <div className="bg-blue-50 border border-blue-100 shadow-sm rounded-2xl p-4">
-                        <p className="text-blue-700 text-sm text-center font-medium">
-                            📞 <span className="font-bold">Verification Call:</span> Our team will call you to confirm payment before dispatch.
-                        </p>
-                    </div>
-                    <div className="bg-emerald-50 border border-emerald-100 shadow-sm rounded-2xl p-4">
-                        <p className="text-gray-700 text-sm text-center font-medium">
-                            💳 <span className="font-bold text-gray-900">Payment confirmed</span> — Your order will be processed shortly
-                        </p>
+                    {paymentMethod === 'cashfree' ? (
+                        <div className="bg-emerald-50 border border-emerald-100 shadow-sm rounded-2xl p-4">
+                            <p className="text-emerald-800 text-sm text-center font-medium">
+                                ⚡ <span className="font-bold">Online Payment Verified:</span> Paid securely via Cashfree. Your order is confirmed and prioritized for immediate dispatch.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="bg-blue-50 border border-blue-100 shadow-sm rounded-2xl p-4">
+                            <p className="text-blue-700 text-sm text-center font-medium">
+                                📞 <span className="font-bold">Verification Call:</span> Our team will call you to confirm your COD order before dispatch.
+                            </p>
+                        </div>
+                    )}
+                    <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-4 text-center">
+                        <p className="text-xs text-gray-500 font-medium">Order updates and delivery tracking have been sent to your registered email & WhatsApp.</p>
                     </div>
                 </div>
 
@@ -584,45 +656,144 @@ export default function CheckoutPage() {
                             {step === 2 && (
                                 <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 md:p-8 animate-fade-in">
                                     <h2 className="font-display text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                        <CreditCard className="text-accent-500" /> Payment Method
+                                        <CreditCard className="text-accent-500" /> Select Payment Method
                                     </h2>
 
-                                    {/* COD - Only Option */}
-                                    <div className="p-6 border-2 border-accent-500 rounded-2xl bg-accent-50/50 shadow-sm">
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center border border-accent-200">
-                                                <span className="text-2xl">💵</span>
+                                    <div className="space-y-4">
+                                        {/* Option 1: Cashfree Online Payment */}
+                                        <div
+                                            onClick={() => setPaymentMethod('cashfree')}
+                                            className={`p-6 border-2 rounded-2xl cursor-pointer transition-all ${
+                                                paymentMethod === 'cashfree'
+                                                    ? 'border-accent-500 bg-accent-50/30 shadow-md ring-2 ring-accent-500/20'
+                                                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className="pt-0.5">
+                                                    <input
+                                                        type="radio"
+                                                        id="payment_cashfree"
+                                                        name="paymentMethod"
+                                                        checked={paymentMethod === 'cashfree'}
+                                                        onChange={() => setPaymentMethod('cashfree')}
+                                                        className="w-5 h-5 text-accent-500 focus:ring-accent-500 cursor-pointer accent-accent-500"
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                        <span className="font-bold text-gray-900 text-lg">Online Payment (Cashfree)</span>
+                                                        <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                                            <Zap size={12} className="fill-emerald-600 text-emerald-600" /> Recommended
+                                                        </span>
+                                                        <span className="bg-accent-100 text-accent-800 text-xs font-bold px-2 py-0.5 rounded-full">
+                                                            Fastest Dispatch
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm font-medium text-gray-600 mb-3">
+                                                        Pay instantly using UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, or NetBanking.
+                                                    </p>
+
+                                                    {/* Supported Badges */}
+                                                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                                                        <span className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-2xs">
+                                                            UPI / QR
+                                                        </span>
+                                                        <span className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-2xs">
+                                                            GPay / PhonePe / Paytm
+                                                        </span>
+                                                        <span className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-2xs">
+                                                            Visa / Mastercard / RuPay
+                                                        </span>
+                                                        <span className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 shadow-2xs">
+                                                            50+ Banks NetBanking
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4 text-xs font-semibold text-gray-500 pt-2 border-t border-gray-100">
+                                                        <span className="flex items-center gap-1 text-emerald-700">
+                                                            <ShieldCheck size={14} /> 100% Secure SSL
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span>Zero Convenience Fee</span>
+                                                        <span>•</span>
+                                                        <span>Instant Confirmation</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex-1">
-                                                <p className="font-bold text-gray-900 text-lg">Cash on Delivery</p>
-                                                <p className="text-sm font-medium text-gray-500">Pay when your order arrives</p>
-                                            </div>
-                                            <span className="bg-green-100 text-green-700 border border-green-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">COD Only</span>
                                         </div>
 
-                                        {/* COD Trust Section */}
-                                        <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-                                            <div className="flex items-center gap-3 text-sm font-medium text-gray-700">
-                                                <Shield size={18} className="text-accent-500 flex-shrink-0" />
-                                                <span>100% secure delivery • No prepayment required</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 text-sm font-medium text-gray-700">
-                                                <Truck size={18} className="text-accent-500 flex-shrink-0" />
-                                                <span>Inspect your order before paying</span>
-                                            </div>
-                                            <div className="flex items-center gap-3 text-sm font-medium text-gray-700">
-                                                <Clock size={18} className="text-accent-500 flex-shrink-0" />
-                                                <span>Pay cash to delivery partner</span>
-                                            </div>
-                                        </div>
+                                        {/* Option 2: Cash on Delivery */}
+                                        {(() => {
+                                            const isRtoBlocked = Boolean(customer && (customer.rto_count ?? 0) >= 2);
+                                            return (
+                                                <div
+                                                    onClick={() => {
+                                                        if (!isRtoBlocked) setPaymentMethod('cod');
+                                                    }}
+                                                    className={`p-6 border-2 rounded-2xl transition-all ${
+                                                        isRtoBlocked
+                                                            ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                                                            : paymentMethod === 'cod'
+                                                            ? 'border-accent-500 bg-accent-50/30 shadow-md ring-2 ring-accent-500/20 cursor-pointer'
+                                                            : 'border-gray-200 hover:border-gray-300 bg-white cursor-pointer'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start gap-4">
+                                                        <div className="pt-0.5">
+                                                            <input
+                                                                type="radio"
+                                                                id="payment_cod"
+                                                                name="paymentMethod"
+                                                                disabled={isRtoBlocked}
+                                                                checked={paymentMethod === 'cod'}
+                                                                onChange={() => {
+                                                                    if (!isRtoBlocked) setPaymentMethod('cod');
+                                                                }}
+                                                                className="w-5 h-5 text-accent-500 focus:ring-accent-500 cursor-pointer accent-accent-500 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                                <span className="font-bold text-gray-900 text-lg">Cash on Delivery (COD)</span>
+                                                                {isRtoBlocked ? (
+                                                                    <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                        Unavailable for this Account
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                        Pay on Arrival
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm font-medium text-gray-600 mb-2">
+                                                                Pay cash to our delivery executive when your parcel is delivered at your doorstep.
+                                                            </p>
+                                                            {isRtoBlocked ? (
+                                                                <p className="text-xs font-semibold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100">
+                                                                    COD is not available due to prior order return history on your profile. Please proceed with Online Payment via Cashfree.
+                                                                </p>
+                                                            ) : (
+                                                                <p className="text-xs font-semibold text-amber-700 flex items-center gap-1.5">
+                                                                    <span>📞</span> Note: A phone verification call is conducted prior to dispatch for COD orders.
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
 
-                                        {/* Amount to Pay */}
-                                        <div className="mt-4 bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-bold text-gray-600">Amount to Pay on Delivery:</span>
-                                                <span className="text-2xl font-black text-accent-600">₹{totalAmount.toLocaleString()}</span>
-                                            </div>
+                                    {/* Amount Summary in Step 2 */}
+                                    <div className="mt-6 bg-gray-50 rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                                                {paymentMethod === 'cashfree' ? 'Amount to Pay Online' : 'Amount to Pay on Delivery'}
+                                            </p>
+                                            <p className="text-xs text-gray-600 font-medium">All taxes & free delivery included</p>
                                         </div>
+                                        <span className="text-2xl font-black text-accent-600">₹{totalAmount.toLocaleString()}</span>
                                     </div>
 
                                     <div className="flex gap-4 mt-8">
@@ -666,8 +837,23 @@ export default function CheckoutPage() {
                                         <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
                                             <CreditCard size={18} className="text-accent-500" /> Payment Method
                                         </h3>
-                                        <p className="font-bold text-gray-800">💵 Cash on Delivery</p>
-                                        <p className="text-sm font-medium text-gray-500 mt-1">Pay <span className="font-bold text-gray-900">₹{totalAmount.toLocaleString()}</span> when your order arrives</p>
+                                        {paymentMethod === 'cashfree' ? (
+                                            <div>
+                                                <p className="font-bold text-emerald-700 flex items-center gap-1.5">
+                                                    <Zap size={16} /> Online Payment (Cashfree Gateway)
+                                                </p>
+                                                <p className="text-sm font-medium text-gray-600 mt-1">
+                                                    Will securely pay <span className="font-bold text-gray-900">₹{totalAmount.toLocaleString()}</span> via UPI, Card, or NetBanking.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p className="font-bold text-gray-800">💵 Cash on Delivery (COD)</p>
+                                                <p className="text-sm font-medium text-gray-500 mt-1">
+                                                    Pay <span className="font-bold text-gray-900">₹{totalAmount.toLocaleString()}</span> to the delivery agent when package arrives.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Order Items */}
@@ -685,6 +871,7 @@ export default function CheckoutPage() {
                                                     <div className="flex items-center gap-4">
                                                         <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
                                                             <button
+                                                                type="button"
                                                                 onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                                                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-600 font-bold"
                                                             >
@@ -692,6 +879,7 @@ export default function CheckoutPage() {
                                                             </button>
                                                             <span className="w-8 text-center font-bold text-gray-900 text-sm">{item.quantity}</span>
                                                             <button
+                                                                type="button"
                                                                 onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                                                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-600 font-bold"
                                                             >
@@ -718,7 +906,13 @@ export default function CheckoutPage() {
                                             disabled={isSubmitting}
                                             className="btn-primary flex-1 shadow-lg shadow-accent-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {isSubmitting ? 'Placing Order...' : 'Confirm Order'}
+                                            {isSubmitting
+                                                ? paymentMethod === 'cashfree'
+                                                    ? 'Opening Cashfree Gateway...'
+                                                    : 'Placing Order...'
+                                                : paymentMethod === 'cashfree'
+                                                ? `Pay ₹${totalAmount.toLocaleString()} via Cashfree`
+                                                : 'Confirm Order (COD)'}
                                         </button>
                                     </div>
                                 </div>
@@ -770,12 +964,20 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
 
-                            {/* COD Payment Message */}
-                            <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4 shadow-sm">
-                                <p className="text-sm text-green-700 text-center font-medium flex items-center justify-center gap-2">
-                                    💵 Pay <span className="font-black text-green-800 text-lg">₹{totalAmount.toLocaleString()}</span> on delivery
-                                </p>
-                            </div>
+                            {/* Dynamic Payment Method Badge in Sidebar */}
+                            {paymentMethod === 'cashfree' ? (
+                                <div className="mt-6 bg-emerald-50 border border-emerald-200 rounded-xl p-4 shadow-sm">
+                                    <p className="text-sm text-emerald-800 text-center font-medium flex items-center justify-center gap-1.5">
+                                        <Zap size={16} className="text-emerald-600" /> Secure checkout with <span className="font-black text-emerald-950">Cashfree</span>
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
+                                    <p className="text-sm text-amber-800 text-center font-medium flex items-center justify-center gap-1.5">
+                                        💵 Pay <span className="font-black text-amber-950 text-base">₹{totalAmount.toLocaleString()}</span> on delivery
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Trust Badges */}
                             <div className="mt-6 grid grid-cols-3 gap-2 text-center border-t border-gray-100 pt-4">
@@ -806,7 +1008,7 @@ export default function CheckoutPage() {
                                 <AlertCircle className="text-red-500" size={24} />
                             </div>
                             <div className="flex-1">
-                                <h3 className="font-display text-xl font-bold text-gray-900 mb-2">Error Occurred</h3>
+                                <h3 className="font-display text-xl font-bold text-gray-900 mb-2">Notice</h3>
                                 <p className="text-gray-600 font-medium whitespace-pre-line text-sm">{errorMessage}</p>
                             </div>
                             <button
@@ -816,11 +1018,26 @@ export default function CheckoutPage() {
                                 <X size={16} strokeWidth={3} />
                             </button>
                         </div>
+
+                        {pendingOrderId && (
+                            <div className="mt-4 p-3 bg-accent-50 rounded-xl border border-accent-100 text-center">
+                                <p className="text-xs font-semibold text-accent-800 mb-2">
+                                    Order #{pendingOrderId} is safely stored in our system.
+                                </p>
+                                <Link
+                                    href={`/track-order?id=${pendingOrderId}`}
+                                    className="text-xs font-bold text-accent-700 underline hover:text-accent-900"
+                                >
+                                    View or check status on Track Order page &rarr;
+                                </Link>
+                            </div>
+                        )}
+
                         <button
                             onClick={() => setErrorMessage('')}
                             className="bg-gray-900 text-white font-bold rounded-xl py-3 w-full mt-6 hover:bg-black transition-colors"
                         >
-                            Got it, return to checkout
+                            Close
                         </button>
                     </div>
                 </div>

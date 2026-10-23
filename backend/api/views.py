@@ -31,7 +31,7 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, Customer,
     Order, OrderItem, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem, BlogPost
+    ChecklistSection, ChecklistItem, BlogPost, StockLog
 )
 from .launch_checklist import (
     LAUNCH_CHECKLIST_PROJECT_NAME,
@@ -44,7 +44,7 @@ from .serializers import (
     CategorySerializer, CategoryListSerializer,
     ProductSerializer, ProductListSerializer, PublicProductSerializer,
     ReviewSerializer, CustomerSerializer, OrderSerializer, OrderCreateSerializer,
-    OrderItemSerializer, BannerSerializer, SiteSettingSerializer,
+    OrderItemSerializer, BannerSerializer, SiteSettingSerializer, StockLogSerializer,
     DashboardStatsSerializer, EnquirySerializer,
     UserSerializer, RoleSerializer, PermissionSerializer,
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
@@ -53,6 +53,11 @@ from .serializers import (
     normalize_email_value, get_or_create_customer_for_user,
 )
 from .ai_service import GeminiBlogService
+from .cashfree_service import (
+    create_cashfree_order,
+    verify_cashfree_order,
+    test_cashfree_credentials,
+)
 
 from .order_emails import (
     send_order_created_email,
@@ -407,27 +412,38 @@ class CreateOrderView(APIView):
             customer.pincode = data['delivery_pincode'] or customer.pincode
             customer.save(update_fields=['name', 'phone', 'address', 'city', 'pincode'])
 
-        # 2. Check RTO Risk
-        if customer.rto_count >= 2:
+        # 2. Check payment method and COD availability
+        is_cod = data.get('is_cod', True)
+        payment_method = (data.get('payment_method') or 'cod').lower()
+        if payment_method == 'cashfree':
+            is_cod = False
+
+        if is_cod and customer.rto_count >= 2:
             return Response(
-                {'error': 'COD not available for this account due to high return rate. Please contact support.'},
+                {'error': 'COD is not available for this account due to previous return rate. Please choose Online Payment via Cashfree.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         total_amount = 0
         order_items = []
+        products_to_deduct = []
         
+        # 3. Validate stock availability and calculate prices
         for item in data['items']:
             product = get_object_or_404(Product, id=item['product_id'])
-            quantity = item.get('quantity', 1)
+            quantity = max(1, int(item.get('quantity', 1)))
+
+            # Stock check
+            if product.stock < quantity:
+                return Response({
+                    'error': f"Product '{product.name}' only has {product.stock} items left in stock. Please reduce your quantity.",
+                    'available_stock': product.stock,
+                    'product_id': product.id,
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             price = product.current_price
             item_total = price * quantity
-
             total_amount += item_total
-
-            # Update sold count
-            product.sold_count += quantity
-            product.save(update_fields=['sold_count'])
 
             order_item_data = {
                 'product': product,
@@ -437,6 +453,11 @@ class CreateOrderView(APIView):
                 'price': price,
             }
             order_items.append(order_item_data)
+            products_to_deduct.append((product, quantity))
+
+        # 4. Create Order
+        order_status = 'pending_verification' if is_cod else 'pending'
+        payment_status = 'pending_cod' if is_cod else 'pending'
 
         order = Order.objects.create(
             customer=customer,
@@ -445,31 +466,61 @@ class CreateOrderView(APIView):
             delivery_city=data['delivery_city'],
             delivery_pincode=data['delivery_pincode'],
             notes=data.get('notes', ''),
-            status='pending_verification',
-            payment_status='pending_cod',
-            is_cod=True 
+            status=order_status,
+            payment_status=payment_status,
+            is_cod=is_cod,
         )
 
-        # 5. Create order items
+        # 5. Create order items, deduct stock (stockout), and record stock log
         for item in order_items:
             OrderItem.objects.create(order=order, **item)
+
+        for prod, qty in products_to_deduct:
+            prev_stock = prod.stock
+            new_stock = max(0, prev_stock - qty)
+            prod.stock = new_stock
+            prod.sold_count += qty
+            prod.save(update_fields=['stock', 'sold_count'])
+
+            StockLog.objects.create(
+                product=prod,
+                change_type='purchase',
+                quantity_change=-qty,
+                previous_stock=prev_stock,
+                new_stock=new_stock,
+                reference=order.order_id,
+                note=f"Order #{order.order_id} stockout",
+            )
         
         # 6. Update Customer Metrics
         customer.order_count += 1
-        customer.save()
+        customer.save(update_fields=['order_count'])
 
-        send_order_created_email(order)
-        site_setting = SiteSetting.objects.filter(pk=1).first() or SiteSetting.objects.first()
-        try:
-            send_order_confirmation_whatsapp(order)
-            send_order_alert_whatsapp(order, getattr(site_setting, 'whatsapp_number', ''))
-        except Exception:
-            logger.exception("WhatsApp notification flow failed for order %s", order.order_id)
+        # 7. Initialize Cashfree session if online payment
+        cashfree_session = None
+        if not is_cod and payment_method == 'cashfree':
+            return_url = request.data.get('return_url')
+            cf_result = create_cashfree_order(order, customer, return_url=return_url)
+            if not cf_result.get('success'):
+                logger.error("Failed to initialize Cashfree session for order %s: %s", order.order_id, cf_result.get('error'))
+            else:
+                cashfree_session = cf_result
 
-        return Response(
-            OrderSerializer(order, context={'request': request}).data,
-            status=status.HTTP_201_CREATED
-        )
+        # For COD orders, trigger email & WhatsApp alerts immediately
+        if is_cod:
+            send_order_created_email(order)
+            site_setting = SiteSetting.objects.filter(pk=1).first() or SiteSetting.objects.first()
+            try:
+                send_order_confirmation_whatsapp(order)
+                send_order_alert_whatsapp(order, getattr(site_setting, 'whatsapp_number', ''))
+            except Exception:
+                logger.exception("WhatsApp notification flow failed for order %s", order.order_id)
+
+        response_data = OrderSerializer(order, context={'request': request}).data
+        if cashfree_session:
+            response_data['cashfree'] = cashfree_session
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
 
 
 class TwilioWhatsAppWebhookView(APIView):
@@ -823,25 +874,41 @@ class AdminLaunchChecklistView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        sections = ensure_launch_checklist_seeded()
-        serializer = ChecklistSectionSerializer(sections, many=True)
-        return Response({
-            'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
-            'sections': serializer.data,
-        })
+        try:
+            sections = ensure_launch_checklist_seeded()
+            serializer = ChecklistSectionSerializer(sections, many=True)
+            return Response({
+                'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
+                'sections': serializer.data,
+            })
+        except Exception as exc:
+            logger.exception("Failed to get launch checklist: %s", exc)
+            return Response({
+                'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
+                'sections': [],
+                'error': str(exc),
+            }, status=status.HTTP_200_OK)
 
 
 class AdminLaunchChecklistSeedView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        replace_existing = bool(request.data.get('replace_existing', False))
-        sections = sync_launch_checklist_from_seed(replace_existing=replace_existing)
-        serializer = ChecklistSectionSerializer(sections, many=True)
-        return Response({
-            'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
-            'sections': serializer.data,
-        }, status=status.HTTP_200_OK)
+        try:
+            replace_existing = bool(request.data.get('replace_existing', False))
+            sections = sync_launch_checklist_from_seed(replace_existing=replace_existing)
+            serializer = ChecklistSectionSerializer(sections, many=True)
+            return Response({
+                'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
+                'sections': serializer.data,
+            }, status=status.HTTP_200_OK)
+        except Exception as exc:
+            logger.exception("Failed to seed launch checklist: %s", exc)
+            return Response({
+                'project_name': LAUNCH_CHECKLIST_PROJECT_NAME,
+                'sections': [],
+                'error': str(exc),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class AdminLaunchChecklistSectionCreateView(APIView):
@@ -1004,6 +1071,16 @@ class AdminDashboardStatsView(APIView):
         )['cost'] or 0
         total_profit = total_revenue - total_cost
 
+        try:
+            recent_orders_data = OrderSerializer(
+                orders.order_by('-created_at')[:10],
+                many=True,
+                context={'request': request}
+            ).data
+        except Exception as exc:
+            logger.warning("Failed to serialize admin recent orders: %s", exc)
+            recent_orders_data = []
+
         stats = {
             'total_orders': orders.count(),
             'total_revenue': total_revenue,
@@ -1011,7 +1088,7 @@ class AdminDashboardStatsView(APIView):
             'total_products': Product.objects.count(),
             'total_customers': Customer.objects.count(),
             'pending_orders': orders.filter(status='pending').count(),
-            'recent_orders': OrderSerializer(orders[:10], many=True, context={'request': request}).data,
+            'recent_orders': recent_orders_data,
             'revenue_history': revenue_history,
             'order_status_distribution': list(status_dist),
         }
@@ -1157,6 +1234,60 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         status = 'approved' if self.request.user.is_superuser else 'pending'
         serializer.save(created_by=self.request.user, approval_status=status)
 
+    @action(detail=True, methods=['get', 'post'], url_path='stock-logs')
+    def stock_logs(self, request, pk=None):
+        product = self.get_object()
+        if request.method == 'GET':
+            logs = product.stock_logs.all().order_by('-created_at')[:100]
+            serializer = StockLogSerializer(logs, many=True)
+            return Response(serializer.data)
+
+        # POST: Manual stock entry
+        try:
+            qty = int(request.data.get('quantity_change', 0))
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid quantity.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        change_type = request.data.get('change_type', 'manual_in')
+        note = (request.data.get('note') or '').strip()
+
+        prev_stock = product.stock
+        if change_type == 'manual_out':
+            qty = -abs(qty)
+            new_stock = max(0, prev_stock + qty)
+        elif change_type == 'adjustment':
+            if 'target_stock' in request.data:
+                try:
+                    target = max(0, int(request.data['target_stock']))
+                    qty = target - prev_stock
+                    new_stock = target
+                except (ValueError, TypeError):
+                    new_stock = max(0, prev_stock + qty)
+            else:
+                new_stock = max(0, prev_stock + qty)
+        else:
+            qty = abs(qty)
+            new_stock = prev_stock + qty
+
+        product.stock = new_stock
+        product.save(update_fields=['stock'])
+
+        log = StockLog.objects.create(
+            product=product,
+            change_type=change_type,
+            quantity_change=qty,
+            previous_stock=prev_stock,
+            new_stock=new_stock,
+            reference=request.data.get('reference', 'Manual Entry'),
+            note=note,
+            created_by=request.user if request.user.is_authenticated else None,
+        )
+        return Response({
+            'success': True,
+            'current_stock': product.stock,
+            'log': StockLogSerializer(log).data
+        }, status=status.HTTP_201_CREATED)
+
 
 class AdminOrderViewSet(viewsets.ModelViewSet):
     """Admin CRUD for orders."""
@@ -1285,8 +1416,10 @@ class AdminCustomerViewSet(viewsets.ReadOnlyModelViewSet):
 
 class AdminBannerViewSet(viewsets.ModelViewSet):
     """Admin CRUD for banners."""
-    queryset = Banner.objects.all()
+    queryset = Banner.objects.all().order_by('order', '-created_at')
     serializer_class = BannerSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
 
 class AdminEnquiryViewSet(viewsets.ModelViewSet):
@@ -1317,6 +1450,7 @@ class AdminEnquiryViewSet(viewsets.ModelViewSet):
 class AdminSiteSettingView(APIView):
     """Admin site settings."""
     permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
         setting, created = SiteSetting.objects.get_or_create(pk=1)
@@ -1324,12 +1458,157 @@ class AdminSiteSettingView(APIView):
         return Response(serializer.data)
 
     def put(self, request):
+        return self._update(request)
+
+    def patch(self, request):
+        return self._update(request)
+
+    def _update(self, request):
         setting, created = SiteSetting.objects.get_or_create(pk=1)
         serializer = SiteSettingSerializer(setting, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminTestEmailView(APIView):
+    """Send test email to verify SMTP configuration."""
+    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+
+    def post(self, request):
+        recipient = request.data.get('recipient') or request.user.email
+        if not recipient:
+            return Response({'error': 'Recipient email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        site_setting = SiteSetting.objects.first()
+        host = (request.data.get('smtp_host') or getattr(site_setting, 'smtp_host', '') or getattr(settings, 'EMAIL_HOST', '')).strip()
+        port = int(request.data.get('smtp_port') or getattr(site_setting, 'smtp_port', 587) or 587)
+        user = (request.data.get('smtp_user') or getattr(site_setting, 'smtp_user', '') or getattr(settings, 'EMAIL_HOST_USER', '')).strip()
+        password = (request.data.get('smtp_password') or getattr(site_setting, 'smtp_password', '') or getattr(settings, 'EMAIL_HOST_PASSWORD', '')).strip()
+        use_tls = request.data.get('smtp_use_tls', getattr(site_setting, 'smtp_use_tls', True))
+        use_ssl = request.data.get('smtp_use_ssl', getattr(site_setting, 'smtp_use_ssl', False))
+        from_email = (request.data.get('default_from_email') or getattr(site_setting, 'default_from_email', '') or user or 'noreply@vorionmart.com').strip()
+
+        if not host or not user or not password:
+            return Response({'error': 'SMTP Host, User/Email, and App Password are required to test email.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from django.core.mail.backends.smtp import EmailBackend
+            from django.core.mail import EmailMessage
+
+            backend = EmailBackend(
+                host=host,
+                port=port,
+                username=user,
+                password=password,
+                use_tls=bool(use_tls),
+                use_ssl=bool(use_ssl),
+                timeout=10,
+            )
+            email_msg = EmailMessage(
+                subject='VorionMart SMTP Configuration Test',
+                body='Congratulations! Your SMTP email setup on VorionMart is configured correctly and ready for customer notifications.',
+                from_email=from_email,
+                to=[recipient],
+                connection=backend,
+            )
+            email_msg.send(fail_silently=False)
+            return Response({'success': True, 'message': f'Test email successfully sent to {recipient}!'})
+        except Exception as ex:
+            logger.exception("SMTP test failed: %s", str(ex))
+            return Response({'error': f'Failed to send test email: {str(ex)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminTestCashfreeView(APIView):
+    """Validate Cashfree payment gateway credentials."""
+    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+
+    def post(self, request):
+        site_setting = SiteSetting.objects.first()
+        app_id = (request.data.get('cashfree_app_id') or getattr(site_setting, 'cashfree_app_id', '')).strip()
+        secret_key = (request.data.get('cashfree_secret_key') or getattr(site_setting, 'cashfree_secret_key', '')).strip()
+        mode = (request.data.get('cashfree_mode') or getattr(site_setting, 'cashfree_mode', 'SANDBOX')).strip()
+
+        if not app_id or not secret_key:
+            return Response({'error': 'Cashfree App ID and Secret Key are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = test_cashfree_credentials(app_id=app_id, secret_key=secret_key, mode=mode)
+        if result.get('success'):
+            return Response(result)
+        return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CashfreeCreateOrderView(APIView):
+    """Create Cashfree payment session for an existing order."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        order_id = request.data.get('order_id')
+        if not order_id:
+            return Response({'error': 'order_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        order = get_object_or_404(Order, order_id=order_id)
+        return_url = request.data.get('return_url')
+        res = create_cashfree_order(order, order.customer, return_url=return_url)
+        if res.get('success'):
+            return Response(res)
+        return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CashfreeVerifyPaymentView(APIView):
+    """Verify payment status via Cashfree and update order."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        order_id = request.data.get('order_id')
+        if not order_id:
+            return Response({'error': 'order_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        order = get_object_or_404(Order, order_id=order_id)
+        res = verify_cashfree_order(order_id)
+        if not res.get('success'):
+            return Response(res, status=status.HTTP_400_BAD_REQUEST)
+
+        if res.get('is_paid'):
+            if order.payment_status != 'paid':
+                order.payment_status = 'paid'
+                order.status = 'confirmed'
+                order.notes = f"{order.notes or ''}\n[Cashfree] Paid successfully (cf_order_id: {res.get('cf_order_id')})".strip()
+                order.save()
+                try:
+                    send_order_created_email(order)
+                    site_setting = SiteSetting.objects.first()
+                    send_order_confirmation_whatsapp(order)
+                    send_order_alert_whatsapp(order, getattr(site_setting, 'whatsapp_number', ''))
+                except Exception as ex:
+                    logger.warning("Notification after payment failed: %s", ex)
+
+        return Response({
+            'success': True,
+            'order_id': order.order_id,
+            'is_paid': res.get('is_paid'),
+            'order_status': order.status,
+            'payment_status': order.payment_status,
+        })
+
+
+class CashfreeWebhookView(APIView):
+    """Cashfree webhook handler for payment notifications."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        data = request.data
+        logger.info("Cashfree webhook payload: %s", data)
+        order_info = data.get('data', {}).get('order', {})
+        order_id = order_info.get('order_id') or data.get('order_id')
+        payment_status = data.get('data', {}).get('payment', {}).get('payment_status') or data.get('payment_status')
+        if order_id:
+            order = Order.objects.filter(order_id=order_id).first()
+            if order and payment_status in ('SUCCESS', 'PAID'):
+                if order.payment_status != 'paid':
+                    order.payment_status = 'paid'
+                    order.status = 'confirmed'
+                    order.save()
+        return Response({'status': 'OK'}, status=status.HTTP_200_OK)
 
 
 class SocialLoginView(APIView):
@@ -1709,68 +1988,91 @@ class PartnerDashboardStatsView(APIView):
         return OrderItem.objects.filter(product__created_by=user).distinct()
 
     def get(self, request):
-        products = self.get_products_queryset(request.user)
+        try:
+            products = self.get_products_queryset(request.user)
 
-        items = self.get_items_queryset(request.user)
-        sales_items = get_sales_order_items_queryset(items)
+            items = self.get_items_queryset(request.user)
+            sales_items = get_sales_order_items_queryset(items)
 
-        item_sales = ExpressionWrapper(
-            F('price') * F('quantity'),
-            output_field=DecimalField(max_digits=12, decimal_places=2),
-        )
-        total_sales = sales_items.aggregate(
-            sales=Coalesce(
-                Sum(item_sales),
-                Value(Decimal('0.00')),
+            item_sales = ExpressionWrapper(
+                F('price') * F('quantity'),
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
-        )['sales']
+            total_sales = sales_items.aggregate(
+                sales=Coalesce(
+                    Sum(item_sales),
+                    Value(Decimal('0.00')),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )['sales']
 
-        # Calculate Earnings (Profit Share)
-        # Formula: Sum((Price - SupplierPrice) * Qty * CommissionRate) / 100
-        supplier_price = Coalesce(
-            F('product__supplier_price'),
-            Value(Decimal('0.00')),
-            output_field=DecimalField(max_digits=10, decimal_places=2),
-        )
-        commission_rate = Coalesce(
-            F('product__created_by__partner_profile__commission_rate'),
-            Value(Decimal('30.00')),
-            output_field=DecimalField(max_digits=5, decimal_places=2),
-        )
-        item_earnings = ExpressionWrapper(
-            (F('price') - supplier_price) * F('quantity') * commission_rate,
-            output_field=DecimalField(max_digits=12, decimal_places=2),
-        )
-        earnings_agg = sales_items.aggregate(
-            earnings=Coalesce(
-                Sum(item_earnings),
+            # Calculate Earnings (Profit Share)
+            # Formula: Sum((Price - SupplierPrice) * Qty * CommissionRate) / 100
+            supplier_price = Coalesce(
+                F('product__supplier_price'),
                 Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            )
+            commission_rate = Coalesce(
+                F('product__created_by__partner_profile__commission_rate'),
+                Value(Decimal('30.00')),
+                output_field=DecimalField(max_digits=5, decimal_places=2),
+            )
+            item_earnings = ExpressionWrapper(
+                (F('price') - supplier_price) * F('quantity') * commission_rate,
                 output_field=DecimalField(max_digits=12, decimal_places=2),
             )
-        )
-        # Divide by 100 after summation (or handle safely)
-        raw_earnings = earnings_agg['earnings']
-        my_earnings = raw_earnings / Decimal('100.00')
+            earnings_agg = sales_items.aggregate(
+                earnings=Coalesce(
+                    Sum(item_earnings),
+                    Value(Decimal('0.00')),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            # Divide by 100 after summation (or handle safely)
+            raw_earnings = earnings_agg['earnings']
+            my_earnings = raw_earnings / Decimal('100.00')
 
-        recent_order_ids = items.values_list('order', flat=True).distinct()[:10]
-        recent_orders = Order.objects.filter(id__in=recent_order_ids).order_by('-created_at')
+            try:
+                recent_order_ids = list(items.order_by().values_list('order_id', flat=True).distinct()[:10])
+                recent_orders = (
+                    list(Order.objects.filter(id__in=recent_order_ids).order_by('-created_at'))
+                    if recent_order_ids
+                    else []
+                )
+                recent_orders_data = OrderSerializer(recent_orders, many=True, context={'request': request}).data
+            except Exception as exc:
+                logger.warning("Failed to fetch partner recent orders: %s", exc)
+                recent_orders_data = []
 
-        total_products = products.count()
-        requested_amount = Decimal('0.00')
-        total_withdrawn = Decimal('0.00')
+            total_products = products.count()
+            requested_amount = Decimal('0.00')
+            total_withdrawn = Decimal('0.00')
 
-        return Response({
-            'total_sales': total_sales,
-            'my_earnings': my_earnings,
-            'total_products': total_products,
-            'pending_amount': my_earnings - requested_amount,
-            'total_withdrawn': total_withdrawn,
-            'total_orders': sales_items.values('order').distinct().count(),
-            'delivered_orders': items.filter(order__status__in=['delivered', 'completed']).values('order').distinct().count(),
-            'returned_orders': items.filter(order__status='returned').values('order').distinct().count(),
-            'recent_orders': OrderSerializer(recent_orders, many=True, context={'request': request}).data
-        })
+            return Response({
+                'total_sales': total_sales,
+                'my_earnings': my_earnings,
+                'total_products': total_products,
+                'pending_amount': my_earnings - requested_amount,
+                'total_withdrawn': total_withdrawn,
+                'total_orders': sales_items.values('order_id').distinct().count(),
+                'delivered_orders': items.filter(order__status__in=['delivered', 'completed']).values('order_id').distinct().count(),
+                'returned_orders': items.filter(order__status='returned').values('order_id').distinct().count(),
+                'recent_orders': recent_orders_data
+            })
+        except Exception as exc:
+            logger.exception("Error in PartnerDashboardStatsView: %s", exc)
+            return Response({
+                'total_sales': Decimal('0.00'),
+                'my_earnings': Decimal('0.00'),
+                'total_products': 0,
+                'pending_amount': Decimal('0.00'),
+                'total_withdrawn': Decimal('0.00'),
+                'total_orders': 0,
+                'delivered_orders': 0,
+                'returned_orders': 0,
+                'recent_orders': []
+            })
 
 
 class PartnerShopListView(APIView):

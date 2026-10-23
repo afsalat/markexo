@@ -46,8 +46,8 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
                 <h3 className="mb-4 font-display text-base font-bold text-white sm:mb-6 sm:text-lg">
                     Revenue &amp; Profit Trend (Last 7 Days)
                 </h3>
-                <div className="h-[240px] w-full sm:h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[240px] w-full min-w-0 sm:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <LineChart data={revenueHistory} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1f2937" />
                             <XAxis
@@ -107,8 +107,8 @@ export default function DashboardCharts({ revenueHistory, statusDistribution }: 
                 <h3 className="mb-4 font-display text-base font-bold text-white sm:mb-6 sm:text-lg">
                     Order Status Distribution
                 </h3>
-                <div className="h-[240px] w-full sm:h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
+                <div className="h-[240px] w-full min-w-0 sm:h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <PieChart>
                             <Pie
                                 data={statusDistribution}

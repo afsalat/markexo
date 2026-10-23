@@ -15,7 +15,7 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, ReviewImage, Customer,
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem, BlogPost
+    ChecklistSection, ChecklistItem, BlogPost, StockLog
 )
 
 logger = logging.getLogger(__name__)
@@ -528,12 +528,14 @@ class PublicProductSerializer(serializers.ModelSerializer):
     current_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     discount_percent = serializers.IntegerField(read_only=True)
     image = serializers.SerializerMethodField()
+    stock_status = serializers.SerializerMethodField()
+    is_in_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'slug', 'description', 'mrp', 'our_price', 'price', 'sale_price',
-            'current_price', 'discount_percent', 'stock', 'sku',
+            'current_price', 'discount_percent', 'stock', 'stock_status', 'is_in_stock', 'sku',
             'category', 'category_name', 'image', 'images',
             'meesho_url', 'specifications',
             'is_featured', 'is_active', 'rating', 'review_count', 'created_at'
@@ -542,6 +544,16 @@ class PublicProductSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         request = self.context.get('request')
         return get_image_url(request, obj.image)
+
+    def get_stock_status(self, obj):
+        if obj.stock <= 0:
+            return 'out_of_stock'
+        if obj.stock <= 5:
+            return 'low_stock'
+        return 'in_stock'
+
+    def get_is_in_stock(self, obj):
+        return obj.stock > 0
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -567,6 +579,8 @@ class ProductSerializer(serializers.ModelSerializer):
     profit_percent = serializers.IntegerField(read_only=True)
     rating = serializers.DecimalField(max_digits=3, decimal_places=1, read_only=True)
     review_count = serializers.IntegerField(read_only=True)
+    stock_status = serializers.SerializerMethodField()
+    is_in_stock = serializers.SerializerMethodField()
     
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
     created_by_email = serializers.CharField(source='created_by.email', read_only=True)
@@ -578,13 +592,23 @@ class ProductSerializer(serializers.ModelSerializer):
             'mrp', 'supplier_price', 'our_price',
             'price', 'sale_price',  # Legacy fields
             'current_price', 'discount_percent', 'profit_margin', 'profit_percent',
-            'stock', 'sku',
+            'stock', 'stock_status', 'is_in_stock', 'sku',
             'shop', 'shop_name', 'shop_id',
             'category', 'category_name', 'category_id', 'image', 'images', 'uploaded_images',
             'meesho_url', 'specifications', 'is_featured', 'is_active', 'approval_status', 'views', 'sold_count', 'rating', 'review_count', 
             'google_merchant_status', 'google_merchant_errors', 'last_google_sync',
             'created_at', 'created_by_name', 'created_by_email'
         ]
+
+    def get_stock_status(self, obj):
+        if obj.stock <= 0:
+            return 'out_of_stock'
+        if obj.stock <= 5:
+            return 'low_stock'
+        return 'in_stock'
+
+    def get_is_in_stock(self, obj):
+        return obj.stock > 0
 
     def to_internal_value(self, data):
         import json
@@ -783,19 +807,52 @@ class OrderCreateSerializer(serializers.Serializer):
     delivery_city = serializers.CharField(max_length=100)
     delivery_pincode = serializers.CharField(max_length=10)
     notes = serializers.CharField(required=False, allow_blank=True)
+    is_cod = serializers.BooleanField(required=False, default=True)
+    payment_method = serializers.CharField(required=False, default='cod')
     items = serializers.ListField(
         child=serializers.DictField(),
         min_length=1
     )
 
 
+class StockLogSerializer(serializers.ModelSerializer):
+    """Serializer for inventory stock movement logs."""
+    change_type_display = serializers.CharField(source='get_change_type_display', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+    product_name = serializers.CharField(source='product.name', read_only=True)
+
+    class Meta:
+        model = StockLog
+        fields = [
+            'id', 'product', 'product_name', 'change_type', 'change_type_display',
+            'quantity_change', 'previous_stock', 'new_stock',
+            'reference', 'note', 'created_by', 'created_by_name',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'previous_stock', 'new_stock', 'created_at']
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            name = f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
+            return name or obj.created_by.username
+        return 'System'
+
+
 class BannerSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False, allow_null=True)
+    link = serializers.CharField(required=False, allow_blank=True, default='')
+    section = serializers.CharField(required=False, default='home_hero')
     section_display = serializers.CharField(source='get_section_display', read_only=True)
 
     class Meta:
         model = Banner
         fields = ['id', 'title', 'subtitle', 'section', 'section_display', 'image', 'link', 'is_active', 'order']
+
+    def validate_section(self, value):
+        valid_sections = {'home_hero', 'category_hero', 'promo', 'general'}
+        if not value or value not in valid_sections:
+            return 'home_hero'
+        return value
 
     def validate(self, attrs):
         if self.instance is None and not attrs.get('image'):
@@ -805,6 +862,9 @@ class BannerSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['image'] = get_image_url(self.context.get('request'), instance.image)
+        # Ensure section is never null or empty in output representation
+        if not data.get('section'):
+            data['section'] = 'home_hero'
         return data
 
 
@@ -818,6 +878,16 @@ class SiteSettingSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['logo'] = get_image_url(self.context.get('request'), instance.logo)
+        request = self.context.get('request')
+        is_admin = bool(
+            request and request.user and request.user.is_authenticated and (
+                request.user.is_staff or getattr(request.user, 'role', '') in ['admin', 'superadmin']
+            )
+        )
+        if not is_admin:
+            data.pop('smtp_password', None)
+            data.pop('twilio_auth_token', None)
+            data.pop('cashfree_secret_key', None)
         return data
 
 

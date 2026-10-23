@@ -5,10 +5,11 @@ import {
     MapPin, Phone, Mail, Clock, CheckCircle2,
     Truck, AlertCircle, ShoppingBag, ExternalLink,
     XCircle, RefreshCw, HelpCircle, ChevronDown, Edit3,
-    RotateCcw, FileText, StickyNote, Download
+    RotateCcw, FileText, StickyNote, Download, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { exportOrderInvoiceToExcel } from '@/lib/excelExport';
 
 interface OrderDetailProps {
     order: Order;
@@ -52,6 +53,7 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
     const [isUpdating, setIsUpdating] = useState(false);
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [showPaymentStatusDropdown, setShowPaymentStatusDropdown] = useState(false);
+    const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
     const handleReturnOrder = async () => {
         if (!returnReason.trim()) {
@@ -111,9 +113,16 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
         }
     };
 
-    const handleDownloadInvoice = () => {
-        alert('Downloading Invoice... (Simulation)');
-        // In real implementation: window.open(`${API_BASE_URL}/orders/${order.id}/invoice/`);
+    const handleDownloadInvoice = async () => {
+        setDownloadingInvoice(true);
+        try {
+            await exportOrderInvoiceToExcel(order);
+        } catch (err) {
+            console.error('Failed to download invoice:', err);
+            alert('Failed to generate Excel invoice. Please try again.');
+        } finally {
+            setDownloadingInvoice(false);
+        }
     };
 
     const handleUpdateStatus = async (newStatus: string) => {
@@ -696,11 +705,12 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
 
                             <button
                                 onClick={handleDownloadInvoice}
-                                className="w-full flex items-center justify-between p-4 bg-dark-700 text-silver-300 border border-dark-600 rounded-2xl font-bold hover:bg-dark-600 hover:text-white transition-all group"
+                                disabled={downloadingInvoice}
+                                className="w-full flex items-center justify-between p-4 bg-dark-700 text-silver-300 border border-dark-600 rounded-2xl font-bold hover:bg-dark-600 hover:text-white transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <span className="flex items-center gap-3">
-                                    <Download size={20} />
-                                    Download Invoice
+                                    {downloadingInvoice ? <Loader2 size={20} className="animate-spin text-accent-500" /> : <Download size={20} />}
+                                    {downloadingInvoice ? 'Generating Invoice...' : 'Download Invoice (Excel)'}
                                 </span>
                                 <ExternalLink size={20} className="group-hover:scale-110 transition-transform" />
                             </button>

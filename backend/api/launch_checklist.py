@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 from django.conf import settings
@@ -10,10 +11,44 @@ from django.db import transaction
 
 from .models import ChecklistItem, ChecklistSection
 
+logger = logging.getLogger(__name__)
+
 LAUNCH_CHECKLIST_PROJECT_NAME = 'Vorionmart'
-LAUNCH_CHECKLIST_SEED_PATH = (
-    settings.BASE_DIR.parent / 'frontend' / 'src' / 'data' / 'vorionmart-launch-checklist.json'
-)
+
+SEED_CANDIDATE_PATHS = [
+    Path(__file__).resolve().parent / 'data' / 'vorionmart-launch-checklist.json',
+    settings.BASE_DIR / 'api' / 'data' / 'vorionmart-launch-checklist.json',
+    settings.BASE_DIR.parent / 'frontend' / 'src' / 'data' / 'vorionmart-launch-checklist.json',
+    Path('/frontend/src/data/vorionmart-launch-checklist.json'),
+]
+
+
+def resolve_launch_checklist_seed_path() -> Path | None:
+    for candidate in SEED_CANDIDATE_PATHS:
+        try:
+            if candidate.is_file():
+                return candidate
+        except (OSError, PermissionError):
+            continue
+    return None
+
+
+def load_launch_checklist_seed() -> dict:
+    seed_path = resolve_launch_checklist_seed_path()
+    if not seed_path:
+        logger.warning(
+            "Launch checklist seed file not found in any candidate path: %s",
+            [str(p) for p in SEED_CANDIDATE_PATHS],
+        )
+        return {'projectName': LAUNCH_CHECKLIST_PROJECT_NAME, 'sections': []}
+
+    try:
+        with seed_path.open(encoding='utf-8') as seed_file:
+            return json.load(seed_file)
+    except Exception as exc:
+        logger.exception("Failed to load launch checklist seed from %s: %s", seed_path, exc)
+        return {'projectName': LAUNCH_CHECKLIST_PROJECT_NAME, 'sections': []}
+
 
 PRIORITY_MAP = {
     'High': ChecklistItem.PRIORITY_HIGH,
@@ -30,11 +65,6 @@ STATUS_MAP = {
     'In Progress': ChecklistItem.STATUS_IN_PROGRESS,
     'Not Started': ChecklistItem.STATUS_NOT_STARTED,
 }
-
-
-def load_launch_checklist_seed() -> dict:
-    with Path(LAUNCH_CHECKLIST_SEED_PATH).open(encoding='utf-8') as seed_file:
-        return json.load(seed_file)
 
 
 def _normalize_priority(value: str | None) -> str:
@@ -60,6 +90,10 @@ def sync_launch_checklist_from_seed(*, replace_existing: bool = False) -> list[C
     """Create or update launch checklist rows from the JSON seed."""
     seed_data = load_launch_checklist_seed()
     sections = seed_data.get('sections', [])
+
+    if not sections:
+        logger.info("No launch checklist sections found in seed data.")
+        return get_launch_checklist_sections()
 
     if replace_existing:
         ChecklistItem.objects.all().delete()
@@ -102,7 +136,14 @@ def sync_launch_checklist_from_seed(*, replace_existing: bool = False) -> list[C
 
 
 def ensure_launch_checklist_seeded() -> list[ChecklistSection]:
-    if not ChecklistSection.objects.exists():
-        return sync_launch_checklist_from_seed()
-    normalize_section_display_order()
-    return get_launch_checklist_sections()
+    try:
+        if not ChecklistSection.objects.exists():
+            return sync_launch_checklist_from_seed()
+        normalize_section_display_order()
+        return get_launch_checklist_sections()
+    except Exception as exc:
+        logger.exception("Error ensuring launch checklist is seeded: %s", exc)
+        try:
+            return get_launch_checklist_sections()
+        except Exception:
+            return []

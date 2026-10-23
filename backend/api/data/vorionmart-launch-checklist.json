@@ -1,0 +1,437 @@
+{
+  "projectName": "Vorionmart",
+  "version": "1.0.0",
+  "generatedAt": "2026-04-05",
+  "sections": [
+    {
+      "id": "core-website-setup",
+      "title": "Core Website Setup",
+      "description": "Lock the production environment, customer-facing basics, and technical hygiene before traffic starts.",
+      "items": [
+        {
+          "id": "prod-config-freeze",
+          "name": "Production config and environment freeze",
+          "description": "Verify production API URLs, payment/COD flags, image domains, email sender settings, and secret keys are correct in deployment config with a documented release snapshot.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Frontend + Backend",
+          "notes": "Confirm Next.js public env values against Django settings and document final launch values in ops notes."
+        },
+        {
+          "id": "ssl-mixed-content",
+          "name": "SSL and mixed content check",
+          "description": "Run the live site through HTTPS-only navigation and confirm no HTTP assets, insecure scripts, or image warnings appear on homepage, PDP, cart, checkout, and policy pages.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Frontend",
+          "notes": "Check CDN image URLs and any hardcoded asset links from older templates."
+        },
+        {
+          "id": "responsive-navigation",
+          "name": "Responsive layout and navigation pass",
+          "description": "Test header, footer, search, category navigation, cart drawer/page, and checkout layout on mobile, tablet, and desktop breakpoints with real content.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Frontend QA",
+          "notes": "Focus on 360px to 430px widths where ecommerce layouts usually break first."
+        },
+        {
+          "id": "link-health-errors",
+          "name": "Broken links and fallback page coverage",
+          "description": "Check all primary nav links, homepage banners, category links, PDP breadcrumbs, cart routes, 404 page, and error boundaries so users never hit a dead end during launch week.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Frontend QA",
+          "notes": "Include manual checks for banners, footer links, and empty-state CTAs."
+        }
+      ]
+    },
+    {
+      "id": "product-management",
+      "title": "Product Management",
+      "description": "Ensure products are launch-ready, complete, and operational in both storefront and admin.",
+      "items": [
+        {
+          "id": "image-quality",
+          "name": "Product image quality and consistency",
+          "description": "Review every launch SKU for sharp primary images, clean background, consistent aspect ratio, zoom-ready resolution, and no supplier watermarks or cropped variants.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Catalog Team",
+          "notes": "Target at least 1200px square exports for main catalog images."
+        },
+        {
+          "id": "required-attributes",
+          "name": "Required catalog attributes complete",
+          "description": "Confirm title, slug, category, MRP, selling price, COD eligibility, stock, brand/specs, shipping promise, and return eligibility exist for each listed product.",
+          "priority": "High",
+          "status": "Done",
+          "owner": "Catalog Team",
+          "notes": "Use admin export to spot blank brand/spec fields before enabling more SKUs."
+        },
+        {
+          "id": "stock-visibility-rules",
+          "name": "Stock handling and out-of-stock behavior",
+          "description": "Validate admin stock edits update storefront availability, low-stock items are visible internally, and out-of-stock products cannot be purchased while still showing useful alternatives.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Admin Ops",
+          "notes": "Verify low stock threshold and disable purchase CTA when quantity reaches zero."
+        },
+        {
+          "id": "pdp-merchandising",
+          "name": "PDP merchandising and trust content",
+          "description": "Make sure each product detail page shows price breakdown, COD messaging, delivery estimate, return cue, highlights/specifications, and visible support path near the purchase action.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Frontend + Merchandising",
+          "notes": "Audit the top 20 launch SKUs manually because template issues surface there first."
+        }
+      ]
+    },
+    {
+      "id": "checkout-order-flow",
+      "title": "Checkout and Order Flow",
+      "description": "Stress the full cart-to-order path with COD-first logic, operational handoffs, and error handling.",
+      "items": [
+        {
+          "id": "cart-total-accuracy",
+          "name": "Cart, shipping, and order total accuracy",
+          "description": "Test quantity changes, coupon edge cases, shipping fee rules, and final order totals so cart, checkout, and admin order records match exactly.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Backend + Frontend",
+          "notes": "Reconcile subtotal, shipping, COD fee if any, and final payable amount in both UI and order payload."
+        },
+        {
+          "id": "cod-verification",
+          "name": "COD verification and risk control flow",
+          "description": "Validate COD-eligible order creation, customer verification steps, blocked/soft-block customer rules, and internal handling for suspicious repeat-RTO customers.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Operations",
+          "notes": "Define who confirms COD orders and where verification status is tracked before dispatch."
+        },
+        {
+          "id": "order-confirmation-workflow",
+          "name": "Order confirmation workflow",
+          "description": "Confirm successful checkout triggers thank-you page state, admin order entry, confirmation email/SMS/WhatsApp plan, and clear next-step messaging for the customer.",
+          "priority": "High",
+          "status": "Done",
+          "owner": "Backend + CRM",
+          "notes": "Existing email flow passes tests; still validate live copy and sender identity on production."
+        },
+        {
+          "id": "checkout-error-recovery",
+          "name": "Checkout validation and error recovery",
+          "description": "Test invalid phone numbers, partial addresses, unavailable items, network failures, and page refreshes to make sure checkout recovers gracefully without duplicate orders.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "QA",
+          "notes": "Include back-button behavior and retry after session expiration."
+        }
+      ]
+    },
+    {
+      "id": "seo-setup",
+      "title": "SEO Setup",
+      "description": "Cover crawlability, metadata, schema, and social previews for search-ready launch pages.",
+      "items": [
+        {
+          "id": "metadata-templates",
+          "name": "Title and meta description templates",
+          "description": "Set production-ready title and description patterns for homepage, categories, products, cart-safe pages, and policy pages without duplicate or placeholder copy.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "SEO",
+          "notes": "Keep product titles readable and capped for search results, not just admin naming."
+        },
+        {
+          "id": "product-schema",
+          "name": "Product schema on PDP",
+          "description": "Implement and validate structured data with product name, image, price, availability, brand, aggregate rating if real, and offer information on product pages.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Frontend SEO",
+          "notes": "Use only real ratings/reviews; do not publish fake aggregate data."
+        },
+        {
+          "id": "sitemap-robots",
+          "name": "Sitemap and robots.txt validation",
+          "description": "Confirm the generated sitemap includes indexable storefront URLs and robots.txt blocks only admin/internal paths while allowing product and category discovery.",
+          "priority": "High",
+          "status": "Done",
+          "owner": "Frontend SEO",
+          "notes": "Re-submit final sitemap URL in Search Console after launch domain is fixed."
+        },
+        {
+          "id": "og-canonical",
+          "name": "Open Graph, Twitter, and canonical tags",
+          "description": "Check social preview tags and canonical URLs on homepage, category, and product pages so shared links render correctly and duplicates do not fragment ranking signals.",
+          "priority": "Medium",
+          "status": "Not Started",
+          "owner": "Frontend SEO",
+          "notes": "Use a real product image for PDP previews and a default brand image for collection pages."
+        }
+      ]
+    },
+    {
+      "id": "merchant-center",
+      "title": "Google Merchant / Free Listings Setup",
+      "description": "Prepare the catalog feed and account settings so products are eligible for free listings and future ads.",
+      "items": [
+        {
+          "id": "merchant-account",
+          "name": "Merchant Center account, domain claim, and business info",
+          "description": "Verify Merchant Center is created, website is claimed and verified, business details are complete, and shipping/return references point to live policy pages.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Growth",
+          "notes": "Use the exact launch domain and match store branding with the site footer/business details."
+        },
+        {
+          "id": "feed-required-fields",
+          "name": "Feed required attributes readiness",
+          "description": "Ensure feed rows expose stable ID, title, description, link, image_link, availability, price, condition, brand, and shipping details where required for launch SKUs.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Backend + Catalog",
+          "notes": "Prepare fallback rules for products missing GTIN/MPN and document the identifier strategy."
+        },
+        {
+          "id": "merchant-policy-alignment",
+          "name": "Merchant shipping, returns, and policy alignment",
+          "description": "Match Merchant Center shipping speeds, return window, and contact info with the actual customer-facing shipping and return policy pages on Vorionmart.",
+          "priority": "High",
+          "status": "Blocked",
+          "owner": "Operations",
+          "notes": "Blocked until the final return window and shipping SLA are approved."
+        },
+        {
+          "id": "feed-diagnostics",
+          "name": "Feed diagnostics and sample product validation",
+          "description": "Upload or fetch the feed, inspect diagnostics, and manually verify at least 10 sample SKUs in Merchant Center for landing-page parity and image approval.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Growth + QA",
+          "notes": "Include one SKU from each launch category instead of testing only best sellers."
+        }
+      ]
+    },
+    {
+      "id": "legal-trust",
+      "title": "Legal and Trust",
+      "description": "Make policies, contact signals, and customer trust cues visible before traffic and orders arrive.",
+      "items": [
+        {
+          "id": "policy-visibility",
+          "name": "Shipping and return policy visibility",
+          "description": "Place shipping and return/refund links in footer, checkout, and PDP trust zones so customers can find policy details before ordering.",
+          "priority": "High",
+          "status": "Done",
+          "owner": "Frontend",
+          "notes": "Verify policy links are not hidden behind expandable accordions on mobile."
+        },
+        {
+          "id": "legal-page-consistency",
+          "name": "Terms, privacy, and COD disclaimer consistency",
+          "description": "Review terms, privacy, COD disclaimer, and return policy language so billing, cancellation, support, and data-use statements do not contradict each other.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Founder + Legal",
+          "notes": "Specifically align COD cancellation and refusal wording across all policy pages."
+        },
+        {
+          "id": "support-visibility",
+          "name": "Support contact visibility",
+          "description": "Expose at least one verified email and phone/WhatsApp support path in footer, contact page, order confirmation, and return/help journeys.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Support",
+          "notes": "Use the same contact details across merchant listings, footer, and transactional templates."
+        },
+        {
+          "id": "trust-messaging",
+          "name": "Trust messaging near purchase actions",
+          "description": "Show customer-safe cues like COD availability, secure checkout note, delivery expectations, and return promise adjacent to add-to-cart or checkout CTAs.",
+          "priority": "Medium",
+          "status": "In Progress",
+          "owner": "Frontend",
+          "notes": "Avoid clutter; keep trust content visible without pushing the buy box below the fold."
+        }
+      ]
+    },
+    {
+      "id": "marketing-readiness",
+      "title": "Marketing Readiness",
+      "description": "Make sure launch campaigns can send traffic to valid pages with clear offers and usable assets.",
+      "items": [
+        {
+          "id": "hero-launch-offers",
+          "name": "Homepage hero and launch offer readiness",
+          "description": "Confirm banners, homepage hero copy, offer badges, and category highlights match the products and pricing that will actually be live on launch day.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Growth + Design",
+          "notes": "Remove any placeholder sales language that is not backed by live catalog pricing."
+        },
+        {
+          "id": "campaign-destination-pages",
+          "name": "Campaign landing page and deep-link readiness",
+          "description": "Validate every marketing URL, UTM-tagged link, and influencer/ads destination leads to a live category, PDP, or launch page with no empty inventory.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Growth",
+          "notes": "Create a simple source-of-truth sheet mapping campaign names to live URLs."
+        },
+        {
+          "id": "promo-config",
+          "name": "Coupon, offer, and COD incentive rules",
+          "description": "Test any launch coupon, free-shipping threshold, bundle, or COD incentive logic so the promise shown in marketing creatives matches checkout behavior.",
+          "priority": "Medium",
+          "status": "Blocked",
+          "owner": "Growth + Backend",
+          "notes": "Blocked until the final launch discount strategy is approved."
+        },
+        {
+          "id": "creative-asset-pack",
+          "name": "Launch creative and support asset pack",
+          "description": "Prepare approved product images, resized ad creatives, social copy, FAQ snippets, and customer-support macros for the first 72 hours after launch.",
+          "priority": "Medium",
+          "status": "In Progress",
+          "owner": "Growth + Support",
+          "notes": "Include quick-reply answers for COD, delivery timing, and return eligibility."
+        }
+      ]
+    },
+    {
+      "id": "analytics-tracking",
+      "title": "Analytics and Tracking",
+      "description": "Instrument the customer journey so launch traffic and order drop-offs can be diagnosed immediately.",
+      "items": [
+        {
+          "id": "ga4-gtm-setup",
+          "name": "GA4 and tag manager installation",
+          "description": "Verify analytics containers are installed on all storefront routes with the correct production measurement IDs and no duplicate page_view firing.",
+          "priority": "High",
+          "status": "Done",
+          "owner": "Growth + Frontend",
+          "notes": "Check route transitions in Next.js so page views are not missed on client-side navigation."
+        },
+        {
+          "id": "ecommerce-events",
+          "name": "Core ecommerce event tracking",
+          "description": "Fire and validate view_item, add_to_cart, begin_checkout, add_shipping_info where applicable, and purchase/order_placed events with usable product and revenue payloads.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Frontend + Backend",
+          "notes": "For COD-first flow, ensure purchase/order_placed tracks after order creation, not after payment success."
+        },
+        {
+          "id": "ads-pixels",
+          "name": "Ads and remarketing pixel validation",
+          "description": "Check Meta or other ad pixels, remarketing tags, and custom conversions on key pages so paid traffic can be optimized after launch.",
+          "priority": "Medium",
+          "status": "Not Started",
+          "owner": "Growth",
+          "notes": "Only enable channels that have actual launch budget and consent-compliant usage."
+        },
+        {
+          "id": "search-console-webmaster",
+          "name": "Search Console and webmaster verification",
+          "description": "Verify domain ownership, submit sitemap, and confirm index coverage can be monitored from day one after the public launch.",
+          "priority": "Medium",
+          "status": "In Progress",
+          "owner": "SEO",
+          "notes": "Track the first crawl errors and soft-404s during the launch week."
+        }
+      ]
+    },
+    {
+      "id": "admin-operations",
+      "title": "Admin and Operations",
+      "description": "Prepare the internal team, admin tools, and resilience processes required to fulfill real orders.",
+      "items": [
+        {
+          "id": "admin-roles",
+          "name": "Admin roles and access review",
+          "description": "Confirm only required users have access to products, orders, banners, settings, partners, and customer data, with launch-day operators clearly assigned.",
+          "priority": "High",
+          "status": "In Progress",
+          "owner": "Admin Lead",
+          "notes": "Remove unused test accounts and verify least-privilege access for non-founder users."
+        },
+        {
+          "id": "stock-ops",
+          "name": "Admin stock handling workflow",
+          "description": "Document who updates stock, how fast sell-outs are reflected, how cancelled COD inventory is returned to stock, and what backup process exists if admin updates fail.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Operations",
+          "notes": "Create a launch-day stock escalation channel for hot SKUs."
+        },
+        {
+          "id": "backup-security",
+          "name": "Backup and security checks",
+          "description": "Validate database backup schedule, media backup coverage, admin auth protections, secret management, and incident contact list before public launch.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "Backend + DevOps",
+          "notes": "Include restore verification for at least one recent backup, not backup creation alone."
+        },
+        {
+          "id": "order-ops-sop",
+          "name": "Order processing SOP and escalation path",
+          "description": "Define a practical SOP covering COD verification, packing, dispatch, delayed shipment follow-up, cancellation handling, and return/refund ownership.",
+          "priority": "High",
+          "status": "Blocked",
+          "owner": "Operations + Support",
+          "notes": "Blocked until shipping partner cutoff times and return SLA are finalized."
+        }
+      ]
+    },
+    {
+      "id": "final-qa",
+      "title": "Final QA Testing",
+      "description": "Run the last launch rehearsal on real devices and production-like data so launch risk is known, not guessed.",
+      "items": [
+        {
+          "id": "cross-device-smoke",
+          "name": "Cross-device storefront smoke test",
+          "description": "Run full browse-to-cart-to-order flows on at least one Android phone, one iPhone-sized viewport, one laptop browser, and one low-bandwidth session.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "QA",
+          "notes": "Use production-like catalog images and real policy pages during the rehearsal."
+        },
+        {
+          "id": "cod-order-rehearsal",
+          "name": "COD order rehearsal with admin follow-through",
+          "description": "Place a complete COD test order and verify it reaches admin, triggers confirmation steps, and can be moved through the first fulfillment states without manual patching.",
+          "priority": "High",
+          "status": "Not Started",
+          "owner": "QA + Operations",
+          "notes": "Use a dedicated test phone/email so communications can be verified end to end."
+        },
+        {
+          "id": "console-performance-check",
+          "name": "Browser console and performance sanity pass",
+          "description": "Check for JavaScript errors, failed network requests, oversized images, and severe Core Web Vitals regressions on homepage, categories, PDP, cart, and checkout.",
+          "priority": "Medium",
+          "status": "In Progress",
+          "owner": "Frontend",
+          "notes": "Prioritize image-heavy PDPs and launch landing pages where LCP risk is highest."
+        },
+        {
+          "id": "rollback-plan",
+          "name": "Launch-day rollback and support plan",
+          "description": "Prepare a clear owner list, issue triage channel, rollback trigger, backup contact sheet, and short customer-facing incident response template before going live.",
+          "priority": "Medium",
+          "status": "Not Started",
+          "owner": "Founder + Tech Lead",
+          "notes": "Keep the rollback decision simple: disable traffic, pause campaigns, and revert the release if checkout or order creation is unstable."
+        }
+      ]
+    }
+  ]
+}

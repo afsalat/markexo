@@ -96,6 +96,15 @@ export default function ProductCard({ product }: ProductCardProps) {
 
                     {/* Badges */}
                     <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                        {product.stock <= 0 ? (
+                            <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wide">
+                                Stock Out
+                            </span>
+                        ) : product.stock <= 5 ? (
+                            <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase tracking-wide">
+                                Only {product.stock} Left!
+                            </span>
+                        ) : null}
                         {product.discount_percent > 0 && (
                             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
                                 -{product.discount_percent}%
@@ -173,18 +182,26 @@ export default function ProductCard({ product }: ProductCardProps) {
 
                     {/* Action Buttons - Stacked on Mobile, Side-by-Side on Tablet/Desktop */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-auto">
-                        <button
-                            onClick={handleAddToCart}
-                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-50 border border-gray-100 text-gray-600 rounded-xl font-bold text-[10px] hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all w-full"
-                        >
-                            <ShoppingCart size={12} /> Add to Cart
-                        </button>
-                        <button
-                            onClick={handleBuyNow}
-                            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-accent-500 text-white rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all w-full shadow-sm shadow-accent-500/20"
-                        >
-                            Buy Now
-                        </button>
+                        {product.stock <= 0 ? (
+                            <div className="col-span-1 sm:col-span-2 py-2 px-3 bg-red-50/80 border border-red-200/80 text-red-600 rounded-xl font-bold text-[11px] text-center uppercase tracking-wider">
+                                Out of Stock
+                            </div>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={handleAddToCart}
+                                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gray-50 border border-gray-100 text-gray-600 rounded-xl font-bold text-[10px] hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all w-full"
+                                >
+                                    <ShoppingCart size={12} /> Add to Cart
+                                </button>
+                                <button
+                                    onClick={handleBuyNow}
+                                    className="flex items-center justify-center gap-1.5 py-2 px-3 bg-accent-500 text-white rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all w-full shadow-sm shadow-accent-500/20"
+                                >
+                                    Buy Now
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             </Link>
