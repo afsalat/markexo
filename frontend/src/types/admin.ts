@@ -195,9 +195,11 @@ export interface SiteSetting {
     twitter_url: string;
 
     // Auth Management
+    google_client_id?: string;
     google_oauth_client_id?: string;
     allow_user_registration?: boolean;
     allow_partner_registration?: boolean;
+    session_timeout_hours?: number;
     session_timeout_minutes?: number;
 
     // Email Config Manage (SMTP / App Password)
@@ -212,6 +214,7 @@ export interface SiteSetting {
     // Other APIs Manage
     twilio_account_sid?: string;
     twilio_auth_token?: string;
+    twilio_whatsapp_from?: string;
     twilio_whatsapp_number?: string;
     firebase_project_id?: string;
 

@@ -870,14 +870,37 @@ class BannerSerializer(serializers.ModelSerializer):
 
 class SiteSettingSerializer(serializers.ModelSerializer):
     logo = serializers.ImageField(required=False, allow_null=True)
+    google_oauth_client_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    session_timeout_minutes = serializers.IntegerField(write_only=True, required=False)
+    twilio_whatsapp_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = SiteSetting
         fields = '__all__'
 
+    def to_internal_value(self, data):
+        # Support common alias keys seamlessly
+        data_copy = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'google_oauth_client_id' in data_copy and not data_copy.get('google_client_id'):
+            data_copy['google_client_id'] = data_copy['google_oauth_client_id']
+        if 'session_timeout_minutes' in data_copy and not data_copy.get('session_timeout_hours'):
+            try:
+                mins = int(data_copy['session_timeout_minutes'])
+                data_copy['session_timeout_hours'] = max(1, round(mins / 60))
+            except Exception:
+                pass
+        if 'twilio_whatsapp_number' in data_copy and not data_copy.get('twilio_whatsapp_from'):
+            data_copy['twilio_whatsapp_from'] = data_copy['twilio_whatsapp_number']
+        return super().to_internal_value(data_copy)
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['logo'] = get_image_url(self.context.get('request'), instance.logo)
+        # Expose aliases for frontend compatibility
+        data['google_oauth_client_id'] = instance.google_client_id
+        data['session_timeout_minutes'] = instance.session_timeout_hours * 60
+        data['twilio_whatsapp_number'] = instance.twilio_whatsapp_from
+
         request = self.context.get('request')
         is_admin = bool(
             request and request.user and request.user.is_authenticated and (

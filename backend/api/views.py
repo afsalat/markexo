@@ -859,14 +859,33 @@ class AdminDashboardPermission(permissions.BasePermission):
 
 class AdminSystemLogsPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return (
+        return bool(
             request.user and
             request.user.is_authenticated and
-            request.user.is_staff and
             (
                 request.user.is_superuser or
+                request.user.is_staff or
+                getattr(request.user, 'role', '') in ['admin', 'superadmin'] or
                 request.user.has_perm('api.view_sitesetting')
             )
+        )
+
+
+class AdminSiteSettingPermission(permissions.BasePermission):
+    """
+    Permission check for Admin Site Settings & integration tools.
+    Allows superusers, staff, admin roles, and users with view/change sitesetting perms.
+    """
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+        if request.user.is_superuser:
+            return True
+        if request.user.is_staff or getattr(request.user, 'role', '') in ['admin', 'superadmin']:
+            return True
+        return (
+            request.user.has_perm('api.view_sitesetting') or
+            request.user.has_perm('api.change_sitesetting')
         )
 
 
@@ -1449,7 +1468,7 @@ class AdminEnquiryViewSet(viewsets.ModelViewSet):
 
 class AdminSiteSettingView(APIView):
     """Admin site settings."""
-    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+    permission_classes = [IsAuthenticated, AdminSiteSettingPermission]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
@@ -1469,12 +1488,13 @@ class AdminSiteSettingView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        logger.error("SiteSetting validation error: %s", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminTestEmailView(APIView):
     """Send test email to verify SMTP configuration."""
-    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+    permission_classes = [IsAuthenticated, AdminSiteSettingPermission]
 
     def post(self, request):
         recipient = request.data.get('recipient') or request.user.email
@@ -1522,7 +1542,7 @@ class AdminTestEmailView(APIView):
 
 class AdminTestCashfreeView(APIView):
     """Validate Cashfree payment gateway credentials."""
-    permission_classes = [IsAuthenticated, AdminSystemLogsPermission]
+    permission_classes = [IsAuthenticated, AdminSiteSettingPermission]
 
     def post(self, request):
         site_setting = SiteSetting.objects.first()

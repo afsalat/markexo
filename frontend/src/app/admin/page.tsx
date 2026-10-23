@@ -75,7 +75,7 @@ export default function AdminPage() {
             addReq('view_category', `${API_BASE_URL}/admin/categories/`, 'categories');
             addReq('view_customer', `${API_BASE_URL}/admin/customers/`, 'customers');
             addReq('view_banner', `${API_BASE_URL}/admin/banners/`, 'banners');
-            addReq('view_sitesetting', `${API_BASE_URL}/admin/settings/`, 'settings');
+            addReq(null, `${API_BASE_URL}/admin/settings/`, 'settings');
 
             const responses = await Promise.all(requests);
 
@@ -201,7 +201,7 @@ export default function AdminPage() {
             case 'banners':
                 return <BannersTab banners={banners} />;
             case 'settings':
-                return <SettingsTab settings={settings} />;
+                return <SettingsTab settings={settings} onSaved={setSettings} />;
             case 'suppliers':
                 return <SupplierAPITab />;
             case 'system-logs':

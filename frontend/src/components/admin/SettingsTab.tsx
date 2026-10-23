@@ -12,6 +12,7 @@ import { APP_URL } from '@/config/siteConfig';
 
 interface SettingsTabProps {
     settings: SiteSetting | null;
+    onSaved?: (newSettings: SiteSetting) => void;
 }
 
 type TabKey = 'site' | 'auth' | 'email' | 'apis' | 'cashfree';
@@ -31,9 +32,11 @@ type SettingsFormData = {
     twitter_url: string;
 
     // Auth Management
+    google_client_id: string;
     google_oauth_client_id: string;
     allow_user_registration: boolean;
     allow_partner_registration: boolean;
+    session_timeout_hours: number;
     session_timeout_minutes: number;
 
     // Email Config Manage
@@ -48,6 +51,7 @@ type SettingsFormData = {
     // Other APIs Manage
     twilio_account_sid: string;
     twilio_auth_token: string;
+    twilio_whatsapp_from: string;
     twilio_whatsapp_number: string;
     firebase_project_id: string;
 
@@ -60,8 +64,12 @@ type SettingsFormData = {
 };
 
 function buildInitialFormData(settings: SiteSetting): SettingsFormData {
+    const googleId = settings.google_client_id || settings.google_oauth_client_id || '';
+    const hours = settings.session_timeout_hours || (settings.session_timeout_minutes ? Math.max(1, Math.round(settings.session_timeout_minutes / 60)) : 24);
+    const twilioFrom = settings.twilio_whatsapp_from || settings.twilio_whatsapp_number || '';
+
     return {
-        id: settings.id,
+        id: settings.id || 1,
         // Site
         site_name: settings.site_name || '',
         site_tagline: settings.site_tagline || '',
@@ -75,10 +83,12 @@ function buildInitialFormData(settings: SiteSetting): SettingsFormData {
         twitter_url: settings.twitter_url || '',
 
         // Auth
-        google_oauth_client_id: settings.google_oauth_client_id || '',
+        google_client_id: googleId,
+        google_oauth_client_id: googleId,
         allow_user_registration: settings.allow_user_registration ?? true,
         allow_partner_registration: settings.allow_partner_registration ?? true,
-        session_timeout_minutes: settings.session_timeout_minutes || 1440,
+        session_timeout_hours: hours,
+        session_timeout_minutes: hours * 60,
 
         // Email
         smtp_host: settings.smtp_host || 'smtp.gmail.com',
@@ -92,7 +102,8 @@ function buildInitialFormData(settings: SiteSetting): SettingsFormData {
         // Other APIs
         twilio_account_sid: settings.twilio_account_sid || '',
         twilio_auth_token: settings.twilio_auth_token || '',
-        twilio_whatsapp_number: settings.twilio_whatsapp_number || '',
+        twilio_whatsapp_from: twilioFrom,
+        twilio_whatsapp_number: twilioFrom,
         firebase_project_id: settings.firebase_project_id || 'markexo-e-commerce',
 
         // Cashfree
@@ -124,9 +135,8 @@ function PreviewItem({
     );
 }
 
-export default function SettingsTab({ settings }: SettingsTabProps) {
-    const { hasPermission, token } = useAuth();
-    const canEdit = hasPermission('change_sitesetting');
+export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
+    const { token, user } = useAuth();
     const [currentSubTab, setCurrentSubTab] = useState<TabKey>('site');
     const [formData, setFormData] = useState<SettingsFormData | null>(null);
     const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -154,8 +164,24 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
             setFormData(buildInitialFormData(settings));
             setLogoFile(null);
             setLogoPreview(settings.logo || null);
+        } else if (token) {
+            // Self-healing fetch if settings prop was null
+            fetch(`${API_BASE_URL}/admin/settings/`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+                .then((res) => (res.ok ? res.json() : null))
+                .then((data) => {
+                    if (data) {
+                        setFormData(buildInitialFormData(data));
+                        setLogoPreview(data.logo || null);
+                        if (onSaved) onSaved(data);
+                    }
+                })
+                .catch((err) => console.error('Failed to self-fetch settings:', err));
         }
-    }, [settings]);
+    }, [settings, token, onSaved]);
 
     useEffect(() => {
         if (!logoFile) {
@@ -183,14 +209,34 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
             value = parseInt(target.value) || 0;
         }
 
-        setFormData({
+        const updated: SettingsFormData = {
             ...formData,
             [name]: value,
-        });
+        };
+
+        // Keep aliases synchronized
+        if (name === 'google_client_id' || name === 'google_oauth_client_id') {
+            updated.google_client_id = value;
+            updated.google_oauth_client_id = value;
+        }
+        if (name === 'twilio_whatsapp_from' || name === 'twilio_whatsapp_number') {
+            updated.twilio_whatsapp_from = value;
+            updated.twilio_whatsapp_number = value;
+        }
+        if (name === 'session_timeout_hours') {
+            updated.session_timeout_hours = value;
+            updated.session_timeout_minutes = value * 60;
+        }
+        if (name === 'session_timeout_minutes') {
+            updated.session_timeout_minutes = value;
+            updated.session_timeout_hours = Math.max(1, Math.round(value / 60));
+        }
+
+        setFormData(updated);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!formData) return;
 
         setSaving(true);
@@ -222,11 +268,21 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                 setFormData(buildInitialFormData(updated));
                 setLogoFile(null);
                 setSaveStatus('success');
-                setTimeout(() => setSaveStatus('idle'), 3500);
+                if (onSaved) onSaved(updated);
+                setTimeout(() => setSaveStatus('idle'), 4000);
             } else {
                 const errorData = await res.json().catch(() => ({}));
                 setSaveStatus('error');
-                setErrorMessage(typeof errorData === 'object' ? JSON.stringify(errorData) : 'Failed to save settings');
+                let errStr = 'Failed to save settings';
+                if (typeof errorData === 'object' && errorData !== null) {
+                    if (errorData.detail) {
+                        errStr = String(errorData.detail);
+                    } else {
+                        const parts = Object.entries(errorData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`);
+                        if (parts.length > 0) errStr = parts.join(' | ');
+                    }
+                }
+                setErrorMessage(errStr);
             }
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -311,7 +367,12 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
     };
 
     if (!formData) {
-        return <div className="text-silver-500">Loading settings...</div>;
+        return (
+            <div className="flex items-center justify-center p-12 text-silver-400 gap-3">
+                <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-accent-500"></div>
+                <span>Loading system settings...</span>
+            </div>
+        );
     }
 
     const TABS = [
@@ -323,7 +384,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
     ];
 
     return (
-        <div className="max-w-6xl animate-fade-in space-y-6">
+        <div className="max-w-6xl animate-fade-in space-y-5">
             <div>
                 <h1 className="font-display text-2xl font-bold text-white">System Settings &amp; Integrations</h1>
                 <p className="mt-1 text-sm text-silver-400">
@@ -331,37 +392,88 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                 </p>
             </div>
 
-            {/* Sub-tab Navigation */}
-            <div className="flex flex-wrap gap-2 border-b border-dark-700 pb-3">
-                {TABS.map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = currentSubTab === tab.id;
-                    return (
+            {/* Sticky Navigation Bar with Sub-Tabs & Immediate Save Button */}
+            <div className="sticky top-0 z-30 bg-dark-900/95 backdrop-blur-md pb-3 pt-2 -mx-3 px-3 sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8 border-b border-dark-700/80 shadow-lg shadow-black/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    {/* Sub-tab pills */}
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        {TABS.map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive = currentSubTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setCurrentSubTab(tab.id)}
+                                    className={`flex items-center gap-2 rounded-xl px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold transition-all ${
+                                        isActive
+                                            ? 'bg-accent-600 text-white shadow-lg shadow-accent-600/30 ring-1 ring-accent-400'
+                                            : 'bg-dark-800 text-silver-400 hover:bg-dark-700 hover:text-white border border-dark-700'
+                                    }`}
+                                >
+                                    <Icon size={16} />
+                                    <span>{tab.label}</span>
+                                    {tab.badge && (
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                            tab.badge === 'Active' || tab.badge === 'Configured'
+                                                ? 'bg-emerald-500/20 text-emerald-300'
+                                                : 'bg-dark-700 text-silver-400'
+                                        }`}>
+                                            {tab.badge}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Quick Save Action in Top Bar */}
+                    <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                        {saveStatus === 'success' && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 animate-fade-in">
+                                <CheckCircle size={14} /> Saved!
+                            </span>
+                        )}
+                        {saveStatus === 'error' && errorMessage && (
+                            <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/20 max-w-[260px] truncate animate-fade-in" title={errorMessage}>
+                                <AlertCircle size={14} /> {errorMessage}
+                            </span>
+                        )}
                         <button
-                            key={tab.id}
                             type="button"
-                            onClick={() => setCurrentSubTab(tab.id)}
-                            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
-                                isActive
-                                    ? 'bg-accent-600 text-white shadow-lg shadow-accent-600/20'
-                                    : 'bg-dark-800 text-silver-400 hover:bg-dark-700 hover:text-white border border-dark-700'
-                            }`}
+                            onClick={() => handleSubmit()}
+                            disabled={saving}
+                            className="btn-primary flex items-center gap-2 shadow-lg shadow-accent-500/20 disabled:cursor-not-allowed disabled:opacity-50 px-5 py-2.5 text-sm font-bold"
                         >
-                            <Icon size={16} />
-                            <span>{tab.label}</span>
-                            {tab.badge && (
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                    tab.badge === 'Active' || tab.badge === 'Configured'
-                                        ? 'bg-emerald-500/20 text-emerald-300'
-                                        : 'bg-dark-700 text-silver-400'
-                                }`}>
-                                    {tab.badge}
-                                </span>
+                            {saving ? (
+                                <>
+                                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                                    <span>Saving...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={16} />
+                                    <span>Save Settings</span>
+                                </>
                             )}
                         </button>
-                    );
-                })}
+                    </div>
+                </div>
             </div>
+
+            {/* Status alerts */}
+            {saveStatus === 'success' && (
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-semibold flex items-center gap-2 animate-fade-in">
+                    <CheckCircle size={18} />
+                    <span>Settings and integrations updated successfully across all tabs!</span>
+                </div>
+            )}
+            {saveStatus === 'error' && (
+                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold flex items-center gap-2 animate-fade-in">
+                    <AlertCircle size={18} />
+                    <span>Error saving settings: {errorMessage}</span>
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* 1. SITE SETTINGS TAB */}
@@ -443,6 +555,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                                             name="contact_email"
                                             value={formData.contact_email}
                                             onChange={handleInputChange}
+                                            placeholder="support@vorionmart.com"
                                             className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-accent-500"
                                         />
                                     </div>
@@ -454,6 +567,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                                             name="contact_phone"
                                             value={formData.contact_phone}
                                             onChange={handleInputChange}
+                                            placeholder="+91..."
                                             className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-accent-500"
                                         />
                                     </div>
@@ -462,10 +576,11 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                                 <div className="mt-6 space-y-2">
                                     <label className="text-sm font-medium text-silver-300">Office / Store Address</label>
                                     <textarea
+                                        rows={3}
                                         name="address"
                                         value={formData.address}
                                         onChange={handleInputChange}
-                                        rows={3}
+                                        placeholder="Full business address..."
                                         className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-accent-500"
                                     />
                                 </div>
@@ -581,8 +696,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                                 <label className="text-sm font-medium text-silver-300">Google OAuth Client ID</label>
                                 <input
                                     type="text"
-                                    name="google_oauth_client_id"
-                                    value={formData.google_oauth_client_id}
+                                    name="google_client_id"
+                                    value={formData.google_client_id}
                                     onChange={handleInputChange}
                                     placeholder="e.g. 123456789-abcdef.apps.googleusercontent.com"
                                     className="w-full rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-accent-500 font-mono text-sm"
@@ -623,17 +738,17 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                             </div>
 
                             <div className="space-y-2 pt-2">
-                                <label className="text-sm font-medium text-silver-300">Session Timeout (Minutes)</label>
+                                <label className="text-sm font-medium text-silver-300">Session Timeout (Hours)</label>
                                 <input
                                     type="number"
-                                    name="session_timeout_minutes"
-                                    value={formData.session_timeout_minutes}
+                                    name="session_timeout_hours"
+                                    value={formData.session_timeout_hours}
                                     onChange={handleInputChange}
-                                    min="15"
-                                    max="43200"
+                                    min="1"
+                                    max="720"
                                     className="w-full max-w-xs rounded-lg border border-dark-600 bg-dark-700 px-4 py-3 text-white outline-none focus:border-transparent focus:ring-2 focus:ring-accent-500 font-mono text-sm"
                                 />
-                                <p className="text-xs text-silver-500">JWT token refresh and expiration cycle (Default: 1440 mins = 24 hours).</p>
+                                <p className="text-xs text-silver-500">JWT token refresh and expiration cycle (Default: 24 hours = 1440 minutes).</p>
                             </div>
                         </div>
                     </div>
@@ -858,8 +973,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                                         <label className="text-xs font-medium text-silver-300">Twilio WhatsApp Number</label>
                                         <input
                                             type="text"
-                                            name="twilio_whatsapp_number"
-                                            value={formData.twilio_whatsapp_number}
+                                            name="twilio_whatsapp_from"
+                                            value={formData.twilio_whatsapp_from}
                                             onChange={handleInputChange}
                                             placeholder="whatsapp:+14155238886"
                                             className="w-full rounded-lg border border-dark-600 bg-dark-700 px-3.5 py-2.5 text-white outline-none focus:ring-2 focus:ring-accent-500 font-mono text-xs"
@@ -1039,44 +1154,43 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                 )}
 
                 {/* Common Bottom Save Bar */}
-                {canEdit && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-dark-700 bg-dark-800 p-5 shadow-sm">
-                        <div>
-                            {saveStatus === 'success' && (
-                                <span className="flex items-center gap-2 text-sm font-medium text-emerald-400">
-                                    <CheckCircle size={18} /> Settings saved and applied successfully.
-                                </span>
-                            )}
-                            {saveStatus === 'error' && errorMessage && (
-                                <span className="text-sm font-medium text-red-400 flex items-center gap-1.5">
-                                    <AlertCircle size={16} /> {errorMessage}
-                                </span>
-                            )}
-                            {saveStatus === 'idle' && (
-                                <span className="text-xs text-silver-400">
-                                    Save your changes to update store configurations immediately across all tabs.
-                                </span>
-                            )}
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="btn-primary flex items-center gap-2 shadow-lg shadow-accent-500/20 disabled:cursor-not-allowed disabled:opacity-50 px-6 py-3 text-sm font-bold w-full sm:w-auto justify-center"
-                        >
-                            {saving ? (
-                                <>
-                                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <Save size={18} /> Save Settings
-                                </>
-                            )}
-                        </button>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-dark-700 bg-dark-800 p-5 shadow-sm">
+                    <div>
+                        {saveStatus === 'success' && (
+                            <span className="flex items-center gap-2 text-sm font-medium text-emerald-400">
+                                <CheckCircle size={18} /> Settings saved and applied successfully.
+                            </span>
+                        )}
+                        {saveStatus === 'error' && errorMessage && (
+                            <span className="text-sm font-medium text-red-400 flex items-center gap-1.5">
+                                <AlertCircle size={16} /> {errorMessage}
+                            </span>
+                        )}
+                        {saveStatus === 'idle' && (
+                            <span className="text-xs text-silver-400">
+                                Save your changes to update store configurations immediately across all tabs.
+                            </span>
+                        )}
                     </div>
-                )}
+
+                    <button
+                        type="submit"
+                        disabled={saving}
+                        className="btn-primary flex items-center gap-2 shadow-lg shadow-accent-500/20 disabled:cursor-not-allowed disabled:opacity-50 px-6 py-3 text-sm font-bold w-full sm:w-auto justify-center"
+                    >
+                        {saving ? (
+                            <>
+                                <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                                <span>Saving...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} />
+                                <span>Save Settings</span>
+                            </>
+                        )}
+                    </button>
+                </div>
             </form>
         </div>
     );
