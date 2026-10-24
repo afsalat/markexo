@@ -31,7 +31,7 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, Customer,
     Order, OrderItem, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem, BlogPost, StockLog
+    ChecklistSection, ChecklistItem, BlogPost, StockLog, CourierPartner, Shipment
 )
 from .launch_checklist import (
     LAUNCH_CHECKLIST_PROJECT_NAME,
@@ -50,6 +50,7 @@ from .serializers import (
     CartSerializer, CartItemSerializer, RegistrationSerializer, PartnerRegistrationSerializer, CustomTokenObtainPairSerializer,
     BlogPostSerializer, SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
     ChecklistSectionSerializer, ChecklistSectionWriteSerializer, ChecklistItemSerializer, ChecklistItemWriteSerializer,
+    CourierPartnerSerializer, ShipmentSerializer,
     normalize_email_value, get_or_create_customer_for_user,
 )
 from .ai_service import GeminiBlogService
@@ -58,6 +59,7 @@ from .cashfree_service import (
     verify_cashfree_order,
     test_cashfree_credentials,
 )
+from .shiprocket_service import ShiprocketService
 
 from .order_emails import (
     send_order_created_email,
@@ -1425,6 +1427,300 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             send_refund_status_email(order)
             return Response({'status': f'Refund status updated to {refund_status}'})
         return Response({'error': 'Invalid refund status'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def create_shipment(self, request, pk=None):
+        """Dispatch order via selected courier partner (Shiprocket, Delhivery, etc.)."""
+        order = self.get_object()
+
+        courier_partner_id = request.data.get('courier_partner_id')
+        partner = None
+        if courier_partner_id:
+            partner = CourierPartner.objects.filter(pk=courier_partner_id, is_active=True).first()
+        if not partner:
+            partner = CourierPartner.objects.filter(is_default=True, is_active=True).first()
+        if not partner:
+            partner = CourierPartner.objects.filter(is_active=True).first()
+
+        if not partner:
+            seed_default_courier_partners()
+            partner = CourierPartner.objects.filter(is_default=True).first() or CourierPartner.objects.first()
+
+        weight_kg = request.data.get('weight_kg')
+        length = request.data.get('length')
+        width = request.data.get('width')
+        height = request.data.get('height')
+        selected_courier_name = request.data.get('selected_courier_name')
+        courier_company_id = request.data.get('courier_company_id')
+        custom_awb = request.data.get('custom_awb')
+
+        try:
+            res = ShiprocketService.create_shipment(
+                order=order,
+                courier_partner=partner,
+                weight_kg=float(weight_kg) if weight_kg is not None else None,
+                length=float(length) if length is not None else None,
+                width=float(width) if width is not None else None,
+                height=float(height) if height is not None else None,
+                selected_courier_name=selected_courier_name,
+                courier_company_id=int(courier_company_id) if courier_company_id else None,
+                custom_awb=custom_awb
+            )
+            try:
+                send_order_status_email(order)
+            except Exception:
+                pass
+            return Response(res)
+        except Exception as e:
+            logger.error("Error creating shipment for order %s: %s", order.order_id, str(e))
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def track_shipment(self, request, pk=None):
+        """Track latest shipment of this order."""
+        order = self.get_object()
+        shipment = order.shipments.first()
+        if not shipment:
+            return Response({'error': 'No shipment created yet for this order.'}, status=status.HTTP_404_NOT_FOUND)
+        track_info = ShiprocketService.track_shipment(shipment)
+        return Response(track_info)
+
+    @action(detail=True, methods=['get'])
+    def shipping_label(self, request, pk=None):
+        """Return printable HTML shipping label for the order."""
+        order = self.get_object()
+        shipment = order.shipments.first()
+        if not shipment:
+            return HttpResponse("<h3>No shipment found for this order. Please dispatch with courier first.</h3>", status=404)
+        html = ShiprocketService.generate_shipping_label_html(shipment)
+        return HttpResponse(html, content_type='text/html')
+
+
+def seed_default_courier_partners():
+    """Ensure default Indian logistics partners are seeded."""
+    defaults = [
+        {
+            'name': 'Shiprocket (AI Courier Aggregator)',
+            'provider_code': 'shiprocket',
+            'is_active': True,
+            'is_default': True,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Primary Warehouse',
+            'pickup_pincode': '110020',
+            'base_rate': 45.0,
+            'per_kg_rate': 35.0,
+            'cod_charge': 25.0,
+            'tracking_url_template': 'https://shiprocket.co/tracking/{awb}',
+            'notes': 'Multi-courier aggregator powered by Shiprocket API with Delhivery, Blue Dart, DTDC, and Shadowfax.'
+        },
+        {
+            'name': 'Delhivery Direct',
+            'provider_code': 'delhivery',
+            'is_active': True,
+            'is_default': False,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Primary Warehouse',
+            'pickup_pincode': '110020',
+            'base_rate': 48.0,
+            'per_kg_rate': 38.0,
+            'cod_charge': 30.0,
+            'tracking_url_template': 'https://www.delhivery.com/track/package/{awb}',
+            'notes': 'Direct B2C surface & express parcel delivery with nationwide coverage.'
+        },
+        {
+            'name': 'Blue Dart Express',
+            'provider_code': 'bluedart',
+            'is_active': True,
+            'is_default': False,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Primary Warehouse',
+            'pickup_pincode': '110020',
+            'base_rate': 75.0,
+            'per_kg_rate': 55.0,
+            'cod_charge': 40.0,
+            'tracking_url_template': 'https://www.bluedart.com/tracking?track={awb}',
+            'notes': 'Premium fast air express delivery for critical orders.'
+        },
+        {
+            'name': 'DTDC Express',
+            'provider_code': 'dtdc',
+            'is_active': True,
+            'is_default': False,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Primary Warehouse',
+            'pickup_pincode': '110020',
+            'base_rate': 50.0,
+            'per_kg_rate': 40.0,
+            'cod_charge': 30.0,
+            'tracking_url_template': 'https://www.dtdc.in/tracking/shipment-tracking.asp?strCNNo={awb}',
+            'notes': 'Wide domestic delivery coverage across Tier 1, 2, and 3 cities.'
+        },
+        {
+            'name': 'India Post (Speed Post)',
+            'provider_code': 'indiapost',
+            'is_active': True,
+            'is_default': False,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Primary Warehouse',
+            'pickup_pincode': '110020',
+            'base_rate': 35.0,
+            'per_kg_rate': 25.0,
+            'cod_charge': 20.0,
+            'tracking_url_template': 'https://www.indiapost.gov.in/_layouts/15/dpt.cpt.application/tracking.aspx?type=SpeedPost&itemNumber={awb}',
+            'notes': 'Deepest rural and pan-India reach covering every pincode.'
+        },
+        {
+            'name': 'Shadowfax',
+            'provider_code': 'shadowfax',
+            'is_active': True,
+            'is_default': False,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Primary Warehouse',
+            'pickup_pincode': '110020',
+            'base_rate': 42.0,
+            'per_kg_rate': 32.0,
+            'cod_charge': 25.0,
+            'tracking_url_template': 'https://tracker.shadowfax.in/#/track/{awb}',
+            'notes': 'Fast hyperlocal and intracity logistics network.'
+        },
+        {
+            'name': 'Manual / Local Dispatch',
+            'provider_code': 'manual',
+            'is_active': True,
+            'is_default': False,
+            'environment': 'SANDBOX',
+            'default_pickup_location': 'Store Front',
+            'pickup_pincode': '110020',
+            'base_rate': 30.0,
+            'per_kg_rate': 20.0,
+            'cod_charge': 0.0,
+            'tracking_url_template': '',
+            'notes': 'Self-delivery, store pickup, or local vehicle delivery.'
+        },
+    ]
+    for d in defaults:
+        CourierPartner.objects.get_or_create(provider_code=d['provider_code'], defaults=d)
+
+
+class AdminCourierPartnerViewSet(viewsets.ModelViewSet):
+    """Admin CRUD and integrations for Courier Partners."""
+    queryset = CourierPartner.objects.all().order_by('-is_default', 'name')
+    serializer_class = CourierPartnerSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        if not CourierPartner.objects.exists():
+            seed_default_courier_partners()
+        return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=['post'])
+    def seed_defaults(self, request):
+        seed_default_courier_partners()
+        partners = CourierPartner.objects.all().order_by('-is_default', 'name')
+        return Response(CourierPartnerSerializer(partners, many=True).data)
+
+    @action(detail=True, methods=['post'])
+    def test_connection(self, request, pk=None):
+        partner = self.get_object()
+        if partner.provider_code == 'shiprocket':
+            if not partner.api_email or not partner.api_password:
+                return Response({
+                    'success': False,
+                    'message': 'Shiprocket API Email and Password are required for live authentication. You can also use Sandbox simulation mode.'
+                })
+            token = ShiprocketService.get_token(partner)
+            if token:
+                return Response({
+                    'success': True,
+                    'message': f"Shiprocket connection authenticated successfully! Active token acquired."
+                })
+            else:
+                return Response({
+                    'success': False,
+                    'message': 'Authentication failed. Please verify your Shiprocket email and password.'
+                })
+        else:
+            return Response({
+                'success': True,
+                'message': f"Courier Partner '{partner.name}' is verified and ready with base rate ₹{partner.base_rate}."
+            })
+
+    @action(detail=True, methods=['post', 'get'])
+    def check_serviceability(self, request, pk=None):
+        partner = self.get_object()
+        pickup = request.data.get('pickup_pincode') or request.query_params.get('pickup_pincode') or partner.pickup_pincode
+        delivery = request.data.get('delivery_pincode') or request.query_params.get('delivery_pincode') or '560001'
+        weight = request.data.get('weight_kg') or request.query_params.get('weight_kg') or 0.5
+        is_cod = request.data.get('is_cod', True)
+        if isinstance(is_cod, str):
+            is_cod = is_cod.lower() in ('1', 'true', 'yes')
+
+        result = ShiprocketService.check_serviceability(
+            courier_partner=partner,
+            pickup_pincode=str(pickup),
+            delivery_pincode=str(delivery),
+            weight_kg=float(weight),
+            is_cod=is_cod
+        )
+        return Response(result)
+
+    @action(detail=True, methods=['post'])
+    def set_default(self, request, pk=None):
+        partner = self.get_object()
+        CourierPartner.objects.all().update(is_default=False)
+        partner.is_default = True
+        partner.save(update_fields=['is_default'])
+        return Response({'success': True, 'message': f"{partner.name} is now the default courier partner."})
+
+
+class AdminShipmentViewSet(viewsets.ModelViewSet):
+    """Admin CRUD & operations for Shipments."""
+    queryset = Shipment.objects.all().select_related('order', 'courier_partner').order_by('-created_at')
+    serializer_class = ShipmentSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        search = self.request.query_params.get('search')
+        if search:
+            qs = qs.filter(
+                Q(awb_code__icontains=search) |
+                Q(order__order_id__icontains=search) |
+                Q(customer_name__icontains=search) |
+                Q(customer_phone__icontains=search) |
+                Q(courier_name__icontains=search)
+            )
+        return qs
+
+    def get_object(self):
+        pk = self.kwargs.get('pk')
+        if pk and not str(pk).isdigit():
+            obj = Shipment.objects.filter(awb_code=pk).first()
+            if obj:
+                return obj
+        return super().get_object()
+
+    @action(detail=True, methods=['get'])
+    def track(self, request, pk=None):
+        shipment = self.get_object()
+        result = ShiprocketService.track_shipment(shipment)
+        return Response(result)
+
+    @action(detail=True, methods=['get'])
+    def label(self, request, pk=None):
+        shipment = self.get_object()
+        html = ShiprocketService.generate_shipping_label_html(shipment)
+        return HttpResponse(html, content_type='text/html')
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        shipment = self.get_object()
+        shipment.status = 'cancelled'
+        shipment.save(update_fields=['status'])
+        return Response({'success': True, 'message': f"Shipment {shipment.awb_code} has been cancelled."})
 
 
 class AdminCustomerViewSet(viewsets.ReadOnlyModelViewSet):

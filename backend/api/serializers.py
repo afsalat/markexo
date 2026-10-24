@@ -15,7 +15,7 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, ReviewImage, Customer,
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem, BlogPost, StockLog
+    ChecklistSection, ChecklistItem, BlogPost, StockLog, CourierPartner, Shipment
 )
 
 logger = logging.getLogger(__name__)
@@ -581,6 +581,7 @@ class ProductSerializer(serializers.ModelSerializer):
     review_count = serializers.IntegerField(read_only=True)
     stock_status = serializers.SerializerMethodField()
     is_in_stock = serializers.SerializerMethodField()
+    volumetric_weight = serializers.FloatField(read_only=True)
     
     created_by_name = serializers.CharField(source='created_by.username', read_only=True)
     created_by_email = serializers.CharField(source='created_by.email', read_only=True)
@@ -593,6 +594,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'price', 'sale_price',  # Legacy fields
             'current_price', 'discount_percent', 'profit_margin', 'profit_percent',
             'stock', 'stock_status', 'is_in_stock', 'sku',
+            'weight_kg', 'package_length', 'package_width', 'package_height', 'hsn_code', 'volumetric_weight',
             'shop', 'shop_name', 'shop_id',
             'category', 'category_name', 'category_id', 'image', 'images', 'uploaded_images',
             'meesho_url', 'specifications', 'is_featured', 'is_active', 'approval_status', 'views', 'sold_count', 'rating', 'review_count', 
@@ -751,12 +753,54 @@ class OrderStatusHistorySerializer(serializers.ModelSerializer):
         fields = ['id', 'status', 'status_display', 'changed_at', 'note']
 
 
+class CourierPartnerSerializer(serializers.ModelSerializer):
+    provider_name = serializers.CharField(source='get_provider_code_display', read_only=True)
+    environment_display = serializers.CharField(source='get_environment_display', read_only=True)
+    active_shipments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CourierPartner
+        fields = [
+            'id', 'name', 'provider_code', 'provider_name', 'is_active', 'is_default',
+            'environment', 'environment_display', 'api_email', 'api_password', 'api_key',
+            'default_pickup_location', 'pickup_pincode', 'base_rate', 'per_kg_rate',
+            'cod_charge', 'tracking_url_template', 'notes', 'active_shipments_count',
+            'created_at', 'updated_at'
+        ]
+
+    def get_active_shipments_count(self, obj):
+        return obj.shipments.exclude(status__in=['delivered', 'cancelled', 'rto_delivered']).count()
+
+
+class ShipmentSerializer(serializers.ModelSerializer):
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    order_id = serializers.CharField(source='order.order_id', read_only=True)
+    volumetric_weight = serializers.FloatField(read_only=True)
+
+    class Meta:
+        model = Shipment
+        fields = [
+            'id', 'order', 'order_id', 'courier_partner', 'courier_name', 'awb_code',
+            'shipment_id', 'status', 'status_display', 'weight_kg', 'package_length',
+            'package_width', 'package_height', 'volumetric_weight', 'shipping_charge',
+            'cod_amount', 'is_cod', 'pickup_location', 'pickup_pincode',
+            'delivery_address', 'delivery_city', 'delivery_pincode',
+            'customer_name', 'customer_phone', 'label_url', 'manifest_url',
+            'tracking_url', 'tracking_events', 'shipped_at', 'delivered_at',
+            'created_at', 'updated_at'
+        ]
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     customer = CustomerSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     payment_status_display = serializers.CharField(source='get_payment_status_display', read_only=True)
     status_history = OrderStatusHistorySerializer(many=True, read_only=True)
+    shipments = ShipmentSerializer(many=True, read_only=True)
+    courier_partner_id = serializers.IntegerField(source='courier_partner.id', read_only=True, allow_null=True)
+    volumetric_weight = serializers.FloatField(read_only=True)
+    estimated_package_specs = serializers.SerializerMethodField()
     supplier_total_cost = serializers.SerializerMethodField()
     profit = serializers.SerializerMethodField()
     return_reason = serializers.SerializerMethodField()
@@ -768,8 +812,17 @@ class OrderSerializer(serializers.ModelSerializer):
             'payment_status', 'payment_status_display', 'status', 'status_display',
             'is_cod', 'items', 'created_at', 'updated_at', 'status_history',
             'notes', 'cancellation_reason', 'refund_status', 'meesho_order_id',
+            'courier_partner', 'courier_partner_id', 'courier_name', 'courier_awb', 'courier_tracking_url',
+            'shipping_label_url', 'shipment_id', 'package_weight', 'package_length', 'package_width', 'package_height',
+            'volumetric_weight', 'estimated_package_specs', 'shipped_at', 'delivered_at', 'shipments',
             'supplier_total_cost', 'profit', 'return_reason'
         ]
+
+    def get_estimated_package_specs(self, obj):
+        return {
+            'weight_kg': obj.calculate_shipping_weight(),
+            'dimensions': obj.calculate_package_dimensions()
+        }
 
     def get_supplier_total_cost(self, obj):
         total_cost = 0

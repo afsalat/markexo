@@ -22,6 +22,7 @@ from .views import (
     AdminLaunchChecklistView, AdminLaunchChecklistSectionCreateView, AdminLaunchChecklistSectionDetailView,
     AdminLaunchChecklistItemCreateView, AdminLaunchChecklistItemDetailView, AdminLaunchChecklistSeedView,
     AdminGoogleMerchantView, GoogleMerchantFeedView, BlogPostViewSet, AdminSEOReportView,
+    AdminCourierPartnerViewSet, AdminShipmentViewSet,
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
@@ -51,6 +52,8 @@ admin_router.register(r'roles', AdminRoleViewSet, basename='admin-role')
 admin_router.register(r'suppliers', AdminSupplierViewSet, basename='admin-supplier')
 admin_router.register(r'forward-logs', OrderForwardLogViewSet, basename='admin-forward-log')
 admin_router.register(r'partners', AdminPartnerViewSet, basename='admin-partner')
+admin_router.register(r'courier-partners', AdminCourierPartnerViewSet, basename='admin-courier-partner')
+admin_router.register(r'shipments', AdminShipmentViewSet, basename='admin-shipment')
 
 urlpatterns = [
     # Public API

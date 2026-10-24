@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
     LayoutDashboard, ShoppingCart, Package, CreditCard,
-    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe, Search
+    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe, Search, Truck
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
@@ -21,6 +21,7 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         { id: 'launch-readiness', label: 'Launch Readiness', icon: ClipboardList, permission: null },
         { id: 'analytics', label: 'Analytics', icon: BarChart2, permission: 'view_product' },
         { id: 'orders', label: 'Orders', icon: ShoppingCart, permission: 'view_order' },
+        { id: 'courier', label: 'Courier & Shipping', icon: Truck, permission: 'view_order' },
         { id: 'returns', label: 'Returns', icon: RotateCcw, permission: 'view_order' },
         { id: 'payments', label: 'Payments', icon: CreditCard, permission: 'view_order' },
         { id: 'products', label: 'Products', icon: Package, permission: 'view_product' },

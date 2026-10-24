@@ -260,6 +260,11 @@ export default function ProductForm({
         our_price: '',
         stock: '',
         sku: '',
+        weight_kg: '0.5',
+        package_length: '10.0',
+        package_width: '10.0',
+        package_height: '5.0',
+        hsn_code: '',
         is_featured: false,
         shop_id: '',
         category_id: '',
@@ -656,6 +661,11 @@ export default function ProductForm({
                     our_price: hasOurPrice ? product.our_price!.toString() : product.current_price?.toString() || product.price?.toString() || '',
                     stock: product.stock?.toString() || '0',
                     sku: product.sku || '',
+                    weight_kg: product.weight_kg?.toString() || '0.5',
+                    package_length: product.package_length?.toString() || '10.0',
+                    package_width: product.package_width?.toString() || '10.0',
+                    package_height: product.package_height?.toString() || '5.0',
+                    hsn_code: product.hsn_code || '',
                     is_featured: product.is_featured || false,
                     shop_id: product.shop?.id ? product.shop.id.toString() : product.shop_id ? product.shop_id.toString() : '',
                     category_id: product.category?.id ? product.category.id.toString() : product.category_id ? product.category_id.toString() : '',
@@ -814,6 +824,11 @@ export default function ProductForm({
         data.append('our_price', formData.our_price);
         data.append('stock', formData.stock);
         data.append('sku', formData.sku);
+        if (formData.weight_kg) data.append('weight_kg', formData.weight_kg);
+        if (formData.package_length) data.append('package_length', formData.package_length);
+        if (formData.package_width) data.append('package_width', formData.package_width);
+        if (formData.package_height) data.append('package_height', formData.package_height);
+        if (formData.hsn_code) data.append('hsn_code', formData.hsn_code);
         data.append('is_featured', formData.is_featured.toString());
 
         if (deletedImageIds.length > 0) {
@@ -1608,6 +1623,88 @@ Savings Goal: 11000 Rupees`}
                                 onChange={handleChange}
                                 className="w-full px-4 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none text-white bg-dark-700 placeholder-silver-600"
                                 placeholder="Stock Keeping Unit"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Shipping & Logistics (Shiprocket) Specifications */}
+                    <div className="p-4 bg-dark-900/50 rounded-xl border border-dark-600/70 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-bold text-accent-400 flex items-center gap-2">
+                                🚚 Package & Shipping Specifications (for Courier & Shiprocket)
+                            </label>
+                            <span className="text-xs text-silver-400 font-mono">
+                                Volumetric: {(((parseFloat(formData.package_length) || 10) * (parseFloat(formData.package_width) || 10) * (parseFloat(formData.package_height) || 5)) / 5000).toFixed(3)} kg
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-silver-300 mb-1">Weight (Kg)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.05"
+                                    name="weight_kg"
+                                    value={formData.weight_kg}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 text-white bg-dark-700 text-sm font-mono"
+                                    placeholder="0.5"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-silver-300 mb-1">Length (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    min="1"
+                                    name="package_length"
+                                    value={formData.package_length}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 text-white bg-dark-700 text-sm font-mono"
+                                    placeholder="10.0"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-silver-300 mb-1">Width (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    min="1"
+                                    name="package_width"
+                                    value={formData.package_width}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 text-white bg-dark-700 text-sm font-mono"
+                                    placeholder="10.0"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-silver-300 mb-1">Height (cm)</label>
+                                <input
+                                    type="number"
+                                    step="0.5"
+                                    min="1"
+                                    name="package_height"
+                                    value={formData.package_height}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 text-white bg-dark-700 text-sm font-mono"
+                                    placeholder="5.0"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-silver-300 mb-1">HSN Code (for GST Invoices & Manifests)</label>
+                            <input
+                                type="text"
+                                name="hsn_code"
+                                value={formData.hsn_code}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-dark-600 rounded-lg focus:ring-2 focus:ring-accent-500 text-white bg-dark-700 text-sm font-mono"
+                                placeholder="e.g. 61091000 or 85171300"
                             />
                         </div>
                     </div>

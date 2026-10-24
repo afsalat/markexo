@@ -24,12 +24,13 @@ import ShopsTab from '@/components/admin/ShopsTab';
 import LaunchReadinessTab from '@/components/admin/LaunchReadinessTab';
 import GoogleMerchantTab from '@/components/admin/GoogleMerchantTab';
 import SEOReportsTab from '@/components/admin/SEOReportsTab';
+import CourierTab from '@/components/admin/CourierTab';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL as API_URL } from '@/config/apiConfig';
 
 const API_BASE_URL = API_URL;
 
-type TabType = 'dashboard' | 'launch-readiness' | 'analytics' | 'orders' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners' | 'google-merchant' | 'seo-reports';
+type TabType = 'dashboard' | 'launch-readiness' | 'analytics' | 'orders' | 'courier' | 'returns' | 'payments' | 'products' | 'shops' | 'categories' | 'customers' | 'enquiries' | 'user-management' | 'banners' | 'settings' | 'suppliers' | 'system-logs' | 'partners' | 'google-merchant' | 'seo-reports';
 
 export default function AdminPage() {
     const { token, user, hasPermission, loading: authLoading } = useAuth();
@@ -144,6 +145,7 @@ export default function AdminPage() {
             'launch-readiness': null,
             analytics: 'view_product',
             orders: 'view_order',
+            courier: 'view_order',
             returns: 'view_order',
             payments: 'view_order',
             products: 'view_product',
@@ -180,6 +182,8 @@ export default function AdminPage() {
                 return <ProductAnalyticsTab />;
             case 'orders':
                 return <OrdersTab />;
+            case 'courier':
+                return <CourierTab />;
             case 'returns':
                 return <ReturnsTab />;
             case 'payments':

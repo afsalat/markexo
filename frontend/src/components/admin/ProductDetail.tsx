@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Product, StockLog } from '@/types/admin';
-import { ArrowLeft, Edit, Trash2, Package, ShoppingBag, Tag, Calendar, Layers, Activity, Star, Info, Link as LinkIcon, Plus, AlertTriangle, CheckCircle2, History, TrendingUp, TrendingDown, RefreshCcw, X } from 'lucide-react';
+import { ArrowLeft, Edit, Trash2, Package, ShoppingBag, Tag, Calendar, Layers, Activity, Star, Info, Link as LinkIcon, Plus, AlertTriangle, CheckCircle2, History, TrendingUp, TrendingDown, RefreshCcw, X, Truck, Scale } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 
@@ -468,6 +468,70 @@ export default function ProductDetail({ product, onBack, onEdit, onDelete }: Pro
                                         </div>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+
+                        {/* Package & Shipping Logistics Card */}
+                        <div className="bg-dark-800 rounded-3xl p-6 shadow-sm border border-dark-700">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="font-bold text-white flex items-center gap-2">
+                                    <Truck size={18} className="text-accent-500" /> Shipping & Package Specs
+                                </h3>
+                                <span className="text-xs bg-accent-500/10 text-accent-400 border border-accent-500/20 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1.5">
+                                    <Package size={12} /> Shiprocket Ready
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                    <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
+                                        <Scale size={13} className="text-accent-500" /> Dead Weight
+                                    </div>
+                                    <div className="text-lg font-bold text-white">
+                                        {product.weight_kg ? `${product.weight_kg} kg` : '0.50 kg'}
+                                    </div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5">Physical weight</div>
+                                </div>
+
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                    <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
+                                        <Package size={13} className="text-accent-500" /> Dimensions
+                                    </div>
+                                    <div className="text-lg font-bold text-white">
+                                        {product.package_length || 10}×{product.package_width || 10}×{product.package_height || 5}
+                                    </div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5">L × W × H (cm)</div>
+                                </div>
+
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                    <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
+                                        <Activity size={13} className="text-purple-400" /> Volumetric
+                                    </div>
+                                    <div className="text-lg font-bold text-purple-300">
+                                        {(product.volumetric_weight != null ? product.volumetric_weight : (((product.package_length || 10) * (product.package_width || 10) * (product.package_height || 5)) / 5000)).toFixed(2)} kg
+                                    </div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5">(L×W×H) / 5000</div>
+                                </div>
+
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                    <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
+                                        <Tag size={13} className="text-emerald-400" /> HSN Code
+                                    </div>
+                                    <div className="text-lg font-bold text-white font-mono">
+                                        {product.hsn_code || '—'}
+                                    </div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5">GST Tax classification</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-xs p-3 rounded-xl bg-dark-900/80 border border-dark-700/50 text-silver-400">
+                                <span>Billable Courier Weight (Higher of Dead vs Volumetric):</span>
+                                <span className="font-bold text-accent-400">
+                                    {Math.max(
+                                        Number(product.weight_kg || 0.5),
+                                        Number(product.volumetric_weight != null ? product.volumetric_weight : (((product.package_length || 10) * (product.package_width || 10) * (product.package_height || 5)) / 5000))
+                                    ).toFixed(2)} kg
+                                </span>
                             </div>
                         </div>
 

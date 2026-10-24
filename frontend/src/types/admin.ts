@@ -48,6 +48,26 @@ export interface Order {
     tracking_number?: string;
     shipping_charge?: number;
     discount_amount?: number;
+    // Courier & Logistics (Shiprocket style)
+    courier_partner?: number | null;
+    courier_partner_id?: number | null;
+    courier_name?: string;
+    courier_awb?: string;
+    courier_tracking_url?: string;
+    shipping_label_url?: string;
+    shipment_id?: string;
+    package_weight?: number;
+    package_length?: number;
+    package_width?: number;
+    package_height?: number;
+    volumetric_weight?: number;
+    shipped_at?: string | null;
+    delivered_at?: string | null;
+    shipments?: Shipment[];
+    estimated_package_specs?: {
+        weight_kg: number;
+        dimensions: { length: number; width: number; height: number };
+    };
 }
 
 export interface Product {
@@ -73,6 +93,14 @@ export interface Product {
 
     stock: number;
     sku: string;
+    // Package & Shipping Specifications
+    weight_kg?: number;
+    package_length?: number;
+    package_width?: number;
+    package_height?: number;
+    hsn_code?: string;
+    volumetric_weight?: number;
+
     shop?: { id: number; name: string; slug?: string; city?: string } | null;
     shop_name?: string;
     shop_id?: number;
@@ -97,6 +125,72 @@ export interface Product {
     google_merchant_status?: 'pending' | 'synced' | 'failed' | 'not_applicable';
     google_merchant_errors?: string | null;
     last_google_sync?: string | null;
+}
+
+export interface TrackingEvent {
+    status: string;
+    activity: string;
+    location: string;
+    timestamp: string;
+}
+
+export interface Shipment {
+    id: number;
+    order: number;
+    order_id: string;
+    courier_partner?: number | null;
+    courier_name: string;
+    awb_code: string;
+    shipment_id?: string;
+    status: 'manifest_generated' | 'pickup_scheduled' | 'picked_up' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'rto_initiated' | 'rto_delivered' | 'cancelled';
+    status_display?: string;
+    weight_kg: number;
+    package_length: number;
+    package_width: number;
+    package_height: number;
+    volumetric_weight?: number;
+    shipping_charge: number;
+    cod_amount: number;
+    is_cod: boolean;
+    pickup_location: string;
+    pickup_pincode: string;
+    delivery_address: string;
+    delivery_city: string;
+    delivery_pincode: string;
+    customer_name: string;
+    customer_phone: string;
+    label_url?: string;
+    manifest_url?: string;
+    tracking_url?: string;
+    tracking_events?: TrackingEvent[];
+    shipped_at?: string | null;
+    delivered_at?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CourierPartner {
+    id: number;
+    name: string;
+    provider_code: 'shiprocket' | 'delhivery' | 'bluedart' | 'dtdc' | 'indiapost' | 'shadowfax' | 'manual';
+    provider_name?: string;
+    is_active: boolean;
+    is_default: boolean;
+    environment: 'SANDBOX' | 'PRODUCTION';
+    environment_display?: string;
+    api_email?: string;
+    api_password?: string;
+    api_key?: string;
+    default_pickup_location: string;
+    pickup_pincode: string;
+    base_rate: number;
+    per_kg_rate: number;
+    cod_charge: number;
+    tracking_url_template?: string;
+    notes?: string;
+    active_shipments_count?: number;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface StockLog {

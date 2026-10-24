@@ -222,6 +222,13 @@ class Product(models.Model):
     google_merchant_errors = models.TextField(blank=True, null=True)
     last_google_sync = models.DateTimeField(null=True, blank=True)
 
+    # Shipping & Package Specifications (for Courier & Shiprocket fulfillment)
+    weight_kg = models.DecimalField(max_digits=6, decimal_places=3, default=0.5, help_text="Weight in kilograms (e.g. 0.500)")
+    package_length = models.DecimalField(max_digits=6, decimal_places=2, default=10.0, help_text="Package length in cm")
+    package_width = models.DecimalField(max_digits=6, decimal_places=2, default=10.0, help_text="Package width in cm")
+    package_height = models.DecimalField(max_digits=6, decimal_places=2, default=5.0, help_text="Package height in cm")
+    hsn_code = models.CharField(max_length=20, blank=True, default='', help_text="HSN code for GST and shipping manifests")
+
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -262,6 +269,14 @@ class Product(models.Model):
         if self.supplier_price and self.supplier_price > 0:
             return int((self.profit_margin / self.supplier_price) * 100)
         return 0
+
+    @property
+    def volumetric_weight(self):
+        """Volumetric weight in kg: (L * W * H) / 5000"""
+        l = float(self.package_length or 10.0)
+        w = float(self.package_width or 10.0)
+        h = float(self.package_height or 5.0)
+        return round((l * w * h) / 5000.0, 3)
 
     def __str__(self):
         return self.name
@@ -305,6 +320,60 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CourierPartner(models.Model):
+    """Courier Partner & Logistics Provider configurations (e.g. Shiprocket, Delhivery, Blue Dart, DTDC, India Post, Manual)."""
+    PROVIDER_CHOICES = [
+        ('shiprocket', 'Shiprocket (AI Courier Aggregator)'),
+        ('delhivery', 'Delhivery Direct'),
+        ('bluedart', 'Blue Dart Express'),
+        ('dtdc', 'DTDC Express'),
+        ('indiapost', 'India Post Speed Post'),
+        ('shadowfax', 'Shadowfax'),
+        ('manual', 'Manual / Local Courier'),
+    ]
+
+    ENVIRONMENT_CHOICES = [
+        ('SANDBOX', 'Sandbox / Testing'),
+        ('PRODUCTION', 'Production / Live'),
+    ]
+
+    name = models.CharField(max_length=100)
+    provider_code = models.CharField(max_length=30, choices=PROVIDER_CHOICES, unique=True)
+    is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=False)
+    environment = models.CharField(max_length=20, choices=ENVIRONMENT_CHOICES, default='SANDBOX')
+
+    # Credentials & API settings
+    api_email = models.CharField(max_length=200, blank=True, help_text="Shiprocket Email or API Client ID")
+    api_password = models.CharField(max_length=200, blank=True, help_text="Shiprocket Password or API Secret")
+    api_key = models.CharField(max_length=255, blank=True, help_text="API Key or Bearer Token")
+
+    # Default Warehouse / Origin
+    default_pickup_location = models.CharField(max_length=100, default='Primary Warehouse', help_text="Pickup location nickname registered on courier portal")
+    pickup_pincode = models.CharField(max_length=10, default='110020', help_text="Origin warehouse pincode")
+
+    # Rates & Charges
+    base_rate = models.DecimalField(max_digits=8, decimal_places=2, default=50.0, help_text="Base rate up to 500g")
+    per_kg_rate = models.DecimalField(max_digits=8, decimal_places=2, default=40.0, help_text="Additional rate per kg")
+    cod_charge = models.DecimalField(max_digits=8, decimal_places=2, default=30.0, help_text="COD handling fee")
+
+    tracking_url_template = models.CharField(
+        max_length=300,
+        blank=True,
+        default='https://shiprocket.co/tracking/{awb}',
+        help_text="URL template where {awb} will be replaced with tracking code"
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_default', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_provider_code_display()})"
 
 
 class Order(models.Model):
@@ -359,8 +428,61 @@ class Order(models.Model):
     delivery_city = models.CharField(max_length=100)
     delivery_pincode = models.CharField(max_length=10)
     notes = models.TextField(blank=True)
+
+    # Courier Partner & Shipping Fulfillment (Shiprocket style)
+    courier_partner = models.ForeignKey(CourierPartner, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    courier_name = models.CharField(max_length=100, blank=True, help_text="Courier partner name at dispatch")
+    courier_awb = models.CharField(max_length=100, blank=True, help_text="AWB / Tracking Number")
+    courier_tracking_url = models.URLField(max_length=500, blank=True)
+    shipping_label_url = models.URLField(max_length=500, blank=True)
+    shipment_id = models.CharField(max_length=100, blank=True, help_text="Courier / Shiprocket shipment ID")
+    package_weight = models.DecimalField(max_digits=6, decimal_places=3, default=0.5, help_text="Package weight in kg")
+    package_length = models.DecimalField(max_digits=6, decimal_places=2, default=10.0, help_text="Package length in cm")
+    package_width = models.DecimalField(max_digits=6, decimal_places=2, default=10.0, help_text="Package width in cm")
+    package_height = models.DecimalField(max_digits=6, decimal_places=2, default=5.0, help_text="Package height in cm")
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def calculate_shipping_weight(self):
+        """Calculate total package weight in kg from all order items."""
+        total_weight = 0.0
+        for item in self.items.select_related('product').all():
+            if item.product and item.product.weight_kg:
+                total_weight += float(item.product.weight_kg) * item.quantity
+            else:
+                total_weight += 0.5 * item.quantity
+        return round(max(0.2, total_weight), 3)
+
+    def calculate_package_dimensions(self):
+        """Estimate package dimensions (L, W, H) in cm based on items."""
+        max_l = 10.0
+        max_w = 10.0
+        stacked_h = 0.0
+        for item in self.items.select_related('product').all():
+            if item.product:
+                l = float(item.product.package_length or 10.0)
+                w = float(item.product.package_width or 10.0)
+                h = float(item.product.package_height or 5.0)
+                max_l = max(max_l, l)
+                max_w = max(max_w, w)
+                stacked_h += h * item.quantity
+            else:
+                stacked_h += 5.0 * item.quantity
+        return {
+            'length': round(max_l, 1),
+            'width': round(max_w, 1),
+            'height': round(max(5.0, stacked_h), 1)
+        }
+
+    @property
+    def volumetric_weight(self):
+        l = float(self.package_length or 10.0)
+        w = float(self.package_width or 10.0)
+        h = float(self.package_height or 5.0)
+        return round((l * w * h) / 5000.0, 3)
 
     @classmethod
     def contributes_to_sales(cls, status):
@@ -496,6 +618,74 @@ class OrderItem(models.Model):
         return f"{self.quantity}x {self.product_name}"
 
 
+class Shipment(models.Model):
+    """Tracks an individual shipment consignment for an Order, with courier, AWB, dimensions, and live tracking."""
+    STATUS_CHOICES = [
+        ('manifest_generated', 'Manifest Generated'),
+        ('pickup_scheduled', 'Pickup Scheduled'),
+        ('picked_up', 'Picked Up'),
+        ('in_transit', 'In Transit'),
+        ('out_for_delivery', 'Out for Delivery'),
+        ('delivered', 'Delivered'),
+        ('rto_initiated', 'RTO Initiated'),
+        ('rto_delivered', 'RTO Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='shipments')
+    courier_partner = models.ForeignKey(CourierPartner, on_delete=models.SET_NULL, null=True, blank=True, related_name='shipments')
+    courier_name = models.CharField(max_length=100)
+    awb_code = models.CharField(max_length=100, unique=True)
+    shipment_id = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='manifest_generated')
+
+    # Dimensions & Package specs
+    weight_kg = models.DecimalField(max_digits=6, decimal_places=3, default=0.5)
+    package_length = models.DecimalField(max_digits=6, decimal_places=2, default=10.0)
+    package_width = models.DecimalField(max_digits=6, decimal_places=2, default=10.0)
+    package_height = models.DecimalField(max_digits=6, decimal_places=2, default=5.0)
+
+    # Financials
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    cod_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    is_cod = models.BooleanField(default=True)
+
+    # Origin & Destination details
+    pickup_location = models.CharField(max_length=150, default='Primary Warehouse')
+    pickup_pincode = models.CharField(max_length=10, default='110020')
+    delivery_address = models.TextField()
+    delivery_city = models.CharField(max_length=100)
+    delivery_pincode = models.CharField(max_length=10)
+    customer_name = models.CharField(max_length=150, blank=True)
+    customer_phone = models.CharField(max_length=30, blank=True)
+
+    # URLs & Manifests
+    label_url = models.CharField(max_length=500, blank=True)
+    manifest_url = models.CharField(max_length=500, blank=True)
+    tracking_url = models.CharField(max_length=500, blank=True)
+
+    # Tracking History Events [{status, activity, location, timestamp}]
+    tracking_events = models.JSONField(default=list, blank=True)
+
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def volumetric_weight(self):
+        l = float(self.package_length or 10.0)
+        w = float(self.package_width or 10.0)
+        h = float(self.package_height or 5.0)
+        return round((l * w * h) / 5000.0, 3)
+
+    def __str__(self):
+        return f"Shipment {self.awb_code} ({self.courier_name}) - Order {self.order.order_id}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+
 class StockLog(models.Model):
     """Inventory movement history tracking stock deductions, restocks, and manual adjustments."""
     LOG_TYPE_CHOICES = [
@@ -605,6 +795,15 @@ class SiteSetting(models.Model):
     cashfree_app_id = models.CharField(max_length=200, blank=True, help_text="Cashfree Client ID / App ID")
     cashfree_secret_key = models.CharField(max_length=200, blank=True, help_text="Cashfree Secret Key")
     cashfree_api_version = models.CharField(max_length=50, default='2023-08-01')
+
+    # Warehouse / Origin Pickup Address (for Courier & Shipping Manifests)
+    pickup_warehouse_name = models.CharField(max_length=150, default='VorionMart Central Hub', blank=True)
+    pickup_phone = models.CharField(max_length=20, default='+91 9876543210', blank=True)
+    pickup_address = models.TextField(default='Plot 42, Logistics Park, Okhla Industrial Area', blank=True)
+    pickup_city = models.CharField(max_length=100, default='New Delhi', blank=True)
+    pickup_state = models.CharField(max_length=100, default='Delhi', blank=True)
+    pickup_pincode = models.CharField(max_length=10, default='110020', blank=True)
+    pickup_gstin = models.CharField(max_length=20, default='07AAAAA0000A1Z5', blank=True)
 
     def save(self, *args, **kwargs):
         process_image_upload(self.logo)

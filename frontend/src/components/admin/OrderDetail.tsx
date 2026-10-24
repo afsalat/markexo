@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Order } from '@/types/admin';
+import { Order, CourierPartner, TrackingEvent } from '@/types/admin';
 import {
     ArrowLeft, Package, User, CreditCard, Calendar,
     MapPin, Phone, Mail, Clock, CheckCircle2,
     Truck, AlertCircle, ShoppingBag, ExternalLink,
     XCircle, RefreshCw, HelpCircle, ChevronDown, Edit3,
-    RotateCcw, FileText, StickyNote, Download, Loader2
+    RotateCcw, FileText, StickyNote, Download, Loader2,
+    Printer, Copy, Check, Navigation, Sparkles, Box
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
@@ -54,6 +55,148 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
     const [showStatusDropdown, setShowStatusDropdown] = useState(false);
     const [showPaymentStatusDropdown, setShowPaymentStatusDropdown] = useState(false);
     const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+
+    // Courier & Shipping states
+    const [showShipModal, setShowShipModal] = useState(false);
+    const [showTrackModal, setShowTrackModal] = useState(false);
+    const [showLabelModal, setShowLabelModal] = useState(false);
+    const [courierPartners, setCourierPartners] = useState<CourierPartner[]>([]);
+    const [loadingPartners, setLoadingPartners] = useState(false);
+    const [selectedPartnerId, setSelectedPartnerId] = useState<number | ''>('');
+    const [dispatchWeight, setDispatchWeight] = useState<string>(
+        String(order.package_weight || order.estimated_package_specs?.weight_kg || '0.5')
+    );
+    const [dispatchLength, setDispatchLength] = useState<string>(
+        String(order.package_length || order.estimated_package_specs?.dimensions?.length || '10')
+    );
+    const [dispatchWidth, setDispatchWidth] = useState<string>(
+        String(order.package_width || order.estimated_package_specs?.dimensions?.width || '10')
+    );
+    const [dispatchHeight, setDispatchHeight] = useState<string>(
+        String(order.package_height || order.estimated_package_specs?.dimensions?.height || '5')
+    );
+    const [customAwb, setCustomAwb] = useState('');
+    const [isDispatching, setIsDispatching] = useState(false);
+    const [dispatchError, setDispatchError] = useState<string | null>(null);
+
+    const [trackingLoading, setTrackingLoading] = useState(false);
+    const [liveTrackingEvents, setLiveTrackingEvents] = useState<TrackingEvent[]>([]);
+    const [labelHtml, setLabelHtml] = useState<string>('');
+    const [labelLoading, setLabelLoading] = useState(false);
+    const [copiedAwb, setCopiedAwb] = useState(false);
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopiedAwb(true);
+        setTimeout(() => setCopiedAwb(false), 2000);
+    };
+
+    const handleOpenShipModal = async () => {
+        setShowShipModal(true);
+        setDispatchError(null);
+        if (courierPartners.length === 0) {
+            setLoadingPartners(true);
+            try {
+                const res = await fetch(`${API_BASE_URL}/admin/courier-partners/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const list: CourierPartner[] = data.results || data;
+                    setCourierPartners(list);
+                    const def = list.find(p => p.is_default) || list[0];
+                    if (def) setSelectedPartnerId(def.id);
+                }
+            } catch (err) {
+                console.error('Failed to load courier partners', err);
+            } finally {
+                setLoadingPartners(false);
+            }
+        }
+    };
+
+    const handleDispatchShipment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsDispatching(true);
+        setDispatchError(null);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/create_shipment/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    courier_partner_id: selectedPartnerId || undefined,
+                    weight_kg: parseFloat(dispatchWeight) || 0.5,
+                    length: parseFloat(dispatchLength) || 10,
+                    width: parseFloat(dispatchWidth) || 10,
+                    height: parseFloat(dispatchHeight) || 5,
+                    custom_awb: customAwb.trim() || undefined
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setOrder({
+                    ...order,
+                    status: 'shipped',
+                    courier_awb: data.awb_code,
+                    courier_name: data.courier_name,
+                    courier_tracking_url: data.tracking_url,
+                    shipping_label_url: data.label_url,
+                    shipment_id: data.shipment_id,
+                    package_weight: parseFloat(dispatchWeight) || 0.5,
+                    package_length: parseFloat(dispatchLength) || 10,
+                    package_width: parseFloat(dispatchWidth) || 10,
+                    package_height: parseFloat(dispatchHeight) || 5,
+                });
+                setShowShipModal(false);
+                if (onStatusUpdate) onStatusUpdate(order.order_id, 'shipped');
+            } else {
+                setDispatchError(data.error || 'Failed to dispatch order with courier.');
+            }
+        } catch (err: any) {
+            setDispatchError(err.message || 'Error occurred while contacting shipping service.');
+        } finally {
+            setIsDispatching(false);
+        }
+    };
+
+    const handleOpenTrackModal = async () => {
+        setShowTrackModal(true);
+        setTrackingLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/track_shipment/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setLiveTrackingEvents(data.tracking_events || []);
+            }
+        } catch (err) {
+            console.error('Error tracking shipment', err);
+        } finally {
+            setTrackingLoading(false);
+        }
+    };
+
+    const handleOpenLabelModal = async () => {
+        setShowLabelModal(true);
+        setLabelLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/shipping_label/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const html = await res.text();
+                setLabelHtml(html);
+            }
+        } catch (err) {
+            console.error('Error fetching label', err);
+        } finally {
+            setLabelLoading(false);
+        }
+    };
 
     const handleReturnOrder = async () => {
         if (!returnReason.trim()) {
@@ -571,6 +714,109 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
 
                 {/* Right Column: Info */}
                 <div className="space-y-6">
+                    {/* Courier & Shipping Fulfillment Card */}
+                    <div className="bg-dark-800 rounded-3xl p-8 shadow-sm border border-dark-700">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <Truck size={20} className="text-accent-500" /> Courier & Shipping
+                            </h2>
+                            {order.courier_awb ? (
+                                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                                    Dispatched
+                                </span>
+                            ) : (
+                                <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                    Ready to Ship
+                                </span>
+                            )}
+                        </div>
+
+                        {order.courier_awb ? (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-dark-900/60 rounded-2xl border border-dark-700">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <div className="text-xs text-silver-400 uppercase font-semibold">Logistics Partner</div>
+                                            <div className="text-base font-extrabold text-white mt-0.5">
+                                                {order.courier_name || 'Courier Partner'}
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-xs text-silver-400 uppercase font-semibold">AWB Tracking #</div>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                <span className="font-mono text-sm font-bold text-accent-400">{order.courier_awb}</span>
+                                                <button
+                                                    onClick={() => copyToClipboard(order.courier_awb || '')}
+                                                    title="Copy AWB"
+                                                    className="text-silver-400 hover:text-white p-1"
+                                                >
+                                                    {copiedAwb ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-dark-750 text-xs">
+                                        <div>
+                                            <span className="text-silver-500">Weight:</span>{' '}
+                                            <span className="text-white font-bold">{order.package_weight || 0.5} kg</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-silver-500">Dimensions:</span>{' '}
+                                            <span className="text-white font-mono">{order.package_length || 10}x{order.package_width || 10}x{order.package_height || 5} cm</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={handleOpenTrackModal}
+                                        className="py-2.5 px-3 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                                    >
+                                        <Navigation size={14} /> Track Live
+                                    </button>
+                                    <button
+                                        onClick={handleOpenLabelModal}
+                                        className="py-2.5 px-3 bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 border border-accent-500/30 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                                    >
+                                        <Printer size={14} /> Print Label
+                                    </button>
+                                </div>
+
+                                {order.courier_tracking_url && (
+                                    <a
+                                        href={order.courier_tracking_url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full py-2 bg-dark-700 hover:bg-dark-600 text-silver-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 border border-dark-600"
+                                    >
+                                        Open Tracking Page <ExternalLink size={12} />
+                                    </a>
+                                )}
+
+                                <button
+                                    onClick={handleOpenShipModal}
+                                    className="w-full text-center text-xs text-silver-500 hover:text-silver-300 font-medium pt-1"
+                                >
+                                    Re-dispatch / Change Courier
+                                </button>
+                            </div>
+                        ) : (
+                            <div>
+                                <p className="text-xs text-silver-400 mb-4 leading-relaxed">
+                                    Connect and fulfill this order with Shiprocket, Delhivery, Blue Dart, DTDC, India Post, or manual dispatch.
+                                </p>
+                                <button
+                                    onClick={handleOpenShipModal}
+                                    className="w-full py-3 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 text-dark-900 font-extrabold rounded-2xl shadow-lg shadow-accent-500/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Truck size={18} />
+                                    Ship with Courier Partner
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Customer Info */}
                     <div className="bg-dark-800 rounded-3xl p-8 shadow-sm border border-dark-700">
                         <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
@@ -767,6 +1013,286 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
                                 disabled={isUpdating || !returnReason.trim()}
                             >
                                 {isUpdating ? 'Processing...' : 'Confirm Return'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Courier Dispatch / Fulfillment Modal */}
+            {showShipModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-dark-800 rounded-3xl p-6 md:p-8 max-w-lg w-full border border-dark-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                        <button
+                            onClick={() => setShowShipModal(false)}
+                            className="absolute top-6 right-6 p-2 text-silver-400 hover:text-white hover:bg-dark-700 rounded-full transition-all"
+                        >
+                            <XCircle size={20} />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-2xl bg-accent-500/10 border border-accent-500/20 text-accent-400 flex items-center justify-center font-bold">
+                                <Truck size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">Dispatch with Courier</h2>
+                                <p className="text-xs text-silver-400">Order #{order.order_id} • To {order.delivery_city} ({order.delivery_pincode})</p>
+                            </div>
+                        </div>
+
+                        {dispatchError && (
+                            <div className="my-4 p-3.5 bg-red-500/10 border border-red-500/20 text-red-300 rounded-2xl text-xs font-semibold flex items-center gap-2">
+                                <AlertCircle size={16} className="shrink-0" />
+                                {dispatchError}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleDispatchShipment} className="space-y-4 mt-4">
+                            <div>
+                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Select Courier Partner</label>
+                                {loadingPartners ? (
+                                    <div className="p-3 bg-dark-700 rounded-xl text-silver-400 text-xs flex items-center gap-2">
+                                        <RefreshCw size={14} className="animate-spin text-accent-500" />
+                                        Loading available carriers...
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={selectedPartnerId}
+                                        onChange={(e) => setSelectedPartnerId(e.target.value ? Number(e.target.value) : '')}
+                                        className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-medium"
+                                    >
+                                        {courierPartners.map((p) => (
+                                            <option key={p.id} value={p.id}>
+                                                {p.name} {p.is_default ? '(Default)' : ''} — Base: ₹{p.base_rate}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Package Weight (Kg)</label>
+                                    <input
+                                        type="number"
+                                        step="0.05"
+                                        min="0.1"
+                                        value={dispatchWeight}
+                                        onChange={(e) => setDispatchWeight(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                    <span className="text-[10px] text-silver-500">Auto-calculated from items</span>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Payment Method</label>
+                                    <div className="px-4 py-2 bg-dark-900/60 border border-dark-700 rounded-xl text-xs font-bold">
+                                        {order.is_cod ? (
+                                            <span className="text-amber-400">COD (Collect ₹{order.total_amount})</span>
+                                        ) : (
+                                            <span className="text-green-400">PREPAID (₹0 to collect)</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Dimensions L x W x H (cm)</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        min="1"
+                                        placeholder="Length"
+                                        value={dispatchLength}
+                                        onChange={(e) => setDispatchLength(e.target.value)}
+                                        required
+                                        className="px-3 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono text-center"
+                                    />
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        min="1"
+                                        placeholder="Width"
+                                        value={dispatchWidth}
+                                        onChange={(e) => setDispatchWidth(e.target.value)}
+                                        required
+                                        className="px-3 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono text-center"
+                                    />
+                                    <input
+                                        type="number"
+                                        step="0.5"
+                                        min="1"
+                                        placeholder="Height"
+                                        value={dispatchHeight}
+                                        onChange={(e) => setDispatchHeight(e.target.value)}
+                                        required
+                                        className="px-3 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono text-center"
+                                    />
+                                </div>
+                                <div className="flex justify-between items-center text-[11px] text-silver-500 mt-1">
+                                    <span>Volumetric weight: {(((parseFloat(dispatchLength) || 10) * (parseFloat(dispatchWidth) || 10) * (parseFloat(dispatchHeight) || 5)) / 5000).toFixed(3)} kg</span>
+                                    <span>Divisor: 5000</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Custom AWB / Tracking # (Optional)</label>
+                                <input
+                                    type="text"
+                                    placeholder="Leave blank to auto-generate via carrier"
+                                    value={customAwb}
+                                    onChange={(e) => setCustomAwb(e.target.value)}
+                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                />
+                            </div>
+
+                            <div className="pt-3 flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowShipModal(false)}
+                                    className="flex-1 py-3 px-4 rounded-xl font-bold text-silver-400 hover:bg-dark-700 transition-all border border-dark-600 text-sm"
+                                    disabled={isDispatching}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isDispatching}
+                                    className="flex-1 py-3 px-4 bg-accent-500 hover:bg-accent-400 text-dark-900 rounded-xl font-extrabold shadow-lg shadow-accent-500/20 transition-all flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+                                >
+                                    {isDispatching ? <RefreshCw size={16} className="animate-spin" /> : <Truck size={16} />}
+                                    {isDispatching ? 'Generating AWB...' : 'Generate AWB & Ship'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Live Tracking Timeline Modal */}
+            {showTrackModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-dark-800 rounded-3xl p-6 md:p-8 max-w-xl w-full border border-dark-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                        <button
+                            onClick={() => setShowTrackModal(false)}
+                            className="absolute top-6 right-6 p-2 text-silver-400 hover:text-white hover:bg-dark-700 rounded-full transition-all"
+                        >
+                            <XCircle size={20} />
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
+                                <Truck size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-white">Live Tracking Timeline</h2>
+                                <p className="text-xs text-silver-400 font-mono">AWB: {order.courier_awb} • {order.courier_name}</p>
+                            </div>
+                        </div>
+
+                        <div className="my-6 p-4 bg-dark-900/60 rounded-2xl border border-dark-700 flex justify-between items-center text-xs">
+                            <div>
+                                <span className="text-silver-500">Destination:</span>
+                                <div className="text-white font-bold text-sm">{order.delivery_city} ({order.delivery_pincode})</div>
+                            </div>
+                            <div>
+                                <span className="text-silver-500">Status:</span>
+                                <div className="text-accent-400 font-bold uppercase">{order.status}</div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 relative pl-6 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-dark-600">
+                            {trackingLoading ? (
+                                <div className="py-8 text-center text-silver-400">
+                                    <RefreshCw size={20} className="animate-spin mx-auto mb-2 text-accent-500" />
+                                    Querying courier live network...
+                                </div>
+                            ) : liveTrackingEvents.length === 0 ? (
+                                <p className="text-silver-400 text-sm">No checkpoints available yet.</p>
+                            ) : (
+                                liveTrackingEvents.map((ev, idx) => (
+                                    <div key={idx} className="relative">
+                                        <div className={`absolute -left-6 top-1 w-3.5 h-3.5 rounded-full border-2 ${idx === liveTrackingEvents.length - 1 ? 'bg-accent-500 border-accent-400 ring-4 ring-accent-500/20' : 'bg-dark-600 border-dark-500'}`} />
+                                        <div className="text-sm font-bold text-white">{ev.activity}</div>
+                                        <div className="flex items-center gap-2 text-xs text-silver-400 mt-1">
+                                            <span className="text-accent-400 font-semibold">{ev.location}</span>
+                                            <span>•</span>
+                                            <span>{ev.timestamp}</span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {order.courier_tracking_url && (
+                            <div className="mt-8 pt-4 border-t border-dark-700 flex justify-end">
+                                <a
+                                    href={order.courier_tracking_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-silver-200 text-xs font-bold rounded-xl transition-all border border-dark-600 flex items-center gap-1.5"
+                                >
+                                    Open Carrier Portal <ExternalLink size={13} />
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Print Thermal Shipping Label Modal */}
+            {showLabelModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-dark-800 rounded-3xl p-6 max-w-2xl w-full border border-dark-700 shadow-2xl relative max-h-[95vh] flex flex-col">
+                        <div className="flex justify-between items-center pb-4 border-b border-dark-700">
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Print Shipping Label (4x6" Thermal)</h2>
+                                <p className="text-xs text-silver-400 font-mono">Consignment: {order.courier_awb} • Order #{order.order_id}</p>
+                            </div>
+                            <button
+                                onClick={() => setShowLabelModal(false)}
+                                className="p-2 text-silver-400 hover:text-white hover:bg-dark-700 rounded-full transition-all"
+                            >
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 my-4 overflow-hidden rounded-2xl bg-white p-2">
+                            {labelLoading ? (
+                                <div className="h-96 flex flex-col items-center justify-center text-dark-700">
+                                    <RefreshCw size={24} className="animate-spin mb-2" />
+                                    Loading standard thermal layout...
+                                </div>
+                            ) : (
+                                <iframe
+                                    srcDoc={labelHtml}
+                                    title="Shipping Label"
+                                    className="w-full h-[520px] border-0"
+                                />
+                            )}
+                        </div>
+
+                        <div className="pt-2 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowLabelModal(false)}
+                                className="px-4 py-2 bg-dark-700 hover:bg-dark-600 text-silver-300 text-sm font-bold rounded-xl transition-all"
+                            >
+                                Close
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const win = window.open('', '_blank');
+                                    if (win) {
+                                        win.document.write(labelHtml);
+                                        win.document.close();
+                                        setTimeout(() => win.print(), 300);
+                                    }
+                                }}
+                                className="px-5 py-2 bg-accent-500 hover:bg-accent-400 text-dark-900 text-sm font-bold rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-accent-500/20"
+                            >
+                                <Printer size={16} /> Print Label Now
                             </button>
                         </div>
                     </div>
