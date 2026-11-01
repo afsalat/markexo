@@ -48,6 +48,8 @@ export interface Order {
     tracking_number?: string;
     shipping_charge?: number;
     discount_amount?: number;
+    coupon_code?: string;
+    coupon_discount?: number;
     // Courier & Logistics (Shiprocket style)
     courier_partner?: number | null;
     courier_partner_id?: number | null;
@@ -63,11 +65,21 @@ export interface Order {
     volumetric_weight?: number;
     shipped_at?: string | null;
     delivered_at?: string | null;
+    is_deleted?: boolean;
+    deleted_at?: string | null;
     shipments?: Shipment[];
     estimated_package_specs?: {
         weight_kg: number;
         dimensions: { length: number; width: number; height: number };
     };
+    pickup_origin?: {
+        shop_id?: number;
+        shop_name?: string;
+        city?: string;
+        state?: string;
+        pincode?: string;
+        pickup_location_nickname?: string;
+    } | null;
 }
 
 export interface Product {
@@ -217,6 +229,9 @@ export interface Shop {
     description?: string;
     address: string;
     city: string;
+    state?: string;
+    pincode?: string;
+    pickup_location_nickname?: string;
     phone: string;
     email: string;
     shop_type?: 'b2b_ecommerce' | 'local_shop' | 'single_product_wholesaler' | 'multi_product_seller' | 'retailer' | 'other';
@@ -280,6 +295,8 @@ export interface SiteSetting {
     site_name: string;
     site_tagline?: string;
     logo?: string | null;
+    logo_light?: string | null;
+    logo_dark?: string | null;
     contact_email: string;
     contact_phone: string;
     address: string;
@@ -350,3 +367,47 @@ export interface AdminUser {
     direct_permissions?: Permission[];
     all_permissions?: string[];
 }
+
+export interface Coupon {
+    id: number;
+    code: string;
+    title: string;
+    description: string;
+    discount_type: 'percentage' | 'fixed' | 'free_shipping';
+    discount_type_display?: string;
+    discount_value: number;
+    min_order_value: number;
+    max_discount_amount?: number | null;
+    usage_limit?: number | null;
+    usage_limit_per_user: number;
+    times_used: number;
+    usages_count?: number;
+    valid_from: string;
+    valid_until?: string | null;
+    is_active: boolean;
+    is_featured: boolean;
+    is_valid?: boolean;
+    validity_status?: 'active' | 'scheduled' | 'expired' | 'limit_reached' | 'inactive';
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CouponStats {
+    total_coupons: number;
+    active_coupons: number;
+    total_redemptions: number;
+    total_discount_given: number;
+}
+
+export interface CouponUsage {
+    id: number;
+    coupon: number;
+    coupon_code: string;
+    order?: number | null;
+    order_number?: string;
+    customer?: number | null;
+    customer_phone: string;
+    discount_applied: number;
+    used_at: string;
+}
+

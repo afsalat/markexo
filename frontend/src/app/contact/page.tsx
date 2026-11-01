@@ -4,8 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Mail, Phone, MapPin, Send, CheckCircle, Store, Users, TrendingUp } from 'lucide-react';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function ContactPage() {
+    const { settings } = useSiteSettings();
     const [formType, setFormType] = useState<'general' | 'partner'>('general');
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
     const [formData, setFormData] = useState({
@@ -89,8 +91,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                                        <a href="mailto:vorionmart@gmail.com" className="text-primary-600 hover:underline">
-                                            vorionmart@gmail.com
+                                        <a href={`mailto:${settings?.contact_email || 'vorionmart@gmail.com'}`} className="text-primary-600 hover:underline">
+                                            {settings?.contact_email || 'vorionmart@gmail.com'}
                                         </a>
                                     </div>
                                 </div>
@@ -101,8 +103,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Phone</h3>
-                                        <a href="tel:+917356216468" className="text-primary-600 hover:underline">
-                                            +91 735 621 6468
+                                        <a href={`tel:${settings?.contact_phone || '+917356216468'}`} className="text-primary-600 hover:underline">
+                                            {settings?.contact_phone || '+91 735 621 6468'}
                                         </a>
                                     </div>
                                 </div>
@@ -113,11 +115,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
-                                        <p className="text-gray-600">
-                                            Vorion Nexus Technology<br />
-                                            Thoppayil Beach C.25, O.P Nadakkavu<br />
-                                            Kozhikode, Kerala 673011<br />
-                                            India
+                                        <p className="text-gray-600 whitespace-pre-line">
+                                            {settings?.address || 'Vorion Nexus Technology\nThoppayil Beach C.25, O.P Nadakkavu\nKozhikode, Kerala 673011\nIndia'}
                                         </p>
                                     </div>
                                 </div>

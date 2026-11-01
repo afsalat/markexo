@@ -6,7 +6,7 @@ import {
     Truck, AlertCircle, ShoppingBag, ExternalLink,
     XCircle, RefreshCw, HelpCircle, ChevronDown, Edit3,
     RotateCcw, FileText, StickyNote, Download, Loader2,
-    Printer, Copy, Check, Navigation, Sparkles, Box
+    Printer, Copy, Check, Navigation, Sparkles, Box, Trash2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
@@ -428,6 +428,71 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
         }
     };
 
+    const handleMoveToTrash = async () => {
+        if (!confirm(`Are you sure you want to move order #${order.order_id} to the trash bin?`)) return;
+        setIsUpdating(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/move_to_trash/`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setOrder({ ...order, is_deleted: true });
+                alert('Order moved to trash bin.');
+            } else {
+                alert('Failed to move order to trash');
+            }
+        } catch (err) {
+            console.error('Error moving order to trash:', err);
+            alert('An error occurred');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleRestore = async () => {
+        setIsUpdating(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/restore/`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                setOrder({ ...order, is_deleted: false });
+                alert('Order restored successfully.');
+            } else {
+                alert('Failed to restore order');
+            }
+        } catch (err) {
+            console.error('Error restoring order:', err);
+            alert('An error occurred');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handlePermanentDelete = async () => {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete order #${order.order_id}? This action cannot be undone.`)) return;
+        setIsUpdating(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/permanent_delete/`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert('Order permanently deleted.');
+                onBack();
+            } else {
+                alert('Failed to permanently delete order');
+            }
+        } catch (err) {
+            console.error('Error deleting order:', err);
+            alert('An error occurred');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     return (
         <div className="animate-fade-in space-y-6">
             {/* Header */}
@@ -443,6 +508,11 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
                         <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs font-bold uppercase tracking-wider text-accent-500 bg-accent-500/10 border border-accent-500/20 px-2 py-0.5 rounded">Order ID</span>
                             <span className="text-silver-500 text-sm font-mono">#{order.order_id}</span>
+                            {order.is_deleted && (
+                                <span className="text-xs font-bold uppercase tracking-wider text-red-400 bg-red-500/20 border border-red-500/30 px-2 py-0.5 rounded">
+                                    In Trash Bin
+                                </span>
+                            )}
                         </div>
                         <h1 className="text-2xl font-bold text-white">Order from {order.customer?.name || 'Guest'}</h1>
                     </div>
@@ -498,6 +568,35 @@ export default function OrderDetail({ order: initialOrder, onBack, onStatusUpdat
                         >
                             <XCircle size={16} /> Cancel Order
                         </button>
+                    )}
+
+                    {order.status === 'cancelled' && !order.is_deleted && (
+                        <button
+                            onClick={handleMoveToTrash}
+                            disabled={isUpdating}
+                            className="flex items-center gap-1.5 px-4 py-1.5 bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 rounded-full text-sm font-bold transition-all disabled:opacity-50"
+                        >
+                            <Trash2 size={16} /> Move to Trash
+                        </button>
+                    )}
+
+                    {order.is_deleted && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleRestore}
+                                disabled={isUpdating}
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 rounded-full text-sm font-bold transition-all disabled:opacity-50"
+                            >
+                                <RotateCcw size={16} /> Restore
+                            </button>
+                            <button
+                                onClick={handlePermanentDelete}
+                                disabled={isUpdating}
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-red-600/20 text-red-400 border border-red-600/40 hover:bg-red-600/30 rounded-full text-sm font-bold transition-all disabled:opacity-50"
+                            >
+                                <Trash2 size={16} /> Delete Permanently
+                            </button>
+                        </div>
                     )}
 
                     <button className="p-2 text-silver-500 hover:text-accent-500 hover:bg-accent-500/10 rounded-xl transition-all">

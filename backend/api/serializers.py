@@ -15,7 +15,8 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, ReviewImage, Customer,
     Order, OrderItem, OrderStatusHistory, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem, BlogPost, StockLog, CourierPartner, Shipment
+    ChecklistSection, ChecklistItem, BlogPost, StockLog, CourierPartner, Shipment,
+    Coupon, CouponUsage
 )
 
 logger = logging.getLogger(__name__)
@@ -235,7 +236,7 @@ class ShopSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = [
-            'id', 'name', 'slug', 'description', 'address', 'city',
+            'id', 'name', 'slug', 'description', 'address', 'city', 'state', 'pincode', 'pickup_location_nickname',
             'phone', 'email', 'shop_type', 'shop_type_display', 'source_platform',
             'website_url', 'contact_person', 'whatsapp_number', 'notes',
             'image', 'is_active', 'approval_status',
@@ -368,7 +369,7 @@ class ShopListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'name', 'slug', 'image', 'city', 'shop_type', 'shop_type_display', 'sourcing_partner_name', 'sourcing_partners']
+        fields = ['id', 'name', 'slug', 'image', 'city', 'state', 'pincode', 'pickup_location_nickname', 'shop_type', 'shop_type_display', 'sourcing_partner_name', 'sourcing_partners']
 
     def get_image(self, obj):
         request = self.context.get('request')
@@ -727,11 +728,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     mrp = serializers.DecimalField(source='product.mrp', max_digits=10, decimal_places=2, read_only=True)
     original_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    shop_pincode = serializers.SerializerMethodField()
+    shop_pickup_nickname = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
         fields = [
-            'id', 'product', 'shop', 'shop_name', 'product_name', 'quantity',
+            'id', 'product', 'shop', 'shop_name', 'shop_pincode', 'shop_pickup_nickname', 'product_name', 'quantity',
             'price', 'total', 'product_image', 'sku',
             'mrp', 'original_price'
         ]
@@ -742,6 +745,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
         if obj.product and obj.product.image:
             return get_image_url(request, obj.product.image)
         return None
+
+    def get_shop_pincode(self, obj):
+        shop = obj.shop or (obj.product.shop if obj.product else None)
+        return shop.pincode if shop else ''
+
+    def get_shop_pickup_nickname(self, obj):
+        shop = obj.shop or (obj.product.shop if obj.product else None)
+        return (shop.pickup_location_nickname or shop.name) if shop else ''
 
 
 class OrderStatusHistorySerializer(serializers.ModelSerializer):
@@ -804,6 +815,7 @@ class OrderSerializer(serializers.ModelSerializer):
     supplier_total_cost = serializers.SerializerMethodField()
     profit = serializers.SerializerMethodField()
     return_reason = serializers.SerializerMethodField()
+    pickup_origin = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -815,8 +827,24 @@ class OrderSerializer(serializers.ModelSerializer):
             'courier_partner', 'courier_partner_id', 'courier_name', 'courier_awb', 'courier_tracking_url',
             'shipping_label_url', 'shipment_id', 'package_weight', 'package_length', 'package_width', 'package_height',
             'volumetric_weight', 'estimated_package_specs', 'shipped_at', 'delivered_at', 'shipments',
-            'supplier_total_cost', 'profit', 'return_reason'
+            'supplier_total_cost', 'profit', 'return_reason', 'pickup_origin',
+            'is_deleted', 'deleted_at',
+            'coupon_code', 'coupon_discount',
         ]
+
+    def get_pickup_origin(self, obj):
+        first_item = obj.items.select_related('shop', 'product__shop').first()
+        shop = getattr(first_item, 'shop', None) or (first_item.product.shop if first_item and first_item.product else None)
+        if shop:
+            return {
+                'shop_id': shop.id,
+                'shop_name': shop.name,
+                'city': shop.city,
+                'state': shop.state,
+                'pincode': shop.pincode,
+                'pickup_location_nickname': shop.pickup_location_nickname or shop.name,
+            }
+        return None
 
     def get_estimated_package_specs(self, obj):
         return {
@@ -862,10 +890,18 @@ class OrderCreateSerializer(serializers.Serializer):
     notes = serializers.CharField(required=False, allow_blank=True)
     is_cod = serializers.BooleanField(required=False, default=True)
     payment_method = serializers.CharField(required=False, default='cod')
+    coupon_code = serializers.CharField(required=False, allow_blank=True, default='')
     items = serializers.ListField(
         child=serializers.DictField(),
         min_length=1
     )
+
+    def validate_delivery_pincode(self, value):
+        val = str(value).strip()
+        import re
+        if not re.match(r'^[1-9][0-9]{5}$', val):
+            raise serializers.ValidationError('Enter a valid 6-digit Indian delivery pincode.')
+        return val
 
 
 class StockLogSerializer(serializers.ModelSerializer):
@@ -923,6 +959,8 @@ class BannerSerializer(serializers.ModelSerializer):
 
 class SiteSettingSerializer(serializers.ModelSerializer):
     logo = serializers.ImageField(required=False, allow_null=True)
+    logo_light = serializers.ImageField(required=False, allow_null=True)
+    logo_dark = serializers.ImageField(required=False, allow_null=True)
     google_oauth_client_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
     session_timeout_minutes = serializers.IntegerField(write_only=True, required=False)
     twilio_whatsapp_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -948,16 +986,21 @@ class SiteSettingSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['logo'] = get_image_url(self.context.get('request'), instance.logo)
+        req = self.context.get('request')
+        base_logo = get_image_url(req, instance.logo)
+        data['logo'] = base_logo
+        data['logo_light'] = get_image_url(req, instance.logo_light) or base_logo
+        data['logo_dark'] = get_image_url(req, instance.logo_dark) or base_logo
         # Expose aliases for frontend compatibility
         data['google_oauth_client_id'] = instance.google_client_id
         data['session_timeout_minutes'] = instance.session_timeout_hours * 60
         data['twilio_whatsapp_number'] = instance.twilio_whatsapp_from
 
         request = self.context.get('request')
+        user = getattr(request, 'user', None)
         is_admin = bool(
-            request and request.user and request.user.is_authenticated and (
-                request.user.is_staff or getattr(request.user, 'role', '') in ['admin', 'superadmin']
+            user and user.is_authenticated and (
+                user.is_staff or getattr(user, 'role', '') in ['admin', 'superadmin']
             )
         )
         if not is_admin:
@@ -1468,3 +1511,80 @@ class BlogPostSerializer(serializers.ModelSerializer):
 
     def get_products(self, obj):
         return list(obj.related_products.values_list('slug', flat=True))
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
+    is_valid = serializers.SerializerMethodField()
+    validity_status = serializers.SerializerMethodField()
+    usages_count = serializers.IntegerField(source='times_used', read_only=True)
+
+    class Meta:
+        model = Coupon
+        fields = [
+            'id', 'code', 'title', 'description', 'discount_type', 'discount_type_display',
+            'discount_value', 'min_order_value', 'max_discount_amount',
+            'usage_limit', 'usage_limit_per_user', 'times_used', 'usages_count',
+            'valid_from', 'valid_until', 'is_active', 'is_featured',
+            'is_valid', 'validity_status', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'times_used', 'created_at', 'updated_at']
+
+    def validate_code(self, value):
+        val = str(value).strip().upper()
+        if not val:
+            raise serializers.ValidationError("Coupon code cannot be empty.")
+        instance = self.instance
+        qs = Coupon.objects.filter(code__iexact=val)
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A coupon with this code already exists.")
+        return val
+
+    def validate(self, attrs):
+        discount_type = attrs.get('discount_type', getattr(self.instance, 'discount_type', 'percentage'))
+        discount_value = attrs.get('discount_value', getattr(self.instance, 'discount_value', Decimal('0.00')))
+        valid_from = attrs.get('valid_from', getattr(self.instance, 'valid_from', None))
+        valid_until = attrs.get('valid_until', getattr(self.instance, 'valid_until', None))
+
+        if discount_type == 'percentage' and (discount_value <= Decimal('0.00') or discount_value > Decimal('100.00')):
+            raise serializers.ValidationError({"discount_value": "Percentage discount must be between 0.01% and 100%."})
+        elif discount_type == 'fixed' and discount_value <= Decimal('0.00'):
+            raise serializers.ValidationError({"discount_value": "Fixed discount must be greater than ₹0."})
+
+        if valid_from and valid_until and valid_until <= valid_from:
+            raise serializers.ValidationError({"valid_until": "Expiry date must be after the start date."})
+
+        return attrs
+
+    def get_is_valid(self, obj):
+        valid, _ = obj.is_valid_now()
+        return valid
+
+    def get_validity_status(self, obj):
+        from django.utils import timezone
+        now = timezone.now()
+        if not obj.is_active:
+            return 'inactive'
+        if obj.valid_from and now < obj.valid_from:
+            return 'scheduled'
+        if obj.valid_until and now > obj.valid_until:
+            return 'expired'
+        if obj.usage_limit is not None and obj.times_used >= obj.usage_limit:
+            return 'limit_reached'
+        return 'active'
+
+
+class CouponUsageSerializer(serializers.ModelSerializer):
+    coupon_code = serializers.CharField(source='coupon.code', read_only=True)
+    order_number = serializers.CharField(source='order.order_id', read_only=True, default='')
+
+    class Meta:
+        model = CouponUsage
+        fields = [
+            'id', 'coupon', 'coupon_code', 'order', 'order_number',
+            'customer', 'customer_phone', 'discount_applied', 'used_at'
+        ]
+        read_only_fields = fields
+

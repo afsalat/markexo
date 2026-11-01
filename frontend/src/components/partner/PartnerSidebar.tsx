@@ -3,6 +3,7 @@ import {
     LayoutDashboard, ShoppingBag, Package, Settings, LogOut
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 interface PartnerSidebarProps {
     sidebarOpen: boolean;
@@ -11,6 +12,7 @@ interface PartnerSidebarProps {
 
 export default function PartnerSidebar({ sidebarOpen, setSidebarOpen }: PartnerSidebarProps) {
     const { logout } = useAuth();
+    const { settings } = useSiteSettings();
 
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/partner' },
@@ -28,9 +30,9 @@ export default function PartnerSidebar({ sidebarOpen, setSidebarOpen }: PartnerS
             <div className="px-4 py-4 sm:px-6 border-b border-gray-800 flex justify-center shrink-0">
                 <Link href="/" className="flex items-center gap-3">
                     <img
-                        src="/logo-white-text.webp"
-                        alt="VorionMart Logo"
-                        className="h-10 sm:h-12 w-auto object-contain"
+                        src={settings?.logo_dark || '/logo-white-text.webp'}
+                        alt={settings?.site_name ? `${settings.site_name} Logo` : 'VorionMart Logo'}
+                        className="h-10 sm:h-12 w-auto max-w-[180px] object-contain"
                     />
                 </Link>
             </div>

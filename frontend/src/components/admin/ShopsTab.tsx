@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, Edit, Loader2, Package, Plus, Save, Search, Store, Trash2, UserRound, Wallet, X } from 'lucide-react';
+import { Building2, Edit, Loader2, MapPin, Package, Plus, Save, Search, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { Shop } from '@/types/admin';
@@ -26,6 +26,9 @@ const emptyForm = {
     description: '',
     address: '',
     city: '',
+    state: '',
+    pincode: '',
+    pickup_location_nickname: '',
     phone: '',
     email: '',
     shop_type: 'other',
@@ -129,6 +132,9 @@ export default function ShopsTab() {
             description: shop.description || '',
             address: shop.address || '',
             city: shop.city || '',
+            state: shop.state || '',
+            pincode: shop.pincode || '',
+            pickup_location_nickname: shop.pickup_location_nickname || '',
             phone: shop.phone || '',
             email: shop.email || '',
             shop_type: shop.shop_type || 'other',
@@ -311,7 +317,9 @@ export default function ShopsTab() {
                                             <span className="px-2.5 py-1 rounded-full text-xs font-semibold border bg-red-500/10 text-red-400 border-red-500/20">Inactive</span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-silver-500 mt-1">{shop.city} • {shop.phone}</p>
+                                    <p className="text-sm text-silver-400 mt-1">
+                                        {[shop.city, shop.state].filter(Boolean).join(', ')} • {shop.phone}
+                                    </p>
                                     {shop.source_platform && (
                                         <p className="text-sm text-silver-400 mt-2">Source: {shop.source_platform}</p>
                                     )}
@@ -338,6 +346,25 @@ export default function ShopsTab() {
                             </div>
 
                             {shop.description && <p className="text-sm text-silver-300">{shop.description}</p>}
+
+                            {/* Courier Multi-Shop Pickup Details */}
+                            <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <div className="flex items-center gap-2">
+                                    <Truck size={14} className="text-blue-400 shrink-0" />
+                                    <span className="text-silver-400">Pickup Origin:</span>
+                                    <span className="font-semibold text-white">
+                                        {shop.pincode ? `PIN ${shop.pincode}` : 'Default Hub (110020)'}
+                                    </span>
+                                    {shop.state && <span className="text-silver-500">({shop.state})</span>}
+                                </div>
+                                {shop.pickup_location_nickname ? (
+                                    <div className="text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                                        SR Nickname: <strong className="text-white">{shop.pickup_location_nickname}</strong>
+                                    </div>
+                                ) : (
+                                    <span className="text-silver-500 italic">No Shiprocket nickname set</span>
+                                )}
+                            </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="bg-dark-700/70 rounded-xl p-3">
@@ -439,6 +466,40 @@ export default function ShopsTab() {
                                     <span className="text-sm text-silver-300">City</span>
                                     <input required value={formData.city} onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500" />
                                 </label>
+                                <label className="space-y-2">
+                                    <span className="text-sm text-silver-300">State</span>
+                                    <input value={formData.state} onChange={(e) => setFormData((prev) => ({ ...prev, state: e.target.value }))} placeholder="e.g. Karnataka, Maharashtra" className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500" />
+                                </label>
+
+                                <div className="md:col-span-2 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
+                                    <div className="flex items-center gap-2 text-blue-400 font-semibold text-sm">
+                                        <Truck size={16} />
+                                        <span>Courier & Multi-Shop Pickup Settings</span>
+                                    </div>
+                                    <p className="text-xs text-silver-400">
+                                        When an order contains items from this shop, Shiprocket and couriers pick up the parcel directly from this origin location.
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                        <label className="space-y-2">
+                                            <span className="text-sm text-silver-300">Courier Pickup Pincode</span>
+                                            <input
+                                                value={formData.pincode}
+                                                onChange={(e) => setFormData((prev) => ({ ...prev, pincode: e.target.value }))}
+                                                placeholder="e.g. 560001 (Shop origin pin)"
+                                                className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500"
+                                            />
+                                        </label>
+                                        <label className="space-y-2">
+                                            <span className="text-sm text-silver-300">Shiprocket Location Nickname</span>
+                                            <input
+                                                value={formData.pickup_location_nickname}
+                                                onChange={(e) => setFormData((prev) => ({ ...prev, pickup_location_nickname: e.target.value }))}
+                                                placeholder="e.g. Meesho_Bengaluru (As registered on Shiprocket)"
+                                                className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500"
+                                            />
+                                        </label>
+                                    </div>
+                                </div>
                                 <label className="space-y-2">
                                     <span className="text-sm text-silver-300">Contact person</span>
                                     <input value={formData.contact_person} onChange={(e) => setFormData((prev) => ({ ...prev, contact_person: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500" />

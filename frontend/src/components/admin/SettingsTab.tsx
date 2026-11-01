@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import {
     Save, CheckCircle, Globe, Upload, MessageCircle, Mail, Phone, MapPin,
     Shield, Key, CreditCard, Cpu, Send, RefreshCw, AlertCircle, Eye, EyeOff,
-    Check, Lock, ExternalLink
+    Check, Lock, ExternalLink, Sun, Moon
 } from 'lucide-react';
 import { SiteSetting } from '@/types/admin';
 import { useEffect, useState } from 'react';
@@ -23,6 +23,8 @@ type SettingsFormData = {
     site_name: string;
     site_tagline: string;
     logo: string | null;
+    logo_light: string | null;
+    logo_dark: string | null;
     contact_email: string;
     contact_phone: string;
     whatsapp_number: string;
@@ -74,6 +76,8 @@ function buildInitialFormData(settings: SiteSetting): SettingsFormData {
         site_name: settings.site_name || '',
         site_tagline: settings.site_tagline || '',
         logo: settings.logo || null,
+        logo_light: settings.logo_light || settings.logo || null,
+        logo_dark: settings.logo_dark || settings.logo || null,
         contact_email: settings.contact_email || '',
         contact_phone: settings.contact_phone || '',
         whatsapp_number: settings.whatsapp_number || '',
@@ -119,17 +123,23 @@ function PreviewItem({
     icon,
     label,
     value,
+    isLightMode = false,
 }: {
     icon: ReactNode;
     label: string;
     value: string;
+    isLightMode?: boolean;
 }) {
     return (
-        <div className="flex items-start gap-3 rounded-xl border border-dark-700 bg-dark-900/60 p-3">
-            <div className="mt-0.5 text-accent-400">{icon}</div>
-            <div>
-                <p className="text-xs uppercase tracking-wide text-silver-500">{label}</p>
-                <p className="mt-1 text-sm text-white break-all">{value || 'Not set'}</p>
+        <div className={`flex items-start gap-3 rounded-xl border p-3 transition-colors ${
+            isLightMode
+                ? 'border-gray-200 bg-gray-50/90 text-gray-900 shadow-xs'
+                : 'border-dark-700 bg-dark-900/60 text-white'
+        }`}>
+            <div className={`mt-0.5 ${isLightMode ? 'text-accent-600' : 'text-accent-400'}`}>{icon}</div>
+            <div className="min-w-0">
+                <p className={`text-[11px] font-semibold uppercase tracking-wider ${isLightMode ? 'text-gray-500' : 'text-silver-500'}`}>{label}</p>
+                <p className={`mt-0.5 text-xs font-medium break-all ${isLightMode ? 'text-gray-800' : 'text-white'}`}>{value || 'Not set'}</p>
             </div>
         </div>
     );
@@ -139,8 +149,16 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
     const { token, user } = useAuth();
     const [currentSubTab, setCurrentSubTab] = useState<TabKey>('site');
     const [formData, setFormData] = useState<SettingsFormData | null>(null);
-    const [logoFile, setLogoFile] = useState<File | null>(null);
-    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+    // Dual Logo upload states
+    const [logoLightFile, setLogoLightFile] = useState<File | null>(null);
+    const [logoLightPreview, setLogoLightPreview] = useState<string | null>(null);
+    const [logoDarkFile, setLogoDarkFile] = useState<File | null>(null);
+    const [logoDarkPreview, setLogoDarkPreview] = useState<string | null>(null);
+
+    // Live Preview theme state: 'light' (Storefront) vs 'dark' (Admin/Dark)
+    const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light');
+
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
@@ -162,8 +180,10 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
     useEffect(() => {
         if (settings) {
             setFormData(buildInitialFormData(settings));
-            setLogoFile(null);
-            setLogoPreview(settings.logo || null);
+            setLogoLightFile(null);
+            setLogoDarkFile(null);
+            setLogoLightPreview(settings.logo_light || settings.logo || null);
+            setLogoDarkPreview(settings.logo_dark || settings.logo || null);
         } else if (token) {
             // Self-healing fetch if settings prop was null
             fetch(`${API_BASE_URL}/admin/settings/`, {
@@ -175,7 +195,8 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
                 .then((data) => {
                     if (data) {
                         setFormData(buildInitialFormData(data));
-                        setLogoPreview(data.logo || null);
+                        setLogoLightPreview(data.logo_light || data.logo || null);
+                        setLogoDarkPreview(data.logo_dark || data.logo || null);
                         if (onSaved) onSaved(data);
                     }
                 })
@@ -184,18 +205,32 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
     }, [settings, token, onSaved]);
 
     useEffect(() => {
-        if (!logoFile) {
-            if (formData?.logo) {
-                setLogoPreview(formData.logo);
+        if (!logoLightFile) {
+            if (formData?.logo_light) {
+                setLogoLightPreview(formData.logo_light);
             }
             return;
         }
 
-        const objectUrl = URL.createObjectURL(logoFile);
-        setLogoPreview(objectUrl);
+        const objectUrl = URL.createObjectURL(logoLightFile);
+        setLogoLightPreview(objectUrl);
 
         return () => URL.revokeObjectURL(objectUrl);
-    }, [logoFile, formData?.logo]);
+    }, [logoLightFile, formData?.logo_light]);
+
+    useEffect(() => {
+        if (!logoDarkFile) {
+            if (formData?.logo_dark) {
+                setLogoDarkPreview(formData.logo_dark);
+            }
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(logoDarkFile);
+        setLogoDarkPreview(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [logoDarkFile, formData?.logo_dark]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         if (!formData) return;
@@ -246,13 +281,17 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
         try {
             const payload = new FormData();
             Object.entries(formData).forEach(([key, value]) => {
-                if (key === 'logo') return;
+                if (key === 'logo' || key === 'logo_light' || key === 'logo_dark') return;
                 if (value !== null && value !== undefined) {
                     payload.append(key, String(value));
                 }
             });
-            if (logoFile) {
-                payload.append('logo', logoFile);
+            if (logoLightFile) {
+                payload.append('logo_light', logoLightFile);
+                payload.append('logo', logoLightFile); // fallback sync
+            }
+            if (logoDarkFile) {
+                payload.append('logo_dark', logoDarkFile);
             }
 
             const res = await fetch(`${API_BASE_URL}/admin/settings/`, {
@@ -266,9 +305,13 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
             if (res.ok) {
                 const updated = await res.json();
                 setFormData(buildInitialFormData(updated));
-                setLogoFile(null);
+                setLogoLightFile(null);
+                setLogoDarkFile(null);
                 setSaveStatus('success');
                 if (onSaved) onSaved(updated);
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('site-settings-updated', { detail: updated }));
+                }
                 setTimeout(() => setSaveStatus('idle'), 4000);
             } else {
                 const errorData = await res.json().catch(() => ({}));
@@ -507,7 +550,7 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
                                     </div>
                                 </div>
 
-                                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_240px]">
+                                <div className="mt-6 space-y-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-silver-300">Site Tagline</label>
                                         <input
@@ -520,27 +563,94 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-silver-300">Store Logo</label>
-                                        <label className="flex min-h-[124px] cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-dark-500 bg-dark-700/70 px-4 py-4 text-center transition-colors hover:border-accent-500 hover:bg-dark-700">
-                                            {logoPreview ? (
-                                                <img src={logoPreview} alt="Site logo preview" className="h-14 max-w-[150px] object-contain" />
-                                            ) : (
-                                                <div className="rounded-full bg-accent-500/10 p-3 text-accent-400">
-                                                    <Upload size={18} />
+                                    {/* Dual Logo Upload Section */}
+                                    <div className="pt-2">
+                                        <div className="mb-3">
+                                            <h3 className="text-sm font-semibold text-white">Store Branding Logos</h3>
+                                            <p className="text-xs text-silver-400">
+                                                Upload optimized logos for both light backgrounds (storefront header &amp; footer) and dark backgrounds (admin panel &amp; dark surfaces).
+                                            </p>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                            {/* Light Mode Logo */}
+                                            <div className="rounded-xl border border-dark-600 bg-dark-700/50 p-4">
+                                                <div className="mb-2 flex items-center justify-between">
+                                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+                                                        <Sun size={14} /> Light Mode Logo
+                                                    </span>
+                                                    <span className="text-[10px] text-silver-400">Storefront &amp; Invoices</span>
                                                 </div>
-                                            )}
-                                            <div>
-                                                <p className="text-sm font-medium text-white">{logoFile ? logoFile.name : 'Upload logo'}</p>
-                                                <p className="mt-1 text-xs text-silver-500">PNG, JPG, WEBP</p>
+                                                <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white p-3 text-center transition-all hover:border-accent-500 hover:shadow-md">
+                                                    {logoLightPreview ? (
+                                                        <img
+                                                            src={logoLightPreview}
+                                                            alt="Light mode logo preview"
+                                                            className="h-16 max-w-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="rounded-full bg-accent-50 p-2.5 text-accent-600">
+                                                                <Upload size={18} />
+                                                            </div>
+                                                            <p className="mt-1.5 text-xs font-medium text-gray-800">Upload Light Logo</p>
+                                                            <p className="text-[10px] text-gray-500">Dark/colored text on white surface</p>
+                                                        </div>
+                                                    )}
+                                                    {logoLightFile && (
+                                                        <span className="truncate max-w-[180px] text-[10px] font-semibold text-accent-700 bg-accent-50 px-2 py-0.5 rounded">
+                                                            {logoLightFile.name}
+                                                        </span>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => setLogoLightFile(e.target.files?.[0] ?? null)}
+                                                    />
+                                                </label>
+                                                <p className="mt-2 text-[10px] text-silver-400 text-center">PNG, JPG, WEBP, SVG</p>
                                             </div>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
-                                            />
-                                        </label>
+
+                                            {/* Dark Mode Logo */}
+                                            <div className="rounded-xl border border-dark-600 bg-dark-700/50 p-4">
+                                                <div className="mb-2 flex items-center justify-between">
+                                                    <span className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400">
+                                                        <Moon size={14} /> Dark Mode Logo
+                                                    </span>
+                                                    <span className="text-[10px] text-silver-400">Admin &amp; Dark Theme</span>
+                                                </div>
+                                                <label className="flex min-h-[140px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-dark-500 bg-dark-900 p-3 text-center transition-all hover:border-accent-500 hover:shadow-md">
+                                                    {logoDarkPreview ? (
+                                                        <img
+                                                            src={logoDarkPreview}
+                                                            alt="Dark mode logo preview"
+                                                            className="h-16 max-w-full object-contain"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex flex-col items-center">
+                                                            <div className="rounded-full bg-dark-800 p-2.5 text-accent-400">
+                                                                <Upload size={18} />
+                                                            </div>
+                                                            <p className="mt-1.5 text-xs font-medium text-white">Upload Dark Logo</p>
+                                                            <p className="text-[10px] text-silver-400">White/light text on dark surface</p>
+                                                        </div>
+                                                    )}
+                                                    {logoDarkFile && (
+                                                        <span className="truncate max-w-[180px] text-[10px] font-semibold text-accent-300 bg-dark-800 px-2 py-0.5 rounded border border-dark-600">
+                                                            {logoDarkFile.name}
+                                                        </span>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={(e) => setLogoDarkFile(e.target.files?.[0] ?? null)}
+                                                    />
+                                                </label>
+                                                <p className="mt-2 text-[10px] text-silver-400 text-center">PNG, JPG, WEBP, SVG</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -631,48 +741,110 @@ export default function SettingsTab({ settings, onSaved }: SettingsTabProps) {
                         {/* Live Preview Column */}
                         <div className="space-y-6">
                             <div className="rounded-2xl border border-dark-700 bg-dark-800 p-6 shadow-sm">
-                                <div className="mb-4 flex items-center justify-between">
-                                    <h2 className="text-lg font-semibold text-white">Live Storefront Preview</h2>
-                                    <a
-                                        href={APP_URL}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-xs text-accent-400 hover:text-accent-300 font-bold"
-                                    >
-                                        <Globe size={14} /> View Store
-                                    </a>
+                                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-white">Live Storefront Preview</h2>
+                                        <p className="text-xs text-silver-400">Preview branding on light vs dark surfaces</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="inline-flex items-center rounded-lg bg-dark-900 p-1 border border-dark-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreviewMode('light')}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                                                    previewMode === 'light'
+                                                        ? 'bg-white text-gray-950 font-bold shadow-sm'
+                                                        : 'text-silver-400 hover:text-white'
+                                                }`}
+                                            >
+                                                <Sun size={13} className={previewMode === 'light' ? 'text-amber-500' : ''} /> Light
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreviewMode('dark')}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                                                    previewMode === 'dark'
+                                                        ? 'bg-accent-600 text-white font-bold shadow-sm'
+                                                        : 'text-silver-400 hover:text-white'
+                                                }`}
+                                            >
+                                                <Moon size={13} className={previewMode === 'dark' ? 'text-indigo-200' : ''} /> Dark
+                                            </button>
+                                        </div>
+                                        <a
+                                            href={APP_URL}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1 text-xs text-accent-400 hover:text-accent-300 font-bold"
+                                        >
+                                            <Globe size={14} /> View
+                                        </a>
+                                    </div>
                                 </div>
 
-                                <div className="rounded-2xl border border-dark-700 bg-dark-900/80 p-5">
-                                    <div className="mb-5 flex items-center gap-4">
-                                        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-dark-600 bg-dark-800">
-                                            {logoPreview ? (
-                                                <img src={logoPreview} alt="Preview logo" className="h-full w-full object-contain p-2" />
-                                            ) : (
-                                                <span className="text-xl font-bold text-accent-400">{formData.site_name.slice(0, 1) || 'V'}</span>
-                                            )}
+                                {previewMode === 'light' ? (
+                                    /* Light Storefront Preview */
+                                    <div className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-900 shadow-sm transition-all">
+                                        <div className="mb-5 flex items-center gap-4 border-b border-gray-100 pb-4">
+                                            <div className="flex h-16 w-24 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-50 p-2">
+                                                {logoLightPreview ? (
+                                                    <img src={logoLightPreview} alt="Light logo preview" className="h-full w-full object-contain" />
+                                                ) : (
+                                                    <span className="text-xl font-bold text-accent-600">{formData.site_name.slice(0, 1) || 'V'}</span>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="truncate text-base font-bold text-gray-900">{formData.site_name || 'VorionMart'}</h3>
+                                                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">Storefront</span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-gray-500 line-clamp-2">{formData.site_tagline || 'No tagline added yet.'}</p>
+                                            </div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <h3 className="truncate text-lg font-bold text-white">{formData.site_name || 'Site Name'}</h3>
-                                            <p className="mt-1 text-sm text-silver-400">{formData.site_tagline || 'No tagline added yet.'}</p>
-                                        </div>
-                                    </div>
 
-                                    <div className="space-y-3">
-                                        <PreviewItem icon={<Mail size={16} />} label="Email" value={formData.contact_email} />
-                                        <PreviewItem icon={<Phone size={16} />} label="Phone" value={formData.contact_phone} />
-                                        <PreviewItem icon={<MessageCircle size={16} />} label="WhatsApp" value={formData.whatsapp_number} />
-                                        <PreviewItem icon={<MapPin size={16} />} label="Address" value={formData.address} />
+                                        <div className="space-y-2.5">
+                                            <PreviewItem icon={<Mail size={15} />} label="Email" value={formData.contact_email} isLightMode />
+                                            <PreviewItem icon={<Phone size={15} />} label="Phone" value={formData.contact_phone} isLightMode />
+                                            <PreviewItem icon={<MessageCircle size={15} />} label="WhatsApp" value={formData.whatsapp_number} isLightMode />
+                                            <PreviewItem icon={<MapPin size={15} />} label="Address" value={formData.address} isLightMode />
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    /* Dark Admin Preview */
+                                    <div className="rounded-2xl border border-dark-700 bg-dark-900/90 p-5 text-white shadow-sm transition-all">
+                                        <div className="mb-5 flex items-center gap-4 border-b border-dark-800 pb-4">
+                                            <div className="flex h-16 w-24 items-center justify-center overflow-hidden rounded-xl border border-dark-700 bg-dark-950 p-2">
+                                                {logoDarkPreview ? (
+                                                    <img src={logoDarkPreview} alt="Dark logo preview" className="h-full w-full object-contain" />
+                                                ) : (
+                                                    <span className="text-xl font-bold text-accent-400">{formData.site_name.slice(0, 1) || 'V'}</span>
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="truncate text-base font-bold text-white">{formData.site_name || 'VorionMart'}</h3>
+                                                    <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-300 border border-indigo-500/30">Admin / Dark</span>
+                                                </div>
+                                                <p className="mt-1 text-xs text-silver-400 line-clamp-2">{formData.site_tagline || 'No tagline added yet.'}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2.5">
+                                            <PreviewItem icon={<Mail size={15} />} label="Email" value={formData.contact_email} />
+                                            <PreviewItem icon={<Phone size={15} />} label="Phone" value={formData.contact_phone} />
+                                            <PreviewItem icon={<MessageCircle size={15} />} label="WhatsApp" value={formData.whatsapp_number} />
+                                            <PreviewItem icon={<MapPin size={15} />} label="Address" value={formData.address} />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="rounded-2xl border border-dark-700 bg-dark-800 p-6 shadow-sm">
                                 <h2 className="mb-4 text-lg font-semibold text-white">Connected Links</h2>
                                 <div className="space-y-3">
-                                    <PreviewItem icon={<Globe size={16} />} label="Facebook" value={formData.facebook_url} />
-                                    <PreviewItem icon={<Globe size={16} />} label="Instagram" value={formData.instagram_url} />
-                                    <PreviewItem icon={<Globe size={16} />} label="Twitter" value={formData.twitter_url} />
+                                    <PreviewItem icon={<Globe size={16} />} label="Facebook" value={formData.facebook_url} isLightMode={previewMode === 'light'} />
+                                    <PreviewItem icon={<Globe size={16} />} label="Instagram" value={formData.instagram_url} isLightMode={previewMode === 'light'} />
+                                    <PreviewItem icon={<Globe size={16} />} label="Twitter" value={formData.twitter_url} isLightMode={previewMode === 'light'} />
                                 </div>
                             </div>
                         </div>

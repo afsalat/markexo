@@ -5,6 +5,7 @@ import { CartProvider } from '@/lib/cart';
 import { AuthProvider } from '@/context/AuthContext';
 import { CustomerAuthProvider } from '@/context/CustomerAuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { SiteSettingsProvider } from '@/context/SiteSettingsContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
 import { APP_URL } from '@/config/siteConfig';
 
@@ -162,11 +163,13 @@ export default function RootLayout({
             </head>
             <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-[#f8f9fb] text-gray-900`}>
                 <ThemeProvider>
-                    <CustomerAuthProvider>
-                        <CartProvider>
-                            <LayoutWrapper>{children}</LayoutWrapper>
-                        </CartProvider>
-                    </CustomerAuthProvider>
+                    <SiteSettingsProvider>
+                        <CustomerAuthProvider>
+                            <CartProvider>
+                                <LayoutWrapper>{children}</LayoutWrapper>
+                            </CartProvider>
+                        </CustomerAuthProvider>
+                    </SiteSettingsProvider>
                 </ThemeProvider>
             </body>
         </html>

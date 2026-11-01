@@ -31,7 +31,8 @@ from .models import (
     Shop, Category, Product, ProductImage, Review, Customer,
     Order, OrderItem, Banner, SiteSetting, Enquiry,
     Cart, CartItem, Supplier, OrderForwardLog, PayoutRequest, Partner,
-    ChecklistSection, ChecklistItem, BlogPost, StockLog, CourierPartner, Shipment
+    ChecklistSection, ChecklistItem, BlogPost, StockLog, CourierPartner, Shipment,
+    Coupon, CouponUsage
 )
 from .launch_checklist import (
     LAUNCH_CHECKLIST_PROJECT_NAME,
@@ -51,6 +52,7 @@ from .serializers import (
     BlogPostSerializer, SupplierSerializer, OrderForwardLogSerializer, OrderForwardSerializer, AdminPartnerSerializer, PayoutRequestSerializer,
     ChecklistSectionSerializer, ChecklistSectionWriteSerializer, ChecklistItemSerializer, ChecklistItemWriteSerializer,
     CourierPartnerSerializer, ShipmentSerializer,
+    CouponSerializer, CouponUsageSerializer,
     normalize_email_value, get_or_create_customer_for_user,
 )
 from .ai_service import GeminiBlogService
@@ -78,16 +80,40 @@ from .whatsapp import (
 
 logger = logging.getLogger(__name__)
 
+class PublicTokenVerifierCredential(firebase_admin.credentials.Base):
+    """Credential provider for verifying Firebase ID tokens via public Google certs when no service account private key is supplied."""
+    def __init__(self, project_id):
+        self.project_id = project_id
+        self.signer = None
+
+    def get_credential(self):
+        import google.auth.credentials
+        return google.auth.credentials.AnonymousCredentials()
+
+
+def get_configured_firebase_project_id():
+    pid = os.environ.get('FIREBASE_PROJECT_ID')
+    if not pid:
+        pid = getattr(settings, 'FIREBASE_PROJECT_ID', None)
+    if not pid:
+        try:
+            from .models import SiteSetting
+            st = SiteSetting.objects.first()
+            if st and st.firebase_project_id:
+                pid = st.firebase_project_id.strip()
+        except Exception:
+            pass
+    return pid or 'vorionmart-66c12'
+
+
 # Initialize Firebase Admin if not already initialized
 if not firebase_admin._apps:
     try:
-        # 1. Try environment variables (best for production)
-        project_id = os.environ.get('FIREBASE_PROJECT_ID')
+        project_id = get_configured_firebase_project_id()
         private_key = os.environ.get('FIREBASE_PRIVATE_KEY')
         client_email = os.environ.get('FIREBASE_CLIENT_EMAIL')
 
         if project_id and private_key and client_email:
-            # Handle potential escaping of newlines in env vars
             if "\\n" in private_key:
                 private_key = private_key.replace("\\n", "\n")
             
@@ -98,24 +124,29 @@ if not firebase_admin._apps:
                 "client_email": client_email,
                 "token_uri": "https://oauth2.googleapis.com/token",
             })
-            firebase_admin.initialize_app(cred)
-            logger.info("Firebase initialized using environment variables.")
+            firebase_admin.initialize_app(cred, options={'projectId': project_id})
+            logger.info("Firebase initialized using environment variables (project_id=%s).", project_id)
         else:
-            # 2. Try the service account JSON file (local development)
             cred_path = os.path.join(settings.BASE_DIR, 'firebase-service-account.json')
+            if not os.path.exists(cred_path):
+                alt_path = getattr(settings, 'GOOGLE_SERVICE_ACCOUNT_FILE', None)
+                if alt_path and os.path.exists(alt_path):
+                    cred_path = alt_path
+
             if os.path.exists(cred_path):
                 cred = firebase_admin.credentials.Certificate(cred_path)
-                firebase_admin.initialize_app(cred)
-                logger.info("Firebase initialized using service account JSON.")
+                firebase_admin.initialize_app(cred, options={'projectId': project_id})
+                logger.info("Firebase initialized using service account JSON (project_id=%s).", project_id)
             else:
-                # 3. Fallback for environments with default credentials (e.g., GCP)
-                firebase_admin.initialize_app()
-                logger.info("Firebase initialized using default credentials.")
+                cred = PublicTokenVerifierCredential(project_id)
+                firebase_admin.initialize_app(cred, options={'projectId': project_id})
+                logger.info("Firebase initialized with PublicTokenVerifierCredential (project_id=%s).", project_id)
     except Exception as e:
-        logger.error(f"Firebase initialization error: {e}")
-        # Final fallback to prevent crash, though subsequent auth calls will fail
+        logger.error("Firebase initialization error: %s", e)
         try:
-            firebase_admin.initialize_app()
+            fallback_pid = get_configured_firebase_project_id()
+            cred = PublicTokenVerifierCredential(fallback_pid)
+            firebase_admin.initialize_app(cred, options={'projectId': fallback_pid})
         except Exception:
             pass
 
@@ -457,13 +488,48 @@ class CreateOrderView(APIView):
             order_items.append(order_item_data)
             products_to_deduct.append((product, quantity))
 
-        # 4. Create Order
+        # 4. Handle Coupon Validation and Discount Calculation
+        coupon_code = (data.get('coupon_code') or '').strip().upper()
+        coupon_discount = Decimal('0.00')
+        applied_coupon = None
+
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code__iexact=coupon_code)
+                is_valid, reason = coupon.is_valid_now()
+                if not is_valid:
+                    return Response({'error': f"Coupon error: {reason}"}, status=status.HTTP_400_BAD_REQUEST)
+
+                if coupon.usage_limit_per_user:
+                    user_usage = CouponUsage.objects.filter(
+                        coupon=coupon,
+                        customer_phone=phone
+                    ).count()
+                    if user_usage >= coupon.usage_limit_per_user:
+                        return Response({
+                            'error': f"You have reached the redemption limit ({coupon.usage_limit_per_user}) for coupon '{coupon.code}'."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                discount, disc_msg = coupon.calculate_discount(total_amount)
+                if discount <= Decimal('0.00') and coupon.discount_type != 'free_shipping':
+                    return Response({'error': disc_msg}, status=status.HTTP_400_BAD_REQUEST)
+
+                coupon_discount = discount
+                applied_coupon = coupon
+            except Coupon.DoesNotExist:
+                return Response({'error': f"Coupon code '{coupon_code}' does not exist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        final_total = max(Decimal('0.00'), total_amount - coupon_discount)
+
+        # 5. Create Order
         order_status = 'pending_verification' if is_cod else 'pending'
         payment_status = 'pending_cod' if is_cod else 'pending'
 
         order = Order.objects.create(
             customer=customer,
-            total_amount=total_amount,
+            total_amount=final_total,
+            coupon_code=applied_coupon.code if applied_coupon else '',
+            coupon_discount=coupon_discount,
             delivery_address=data['delivery_address'],
             delivery_city=data['delivery_city'],
             delivery_pincode=data['delivery_pincode'],
@@ -473,7 +539,18 @@ class CreateOrderView(APIView):
             is_cod=is_cod,
         )
 
-        # 5. Create order items, deduct stock (stockout), and record stock log
+        if applied_coupon:
+            CouponUsage.objects.create(
+                coupon=applied_coupon,
+                order=order,
+                customer=customer,
+                user=request.user if request.user.is_authenticated else None,
+                customer_phone=phone,
+                discount_applied=coupon_discount
+            )
+            Coupon.objects.filter(id=applied_coupon.id).update(times_used=F('times_used') + 1)
+
+        # 6. Create order items, deduct stock (stockout), and record stock log
         for item in order_items:
             OrderItem.objects.create(order=order, **item)
 
@@ -601,7 +678,7 @@ class OrderDetailView(APIView):
     """Get order details by order ID."""
     permission_classes = [AllowAny]
     def get(self, request, order_id):
-        order = get_object_or_404(Order, order_id=order_id)
+        order = get_object_or_404(Order, order_id=order_id, is_deleted=False)
         serializer = OrderSerializer(order, context={'request': request})
         return Response(serializer.data)
 
@@ -702,7 +779,7 @@ class CustomerOrdersView(APIView):
             customer = get_existing_customer_by_email(email)
             if customer is None:
                 return Response([])
-            orders = Order.objects.filter(customer=customer).order_by('-created_at')
+            orders = Order.objects.filter(customer=customer, is_deleted=False).order_by('-created_at')
             serializer = OrderSerializer(orders, many=True, context={'request': request})
             return Response(serializer.data)
         except Customer.DoesNotExist:
@@ -1319,16 +1396,26 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
 
+        # Trash bin filtering
+        show_trash = (
+            self.request.query_params.get('show_trash') == 'true' or
+            self.request.query_params.get('trash') == 'true' or
+            self.request.query_params.get('status') == 'trash'
+        )
+        if show_trash:
+            queryset = queryset.filter(is_deleted=True)
+        else:
+            queryset = queryset.filter(is_deleted=False)
+
         # RLS: Limit to orders containing products the user created
         if not self.request.user.is_superuser:
             queryset = queryset.filter(
                 items__product__created_by=self.request.user
             ).distinct()
 
-
         # Filter by status
         status_filter = self.request.query_params.get('status')
-        if status_filter:
+        if status_filter and status_filter != 'trash':
             queryset = queryset.filter(status=status_filter)
 
         # Filter by payment status
@@ -1349,6 +1436,68 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             )
 
         return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        """Soft delete order to trash bin, or permanently delete if already in trash."""
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        pk = self.kwargs.get(lookup_url_kwarg)
+        order = Order.objects.filter(pk=pk).first()
+        if not order:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if order.is_deleted:
+            order_id_val = order.order_id
+            order.delete()
+            return Response({'status': 'success', 'message': f'Order {order_id_val} permanently deleted.'}, status=status.HTTP_200_OK)
+        else:
+            order.is_deleted = True
+            order.deleted_at = timezone.now()
+            order.save(update_fields=['is_deleted', 'deleted_at'])
+            return Response({'status': 'success', 'message': f'Order {order.order_id} moved to trash bin.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def move_to_trash(self, request, pk=None):
+        """Move an order to trash bin."""
+        order = Order.objects.filter(pk=pk).first()
+        if not order:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        order.is_deleted = True
+        order.deleted_at = timezone.now()
+        order.save(update_fields=['is_deleted', 'deleted_at'])
+        return Response({'status': 'success', 'message': f'Order {order.order_id} moved to trash bin.'})
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore an order from trash bin."""
+        order = Order.objects.filter(pk=pk).first()
+        if not order:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        order.is_deleted = False
+        order.deleted_at = None
+        order.save(update_fields=['is_deleted', 'deleted_at'])
+        return Response({'status': 'success', 'message': f'Order {order.order_id} restored successfully.'})
+
+    @action(detail=True, methods=['post', 'delete'])
+    def permanent_delete(self, request, pk=None):
+        """Permanently delete an order from database."""
+        order = Order.objects.filter(pk=pk).first()
+        if not order:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+        order_num = order.order_id
+        order.delete()
+        return Response({'status': 'success', 'message': f'Order {order_num} permanently deleted.'})
+
+    @action(detail=False, methods=['post'])
+    def empty_trash(self, request):
+        """Permanently delete all orders currently in trash bin."""
+        deleted_count, _ = Order.objects.filter(is_deleted=True).delete()
+        return Response({'status': 'success', 'deleted_count': deleted_count, 'message': f'Permanently deleted {deleted_count} orders from trash bin.'})
+
+    @action(detail=False, methods=['get'])
+    def trash_count(self, request):
+        """Get count of orders currently in trash bin."""
+        count = Order.objects.filter(is_deleted=True).count()
+        return Response({'count': count})
 
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
@@ -1453,6 +1602,8 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         selected_courier_name = request.data.get('selected_courier_name')
         courier_company_id = request.data.get('courier_company_id')
         custom_awb = request.data.get('custom_awb')
+        pickup_pincode = request.data.get('pickup_pincode')
+        pickup_location = request.data.get('pickup_location')
 
         try:
             res = ShiprocketService.create_shipment(
@@ -1464,7 +1615,9 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                 height=float(height) if height is not None else None,
                 selected_courier_name=selected_courier_name,
                 courier_company_id=int(courier_company_id) if courier_company_id else None,
-                custom_awb=custom_awb
+                custom_awb=custom_awb,
+                pickup_pincode=pickup_pincode,
+                pickup_location=pickup_location
             )
             try:
                 send_order_status_email(order)
@@ -1626,18 +1779,18 @@ class AdminCourierPartnerViewSet(viewsets.ModelViewSet):
             if not partner.api_email or not partner.api_password:
                 return Response({
                     'success': False,
-                    'message': 'Shiprocket API Email and Password are required for live authentication. You can also use Sandbox simulation mode.'
+                    'message': 'Shiprocket API Email and Password are required for live authentication.'
                 })
-            token = ShiprocketService.get_token(partner)
+            token, error_msg = ShiprocketService.get_token_with_error(partner)
             if token:
                 return Response({
                     'success': True,
-                    'message': f"Shiprocket connection authenticated successfully! Active token acquired."
+                    'message': "Shiprocket connection authenticated successfully! Active token acquired."
                 })
             else:
                 return Response({
                     'success': False,
-                    'message': 'Authentication failed. Please verify your Shiprocket email and password.'
+                    'message': f"Shiprocket error: {error_msg}"
                 })
         else:
             return Response({
@@ -1937,12 +2090,52 @@ class SocialLoginView(APIView):
         if provider != 'google':
             return Response({'error': 'Unsupported provider'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if not token:
+            return Response({'error': 'Authentication token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_project_id = get_configured_firebase_project_id()
+        decoded_token = None
+        verification_error = None
+
+        # 1. Primary verification: Firebase Admin SDK
         try:
-            # Verify Firebase ID token
             decoded_token = firebase_auth.verify_id_token(token)
+        except Exception as ex:
+            verification_error = ex
+            logger.info("Firebase Admin verify_id_token failed (%s), attempting google.oauth2 fallback...", ex)
+
+        # 2. Secondary fallback: google.oauth2.id_token.verify_firebase_token
+        if not decoded_token:
+            try:
+                import google.oauth2.id_token
+                from google.auth.transport import requests as google_requests
+                req = google_requests.Request()
+                decoded_token = google.oauth2.id_token.verify_firebase_token(
+                    token,
+                    req,
+                    audience=target_project_id
+                )
+            except Exception as ex:
+                logger.info("verify_firebase_token fallback failed (%s), attempting verify_oauth2_token...", ex)
+
+        # 3. Tertiary fallback: google.oauth2.id_token.verify_oauth2_token
+        if not decoded_token:
+            try:
+                import google.oauth2.id_token
+                from google.auth.transport import requests as google_requests
+                req = google_requests.Request()
+                decoded_token = google.oauth2.id_token.verify_oauth2_token(token, req)
+            except Exception as ex:
+                logger.warning("verify_oauth2_token fallback failed: %s", ex)
+
+        if not decoded_token:
+            logger.error("Social login token verification rejected: %s", verification_error)
+            return Response({'error': 'Invalid or expired social token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
             email = decoded_token.get('email')
             name = decoded_token.get('name', '')
-            
+
             if not email:
                 return Response({'error': 'Email not provided by Google'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1951,16 +2144,15 @@ class SocialLoginView(APIView):
             user = User.objects.filter(email__iexact=normalized_email).first()
             if not user:
                 username = normalized_email.split('@')[0]
-                # Ensure unique username
                 base_username = username
                 counter = 1
                 while User.objects.filter(username=username).exists():
                     username = f"{base_username}{counter}"
                     counter += 1
-                
+
                 user = User.objects.create_user(
                     username=username,
-                    email=email,
+                    email=normalized_email,
                     first_name=name.split(' ')[0] if name else '',
                     last_name=' '.join(name.split(' ')[1:]) if name and len(name.split(' ')) > 1 else '',
                 )
@@ -1968,11 +2160,11 @@ class SocialLoginView(APIView):
                 user.save()
 
             # Ensure customer profile exists
-            get_or_create_customer_for_user(user)
+            customer = get_or_create_customer_for_user(user)
 
             # Generate JWT
             refresh = RefreshToken.for_user(user)
-            
+
             return Response({
                 'access': str(refresh.access_token),
                 'refresh': str(refresh),
@@ -1980,11 +2172,12 @@ class SocialLoginView(APIView):
                     'id': user.id,
                     'email': user.email,
                     'name': f"{user.first_name} {user.last_name}".strip() or user.username,
+                    'phone': getattr(customer, 'phone', '') or '',
                 }
             })
 
         except Exception as e:
-            logger.error("Social login error: %s", str(e))
+            logger.error("Social login user creation/resolution error: %s", str(e), exc_info=True)
             return Response({'error': 'Social login failed'}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -2748,3 +2941,143 @@ class GoogleMerchantFeedView(APIView):
 
         xml_str = ET.tostring(rss, encoding='utf-8', method='xml')
         return HttpResponse(xml_str, content_type='application/xml')
+
+
+class AdminCouponViewSet(viewsets.ModelViewSet):
+    """
+    Advanced Admin ViewSet for Coupon management.
+    Supports full CRUD, toggle_status, statistics, and usage logs.
+    """
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = CouponSerializer
+
+    def get_queryset(self):
+        queryset = Coupon.objects.all().order_by('-created_at')
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(Q(code__icontains=search) | Q(title__icontains=search) | Q(description__icontains=search))
+
+        discount_type = self.request.query_params.get('discount_type')
+        if discount_type:
+            queryset = queryset.filter(discount_type=discount_type)
+
+        status_filter = self.request.query_params.get('status')
+        now = timezone.now()
+        if status_filter == 'active':
+            queryset = queryset.filter(is_active=True, valid_from__lte=now).filter(
+                Q(valid_until__isnull=True) | Q(valid_until__gte=now)
+            )
+        elif status_filter == 'inactive':
+            queryset = queryset.filter(is_active=False)
+        elif status_filter == 'expired':
+            queryset = queryset.filter(valid_until__lt=now)
+
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def toggle_status(self, request, pk=None):
+        coupon = self.get_object()
+        coupon.is_active = not coupon.is_active
+        coupon.save(update_fields=['is_active'])
+        return Response(CouponSerializer(coupon).data)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total_coupons = Coupon.objects.count()
+        now = timezone.now()
+        active_coupons = Coupon.objects.filter(is_active=True, valid_from__lte=now).filter(
+            Q(valid_until__isnull=True) | Q(valid_until__gte=now)
+        ).count()
+        total_redemptions = Coupon.objects.aggregate(total=Sum('times_used'))['total'] or 0
+        total_discount = CouponUsage.objects.aggregate(total=Sum('discount_applied'))['total'] or Decimal('0.00')
+
+        return Response({
+            'total_coupons': total_coupons,
+            'active_coupons': active_coupons,
+            'total_redemptions': total_redemptions,
+            'total_discount_given': float(total_discount),
+        })
+
+    @action(detail=True, methods=['get'])
+    def usages(self, request, pk=None):
+        coupon = self.get_object()
+        usages = coupon.usages.select_related('order', 'customer').order_by('-used_at')[:50]
+        serializer = CouponUsageSerializer(usages, many=True)
+        return Response(serializer.data)
+
+
+class ValidateCouponView(APIView):
+    """
+    Public API to validate and calculate discount for a coupon code at checkout.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        code = str(request.data.get('code', '')).strip().upper()
+        if not code:
+            return Response({'valid': False, 'message': 'Please enter a coupon code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            subtotal = Decimal(str(request.data.get('subtotal', 0)))
+        except Exception:
+            subtotal = Decimal('0.00')
+
+        phone = str(request.data.get('phone', '')).strip()
+
+        try:
+            coupon = Coupon.objects.get(code__iexact=code)
+        except Coupon.DoesNotExist:
+            return Response({'valid': False, 'message': f"Coupon code '{code}' does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        is_valid, reason = coupon.is_valid_now()
+        if not is_valid:
+            return Response({'valid': False, 'message': reason}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check per-user limit
+        if coupon.usage_limit_per_user and (phone or request.user.is_authenticated):
+            usage_qs = CouponUsage.objects.filter(coupon=coupon)
+            if phone:
+                usage_qs = usage_qs.filter(customer_phone=phone)
+            elif request.user.is_authenticated:
+                usage_qs = usage_qs.filter(user=request.user)
+
+            if usage_qs.count() >= coupon.usage_limit_per_user:
+                return Response({
+                    'valid': False,
+                    'message': f"You have already used coupon '{coupon.code}' the maximum allowed number of times ({coupon.usage_limit_per_user})."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        discount, disc_msg = coupon.calculate_discount(subtotal)
+        if discount <= Decimal('0.00') and coupon.discount_type != 'free_shipping':
+            return Response({'valid': False, 'message': disc_msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        final_total = max(Decimal('0.00'), subtotal - discount)
+
+        return Response({
+            'valid': True,
+            'message': f"Coupon '{coupon.code}' applied successfully!",
+            'coupon': CouponSerializer(coupon).data,
+            'discount_amount': float(discount),
+            'final_total': float(final_total),
+            'savings_text': f"You saved ₹{discount:,.2f} with this coupon!"
+        }, status=status.HTTP_200_OK)
+
+
+class AvailableCouponsView(APIView):
+    """
+    Public API returning active promotional coupons to showcase on checkout.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        now = timezone.now()
+        coupons = Coupon.objects.filter(
+            is_active=True,
+            valid_from__lte=now
+        ).filter(
+            Q(valid_until__isnull=True) | Q(valid_until__gte=now)
+        ).order_by('-is_featured', '-created_at')[:8]
+
+        serializer = CouponSerializer(coupons, many=True)
+        return Response(serializer.data)
+

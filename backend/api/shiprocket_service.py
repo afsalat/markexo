@@ -27,25 +27,25 @@ class ShiprocketService:
     """Service to interact with Shiprocket and manage courier partner fulfillment."""
 
     @staticmethod
-    def get_token(courier_partner: CourierPartner) -> Optional[str]:
-        """Authenticate with Shiprocket API and cache the bearer token."""
+    def get_token_with_error(courier_partner: CourierPartner) -> tuple[Optional[str], Optional[str]]:
+        """Authenticate with Shiprocket API, returning (token, error_message)."""
         email = (courier_partner.api_email or '').strip()
         password = (courier_partner.api_password or '').strip()
 
         if not email or not password:
-            return None
+            return None, "Shiprocket API Email and Password are required."
 
         cache_key = f"sr_{courier_partner.id}_{email}"
         cached = _TOKEN_CACHE.get(cache_key)
         if cached and cached.get('expires_at', 0) > time.time() + 300:
-            return cached.get('token')
+            return cached.get('token'), None
 
         url = f"{SHIPROCKET_API_BASE}/auth/login"
         payload = json.dumps({'email': email, 'password': password}).encode('utf-8')
         req = urllib.request.Request(
             url,
             data=payload,
-            headers={'Content-Type': 'application/json', 'Accept': 'application/json'},
+            headers={'Content-Type': 'application/json', 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0'},
             method='POST'
         )
 
@@ -59,10 +59,25 @@ class ShiprocketService:
                         'token': token,
                         'expires_at': time.time() + (7 * 86400)
                     }
-                    return token
+                    return token, None
+                return None, body.get('message', 'No authentication token received from Shiprocket.')
+        except urllib.error.HTTPError as e:
+            try:
+                err_body = json.loads(e.read().decode('utf-8'))
+                msg = err_body.get('message') or f"HTTP {e.code}"
+            except Exception:
+                msg = f"HTTP {e.code}: {e.reason}"
+            logger.error("Shiprocket authentication HTTP error: %s", msg)
+            return None, msg
         except Exception as e:
             logger.error("Shiprocket authentication error for partner %s: %s", courier_partner.name, str(e))
-            return None
+            return None, str(e)
+
+    @staticmethod
+    def get_token(courier_partner: CourierPartner) -> Optional[str]:
+        """Authenticate with Shiprocket API and cache the bearer token."""
+        token, _ = ShiprocketService.get_token_with_error(courier_partner)
+        return token
 
     @staticmethod
     def check_serviceability(
@@ -179,15 +194,35 @@ class ShiprocketService:
         height: Optional[float] = None,
         selected_courier_name: Optional[str] = None,
         courier_company_id: Optional[int] = None,
-        custom_awb: Optional[str] = None
+        custom_awb: Optional[str] = None,
+        pickup_pincode: Optional[str] = None,
+        pickup_location: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Creates an AWB and Shipment consignment for an Order.
         Updates the Order status to 'shipped' and records tracking details.
+        Supports multi-shop pickup by auto-detecting the shop for order items.
         """
         site_setting = SiteSetting.objects.first()
-        pickup_pincode = courier_partner.pickup_pincode or getattr(site_setting, 'pickup_pincode', '110020')
-        pickup_loc = courier_partner.default_pickup_location or getattr(site_setting, 'pickup_warehouse_name', 'Primary Warehouse')
+
+        # Multi-shop pickup resolution:
+        # Check if order items belong to a specific shop with its own pickup address/pincode
+        first_item = order.items.select_related('shop', 'product__shop').first()
+        item_shop = getattr(first_item, 'shop', None) or (first_item.product.shop if first_item and first_item.product else None)
+
+        if not pickup_pincode:
+            if item_shop and item_shop.pincode:
+                pickup_pincode = item_shop.pincode.strip()
+            else:
+                pickup_pincode = courier_partner.pickup_pincode or getattr(site_setting, 'pickup_pincode', '110020')
+
+        if not pickup_location:
+            if item_shop and (item_shop.pickup_location_nickname or item_shop.name):
+                pickup_loc = (item_shop.pickup_location_nickname or item_shop.name).strip()
+            else:
+                pickup_loc = courier_partner.default_pickup_location or getattr(site_setting, 'pickup_warehouse_name', 'Primary Warehouse')
+        else:
+            pickup_loc = pickup_location.strip()
 
         # Compute package specs if not passed
         final_weight = float(weight_kg if weight_kg is not None else order.calculate_shipping_weight())
@@ -534,13 +569,26 @@ class ShiprocketService:
         site_setting = SiteSetting.objects.first()
         order = shipment.order
 
-        sender_name = getattr(site_setting, 'pickup_warehouse_name', 'VorionMart Logistics Hub') or 'VorionMart Logistics Hub'
-        sender_phone = getattr(site_setting, 'pickup_phone', '+91 9876543210') or '+91 9876543210'
-        sender_address = getattr(site_setting, 'pickup_address', 'Plot 42, Logistics Park, Okhla Industrial Area') or 'Plot 42, Logistics Park, Okhla Industrial Area'
-        sender_city = getattr(site_setting, 'pickup_city', 'New Delhi') or 'New Delhi'
-        sender_state = getattr(site_setting, 'pickup_state', 'Delhi') or 'Delhi'
-        sender_pincode = getattr(site_setting, 'pickup_pincode', '110020') or '110020'
-        sender_gstin = getattr(site_setting, 'pickup_gstin', '07AAAAA0000A1Z5') or '07AAAAA0000A1Z5'
+        # Multi-shop consignor resolution
+        first_item = order.items.select_related('shop', 'product__shop').first()
+        item_shop = getattr(first_item, 'shop', None) or (first_item.product.shop if first_item and first_item.product else None)
+
+        if item_shop and (item_shop.address or item_shop.city or item_shop.pincode):
+            sender_name = item_shop.name
+            sender_phone = item_shop.phone or getattr(site_setting, 'pickup_phone', '+91 9876543210')
+            sender_address = item_shop.address
+            sender_city = item_shop.city
+            sender_state = item_shop.state or getattr(site_setting, 'pickup_state', 'Delhi')
+            sender_pincode = item_shop.pincode or getattr(site_setting, 'pickup_pincode', '110020')
+            sender_gstin = getattr(site_setting, 'pickup_gstin', '07AAAAA0000A1Z5') or '07AAAAA0000A1Z5'
+        else:
+            sender_name = getattr(site_setting, 'pickup_warehouse_name', 'VorionMart Logistics Hub') or 'VorionMart Logistics Hub'
+            sender_phone = getattr(site_setting, 'pickup_phone', '+91 9876543210') or '+91 9876543210'
+            sender_address = getattr(site_setting, 'pickup_address', 'Plot 42, Logistics Park, Okhla Industrial Area') or 'Plot 42, Logistics Park, Okhla Industrial Area'
+            sender_city = getattr(site_setting, 'pickup_city', 'New Delhi') or 'New Delhi'
+            sender_state = getattr(site_setting, 'pickup_state', 'Delhi') or 'Delhi'
+            sender_pincode = getattr(site_setting, 'pickup_pincode', '110020') or '110020'
+            sender_gstin = getattr(site_setting, 'pickup_gstin', '07AAAAA0000A1Z5') or '07AAAAA0000A1Z5'
 
         payment_badge_class = "cod-badge" if shipment.is_cod else "prepaid-badge"
         payment_text = "C.O.D (Cash on Delivery)" if shipment.is_cod else "PREPAID"

@@ -17,6 +17,10 @@ db.sqlite3
 media/
 staticfiles/
 
+# Django Migrations
+**/migrations/*.py
+!**/migrations/__init__.py
+
 # Node / Next.js
 node_modules/
 .next/

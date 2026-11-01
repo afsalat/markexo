@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { ChevronRight, Shield, Truck, CreditCard, Users, Award, CheckCircle, MapPin, Mail, Phone, Globe, Building2, Heart, Target, Zap, Star } from 'lucide-react';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function AboutPage() {
+    const { settings } = useSiteSettings();
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Breadcrumb */}
@@ -210,7 +212,7 @@ export default function AboutPage() {
                                     </div>
                                     <div>
                                         <dt className="text-gray-400 text-xs uppercase tracking-wider mb-0.5">Brand Name</dt>
-                                        <dd className="font-semibold">VorionMart</dd>
+                                        <dd className="font-semibold">{settings?.site_name || 'VorionMart'}</dd>
                                     </div>
                                     <div>
                                         <dt className="text-gray-400 text-xs uppercase tracking-wider mb-0.5">Business Type</dt>
@@ -233,21 +235,22 @@ export default function AboutPage() {
                                     <li className="flex items-start gap-3">
                                         <MapPin size={18} className="text-accent-400 shrink-0 mt-0.5" />
                                         <div>
-                                            <p className="font-semibold">Vorion Nexus Technology</p>
-                                            <p className="text-gray-400">Thoppayil Beach C.25, O.P Nadakkavu</p>
-                                            <p className="text-gray-400">Kozhikode, Kerala 673011, India</p>
+                                            <p className="font-semibold">{settings?.site_name || 'Vorion Nexus Technology'}</p>
+                                            <p className="text-gray-400 whitespace-pre-line">
+                                                {settings?.address || 'Thoppayil Beach C.25, O.P Nadakkavu\nKozhikode, Kerala 673011, India'}
+                                            </p>
                                         </div>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Phone size={18} className="text-accent-400 shrink-0" />
-                                        <a href="tel:+917356216468" className="hover:text-accent-400 transition-colors font-semibold">
-                                            +91 735 621 6468
+                                        <a href={`tel:${settings?.contact_phone || '+917356216468'}`} className="hover:text-accent-400 transition-colors font-semibold">
+                                            {settings?.contact_phone || '+91 735 621 6468'}
                                         </a>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <Mail size={18} className="text-accent-400 shrink-0" />
-                                        <a href="mailto:vorionmart@gmail.com" className="hover:text-accent-400 transition-colors font-semibold">
-                                            vorionmart@gmail.com
+                                        <a href={`mailto:${settings?.contact_email || 'vorionmart@gmail.com'}`} className="hover:text-accent-400 transition-colors font-semibold">
+                                            {settings?.contact_email || 'vorionmart@gmail.com'}
                                         </a>
                                     </li>
                                     <li className="flex items-center gap-3">

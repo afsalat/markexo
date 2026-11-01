@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import {
     LayoutDashboard, ShoppingCart, Package, CreditCard,
-    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe, Search, Truck
+    Users, Image, Settings, ChevronRight, Grid, MessageSquare, LogOut, Shield, RotateCcw, Zap, BarChart2, TerminalSquare, Store, ClipboardList, Globe, Search, Truck, Ticket
 } from 'lucide-react';
 
 import { useAuth } from '@/context/AuthContext';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 interface SidebarProps {
     activeTab: string;
@@ -16,6 +17,7 @@ interface SidebarProps {
 
 export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen, pendingOrdersCount }: SidebarProps) {
     const { logout, hasPermission } = useAuth();
+    const { settings } = useSiteSettings();
     const menuItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, permission: null },
         { id: 'launch-readiness', label: 'Launch Readiness', icon: ClipboardList, permission: null },
@@ -35,7 +37,7 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
         { id: 'google-merchant', label: 'Google Merchant', icon: Globe, permission: 'view_sitesetting' },
         { id: 'seo-reports', label: 'SEO Reports', icon: Search, permission: 'view_sitesetting' },
         { id: 'system-logs', label: 'System Logs', icon: TerminalSquare, permission: 'view_sitesetting' },
-
+        { id: 'coupons', label: 'Coupons & Offers', icon: Ticket, permission: 'view_sitesetting' },
         { id: 'banners', label: 'Banners', icon: Image, permission: 'view_banner' },
         { id: 'settings', label: 'Settings', icon: Settings, permission: 'view_sitesetting' },
     ];
@@ -49,9 +51,9 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
             <div className="px-4 py-4 sm:px-6 border-b border-gray-800 flex justify-center shrink-0">
                 <Link href="/" className="flex items-center gap-3">
                     <img
-                        src="/logo-white-text.webp"
-                        alt="VorionMart Logo"
-                        className="h-10 sm:h-12 w-auto object-contain"
+                        src={settings?.logo_dark || '/logo-white-text.webp'}
+                        alt={settings?.site_name ? `${settings.site_name} Logo` : 'VorionMart Logo'}
+                        className="h-10 sm:h-12 w-auto max-w-[180px] object-contain"
                     />
                 </Link>
             </div>

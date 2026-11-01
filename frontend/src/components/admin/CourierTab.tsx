@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import {
     Truck, Package, ShieldCheck, MapPin, Search, RefreshCw, Printer, ExternalLink,
     CheckCircle2, Clock, AlertTriangle, ArrowRight, Settings, Plus, Edit3, X,
-    ChevronDown, DollarSign, Box, Check, Copy, AlertCircle, Sparkles, Navigation
+    ChevronDown, DollarSign, Box, Check, Copy, AlertCircle, Sparkles, Navigation, Store
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
-import { CourierPartner, Shipment, TrackingEvent } from '@/types/admin';
+import { CourierPartner, Shipment, TrackingEvent, Order, Shop } from '@/types/admin';
 
 export default function CourierTab() {
     const { token } = useAuth();
@@ -44,6 +44,17 @@ export default function CourierTab() {
     const [calcIsCod, setCalcIsCod] = useState(true);
     const [calcLoading, setCalcLoading] = useState(false);
     const [calcResults, setCalcResults] = useState<any[] | null>(null);
+
+    // Multi-shop sourcing origins
+    const [shops, setShops] = useState<Shop[]>([]);
+    const [selectedOriginType, setSelectedOriginType] = useState<string>('hub');
+
+    // Arrived / Pending Orders for easy calculation & dispatch
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [dispatchingOrder, setDispatchingOrder] = useState(false);
+    const [dispatchSuccessMsg, setDispatchSuccessMsg] = useState<string | null>(null);
 
     // Warehouse Settings state
     const [warehouseForm, setWarehouseForm] = useState({
@@ -128,10 +139,47 @@ export default function CourierTab() {
         }
     };
 
+    // Fetch Arrived / Pending Orders
+    const fetchOrders = async () => {
+        if (!token) return;
+        setOrdersLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/?page_size=50`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const list: Order[] = data.results || (Array.isArray(data) ? data : []);
+                setOrders(list);
+            }
+        } catch (e) {
+            console.error('Failed to fetch orders for courier calculator', e);
+        } finally {
+            setOrdersLoading(false);
+        }
+    };
+
+    // Fetch Active Sourcing Shops
+    const fetchShops = async () => {
+        if (!token) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/shops/?is_active=true`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const list: Shop[] = data.results || (Array.isArray(data) ? data : []);
+                setShops(list);
+            }
+        } catch (e) {
+            console.error('Failed to fetch shops for courier calculation', e);
+        }
+    };
+
     useEffect(() => {
         const loadAll = async () => {
             setLoading(true);
-            await Promise.all([fetchShipments(), fetchPartners(), fetchWarehouseSettings()]);
+            await Promise.all([fetchShipments(), fetchPartners(), fetchWarehouseSettings(), fetchOrders(), fetchShops()]);
             setLoading(false);
         };
         loadAll();
@@ -265,9 +313,8 @@ export default function CourierTab() {
         }
     };
 
-    // Run Rate Calculator
-    const handleCalculateRate = async (e: React.FormEvent) => {
-        e.preventDefault();
+    // Trigger calculation helper
+    const triggerRateCalculation = async (pickupPin: string, deliveryPin: string, weightKg: number, isCodVal: boolean) => {
         setCalcLoading(true);
         setCalcResults(null);
         try {
@@ -284,10 +331,10 @@ export default function CourierTab() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    pickup_pincode: calcPickupPincode,
-                    delivery_pincode: calcDeliveryPincode,
-                    weight_kg: parseFloat(calcWeight) || 0.5,
-                    is_cod: calcIsCod
+                    pickup_pincode: pickupPin,
+                    delivery_pincode: deliveryPin,
+                    weight_kg: weightKg,
+                    is_cod: isCodVal
                 })
             });
 
@@ -299,6 +346,116 @@ export default function CourierTab() {
             console.error('Failed to calculate rate', e);
         } finally {
             setCalcLoading(false);
+        }
+    };
+
+    // Run Rate Calculator from form
+    const handleCalculateRate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await triggerRateCalculation(calcPickupPincode, calcDeliveryPincode, parseFloat(calcWeight) || 0.5, calcIsCod);
+    };
+
+    // Handle Origin Dropdown Change
+    const handleOriginChange = (val: string) => {
+        setSelectedOriginType(val);
+        if (val === 'hub') {
+            const defaultPartner = partners.find(p => p.is_default) || partners[0];
+            const hubPin = defaultPartner?.pickup_pincode || warehouseForm.pickup_pincode || '110020';
+            setCalcPickupPincode(hubPin);
+        } else if (val !== 'custom') {
+            const shop = shops.find(s => String(s.id) === val);
+            if (shop && shop.pincode) {
+                setCalcPickupPincode(shop.pincode.trim());
+            }
+        }
+    };
+
+    // Handle Order Selection for Instant Auto-Calculation
+    const handleSelectOrder = (order: Order | null) => {
+        setSelectedOrder(order);
+        setDispatchSuccessMsg(null);
+        if (!order) return;
+
+        // Auto-detect and set origin from order's shop
+        let originPin = calcPickupPincode;
+        if (order.pickup_origin?.pincode) {
+            originPin = order.pickup_origin.pincode.trim();
+            setSelectedOriginType(String(order.pickup_origin.shop_id || 'custom'));
+            setCalcPickupPincode(originPin);
+        } else if (order.items && order.items.length > 0) {
+            const firstItemShopPin = order.items[0]?.shop_pincode;
+            const firstItemShopId = order.items[0]?.shop;
+            if (firstItemShopPin) {
+                originPin = firstItemShopPin.trim();
+                setSelectedOriginType(String(firstItemShopId || 'custom'));
+                setCalcPickupPincode(originPin);
+            }
+        }
+
+        // Auto-fill delivery pincode
+        const deliveryPin = (order.delivery_pincode || '').trim();
+        if (deliveryPin) {
+            setCalcDeliveryPincode(deliveryPin);
+        }
+
+        // Auto-fill weight (kg)
+        let weight = 0.5;
+        if (order.package_weight && Number(order.package_weight) > 0) {
+            weight = Number(order.package_weight);
+        } else if (order.estimated_package_specs?.weight_kg && Number(order.estimated_package_specs.weight_kg) > 0) {
+            weight = Number(order.estimated_package_specs.weight_kg);
+        } else if (order.items && order.items.length > 0) {
+            const sumWeight = order.items.reduce((acc: number, itm: any) => {
+                const w = itm.product?.weight_kg || 0.4;
+                return acc + (Number(w) * (itm.quantity || 1));
+            }, 0);
+            if (sumWeight > 0) weight = Math.max(0.1, Math.round(sumWeight * 100) / 100);
+        }
+        setCalcWeight(String(weight));
+
+        // Auto-fill COD status
+        const isCodVal = order.is_cod !== undefined ? !!order.is_cod : (order.payment_method?.toLowerCase() === 'cod');
+        setCalcIsCod(isCodVal);
+
+        // Instantly trigger rate calculation
+        if (deliveryPin) {
+            triggerRateCalculation(originPin, deliveryPin, weight, isCodVal);
+        }
+    };
+
+    // Dispatch Selected Order directly with chosen courier
+    const handleDispatchSelectedOrder = async (courier: any) => {
+        if (!selectedOrder) return;
+        setDispatchingOrder(true);
+        setDispatchSuccessMsg(null);
+        try {
+            const defaultPartner = partners.find(p => p.is_default) || partners[0];
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${selectedOrder.id}/create_shipment/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    courier_partner_id: defaultPartner?.id,
+                    selected_courier_name: courier.courier_name,
+                    courier_company_id: courier.courier_company_id,
+                    weight_kg: parseFloat(calcWeight) || 0.5,
+                    pickup_pincode: calcPickupPincode,
+                    pickup_location: selectedOrder.pickup_origin?.pickup_location_nickname || undefined,
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                setDispatchSuccessMsg(`Order #${selectedOrder.order_id} dispatched successfully with ${data.courier_name}! AWB: ${data.awb_code}`);
+                await Promise.all([fetchShipments(), fetchOrders()]);
+            } else {
+                alert(data.error || 'Failed to dispatch order with courier.');
+            }
+        } catch (e: any) {
+            alert(e.message || 'Error creating shipment.');
+        } finally {
+            setDispatchingOrder(false);
         }
     };
 
@@ -703,125 +860,342 @@ export default function CourierTab() {
 
             {/* SUBTAB 3: RATE & SERVICEABILITY CALCULATOR */}
             {subTab === 'calculator' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1 bg-dark-800 rounded-3xl p-6 border border-dark-700 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Sparkles size={18} className="text-accent-400" />
-                            <h2 className="text-lg font-bold text-white">Rate & Courier Calculator</h2>
-                        </div>
-                        <p className="text-xs text-silver-400 mb-6">
-                            Simulate and fetch real-time freight charges and carrier options across all postal codes.
-                        </p>
-
-                        <form onSubmit={handleCalculateRate} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Pickup Pincode (Origin)</label>
-                                <input
-                                    type="text"
-                                    value={calcPickupPincode}
-                                    onChange={(e) => setCalcPickupPincode(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
-                                />
+                <div className="space-y-6">
+                    {/* Arrived Orders Quick Selector Bar */}
+                    <div className="bg-dark-800 rounded-3xl p-6 border border-dark-700 shadow-sm">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-2xl bg-accent-500/10 border border-accent-500/20 text-accent-400 flex items-center justify-center font-bold">
+                                    <Package size={22} />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-extrabold text-white">Select Arrived Order for Easy Calculation</h2>
+                                    <p className="text-xs text-silver-400">
+                                        Select any incoming order to automatically fill destination pincode, weight, COD, and get instant courier freight rates.
+                                    </p>
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Delivery Pincode (Destination)</label>
-                                <input
-                                    type="text"
-                                    value={calcDeliveryPincode}
-                                    onChange={(e) => setCalcDeliveryPincode(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
-                                />
+                            {/* Dropdown & Actions */}
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={selectedOrder ? selectedOrder.id : ''}
+                                    onChange={(e) => {
+                                        const found = orders.find(o => o.id === parseInt(e.target.value));
+                                        handleSelectOrder(found || null);
+                                    }}
+                                    className="px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-accent-500 min-w-[280px] cursor-pointer"
+                                >
+                                    <option value="">-- Choose an arrived order --</option>
+                                    {orders.map((o) => (
+                                        <option key={o.id} value={o.id}>
+                                            #{o.order_id} • {o.customer?.name || 'Customer'} • {o.delivery_city || 'City'} ({o.delivery_pincode || 'No Pin'}) • ₹{Number(o.total_amount).toLocaleString()} {o.is_cod ? '(COD)' : '(Prepaid)'}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {selectedOrder && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelectOrder(null)}
+                                        className="p-2.5 bg-dark-700 hover:bg-dark-600 text-silver-400 hover:text-white rounded-xl transition-all border border-dark-600"
+                                        title="Clear selected order"
+                                    >
+                                        <X size={15} />
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={fetchOrders}
+                                    disabled={ordersLoading}
+                                    className="p-2.5 bg-dark-700 hover:bg-dark-600 text-silver-400 hover:text-white rounded-xl transition-all border border-dark-600"
+                                    title="Refresh orders list"
+                                >
+                                    <RefreshCw size={15} className={ordersLoading ? 'animate-spin text-accent-400' : ''} />
+                                </button>
                             </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Package Weight (in Kg)</label>
-                                <input
-                                    type="number"
-                                    step="0.05"
-                                    min="0.1"
-                                    value={calcWeight}
-                                    onChange={(e) => setCalcWeight(e.target.value)}
-                                    required
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-3 pt-2">
-                                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-white">
-                                    <input
-                                        type="checkbox"
-                                        checked={calcIsCod}
-                                        onChange={(e) => setCalcIsCod(e.target.checked)}
-                                        className="w-4 h-4 rounded text-accent-500 focus:ring-accent-500 bg-dark-700 border-dark-600"
-                                    />
-                                    Cash on Delivery (COD)
-                                </label>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={calcLoading}
-                                className="w-full mt-4 py-3 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 text-dark-900 font-extrabold rounded-xl shadow-lg shadow-accent-500/20 transition-all flex items-center justify-center gap-2"
-                            >
-                                {calcLoading ? <RefreshCw size={16} className="animate-spin" /> : <Truck size={16} />}
-                                Calculate Shipping Rates
-                            </button>
-                        </form>
-                    </div>
-
-                    <div className="lg:col-span-2 bg-dark-800 rounded-3xl p-6 border border-dark-700 shadow-sm flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-white">Available Logistics Partners</h2>
-                            <span className="text-xs text-silver-500">Origin: {calcPickupPincode} → Destination: {calcDeliveryPincode}</span>
                         </div>
 
-                        {calcResults === null ? (
-                            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-silver-500 border border-dashed border-dark-700 rounded-2xl">
-                                <Truck size={36} className="opacity-30 mb-2" />
-                                <p className="font-semibold text-white">No Calculation Yet</p>
-                                <p className="text-xs max-w-sm mt-1">Enter pincodes and parcel weight on the left to compare delivery times and shipping rates across Shiprocket partner networks.</p>
-                            </div>
-                        ) : calcResults.length === 0 ? (
-                            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-silver-500 border border-dashed border-dark-700 rounded-2xl">
-                                <AlertCircle size={36} className="text-amber-500 mb-2" />
-                                <p className="font-semibold text-white">No Courier Serviceable</p>
-                                <p className="text-xs">No active carrier covers this pincode combination with COD.</p>
+                        {/* Recent Orders Quick Chips */}
+                        {orders.length > 0 ? (
+                            <div className="mt-4 pt-4 border-t border-dark-700/60 flex items-center gap-2 overflow-x-auto pb-1">
+                                <span className="text-[11px] font-bold text-silver-500 uppercase tracking-wider whitespace-nowrap">
+                                    Recent Arrived:
+                                </span>
+                                {orders.slice(0, 6).map((ord) => {
+                                    const isSelected = selectedOrder?.id === ord.id;
+                                    return (
+                                        <button
+                                            key={ord.id}
+                                            type="button"
+                                            onClick={() => handleSelectOrder(ord)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${
+                                                isSelected
+                                                    ? 'bg-accent-500 text-dark-900 border-accent-400 shadow-md shadow-accent-500/20'
+                                                    : 'bg-dark-700/80 hover:bg-dark-700 text-silver-300 border-dark-600 hover:text-white'
+                                            }`}
+                                        >
+                                            <span className="font-mono">#{ord.order_id}</span>
+                                            <span className="opacity-75 font-normal">
+                                                {ord.customer?.name?.split(' ')[0] || 'Cust'} • {ord.delivery_pincode || 'Pin'}
+                                            </span>
+                                            {ord.is_cod ? (
+                                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${isSelected ? 'bg-dark-900 text-amber-300' : 'bg-amber-500/20 text-amber-400'}`}>
+                                                    COD
+                                                </span>
+                                            ) : (
+                                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${isSelected ? 'bg-dark-900 text-green-300' : 'bg-green-500/20 text-green-400'}`}>
+                                                    PREPAID
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         ) : (
-                            <div className="space-y-3 flex-1 overflow-y-auto">
-                                {calcResults.map((c, i) => (
-                                    <div
-                                        key={i}
-                                        className="flex items-center justify-between p-4 bg-dark-700/60 hover:bg-dark-700 rounded-2xl border border-dark-600 transition-all"
-                                    >
-                                        <div className="flex items-center gap-3.5">
-                                            <div className="w-10 h-10 rounded-xl bg-accent-500/10 border border-accent-500/20 flex items-center justify-center text-accent-400 font-extrabold text-sm">
-                                                {i + 1}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-extrabold text-white text-base">{c.courier_name}</h3>
-                                                <div className="flex items-center gap-3 text-xs text-silver-400 mt-0.5">
-                                                    <span className="flex items-center gap-1 text-silver-300">
-                                                        <Clock size={12} className="text-silver-400" />
-                                                        Est. Delivery: {c.etd}
-                                                    </span>
-                                                    <span>•</span>
-                                                    <span>⭐ {c.rating} Rating</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-right">
-                                            <div className="text-xl font-black text-white">₹{c.rate}</div>
-                                            <span className="text-[11px] text-green-400 font-semibold">Serviceable</span>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="mt-3 text-xs text-silver-500">
+                                No arrived orders pending shipment found. When customers place orders, they will appear here automatically for 1-click calculation.
                             </div>
                         )}
+                    </div>
+
+                    {/* Main Calculator Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Form */}
+                        <div className="lg:col-span-1 bg-dark-800 rounded-3xl p-6 border border-dark-700 shadow-sm space-y-4">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Sparkles size={18} className="text-accent-400" />
+                                <h2 className="text-lg font-bold text-white">Rate & Courier Calculator</h2>
+                            </div>
+                            <p className="text-xs text-silver-400">
+                                Simulate and fetch real-time freight charges and carrier options across all postal codes.
+                            </p>
+
+                            {/* Selected Order Preview Card */}
+                            {selectedOrder && (
+                                <div className="p-4 bg-accent-500/10 border border-accent-500/30 rounded-2xl space-y-2 animate-fade-in">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <span className="text-[10px] font-black uppercase text-accent-400 tracking-wider">Active Selected Order</span>
+                                            <div className="text-base font-extrabold text-white font-mono">#{selectedOrder.order_id}</div>
+                                        </div>
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${selectedOrder.is_cod ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
+                                            {selectedOrder.is_cod ? 'COD' : 'PREPAID'} • ₹{Number(selectedOrder.total_amount).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="text-xs text-silver-300">
+                                        <span className="font-bold text-white">{selectedOrder.customer?.name}</span>
+                                        {selectedOrder.customer?.phone && <span className="text-silver-400 font-mono"> ({selectedOrder.customer.phone})</span>}
+                                    </div>
+                                    <div className="text-[11px] text-silver-400 line-clamp-2">
+                                        📍 {selectedOrder.delivery_address || ''}, {selectedOrder.delivery_city} - {selectedOrder.delivery_pincode}
+                                    </div>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleCalculateRate} className="space-y-4">
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="text-xs font-bold text-silver-400 uppercase">Pickup Origin (Multi-Shop Pickup)</label>
+                                        {selectedOrder?.pickup_origin ? (
+                                            <span className="text-[10px] text-accent-400 font-bold">Auto-detected from Shop</span>
+                                        ) : selectedOriginType !== 'hub' && (
+                                            <span className="text-[10px] text-blue-400 font-bold">Shop Origin</span>
+                                        )}
+                                    </div>
+                                    <select
+                                        value={selectedOriginType}
+                                        onChange={(e) => handleOriginChange(e.target.value)}
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-accent-500 mb-2 cursor-pointer"
+                                    >
+                                        <option value="hub">🏢 Default Hub Warehouse (110020 - Delhi)</option>
+                                        {shops.map((s) => (
+                                            <option key={s.id} value={String(s.id)}>
+                                                🏪 {s.name} • {s.city || 'City'} {s.pincode ? `(PIN ${s.pincode})` : '(No PIN set)'}
+                                            </option>
+                                        ))}
+                                        <option value="custom">✏️ Custom Pickup Pincode...</option>
+                                    </select>
+                                    <input
+                                        type="text"
+                                        value={calcPickupPincode}
+                                        onChange={(e) => {
+                                            setCalcPickupPincode(e.target.value);
+                                            setSelectedOriginType('custom');
+                                        }}
+                                        placeholder="6-digit origin pincode"
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                    <p className="text-[11px] text-silver-500 mt-1">
+                                        Each shop's products route courier pickup from that shop's origin pincode.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="text-xs font-bold text-silver-400 uppercase">Delivery Pincode (Destination)</label>
+                                        {selectedOrder && <span className="text-[10px] text-accent-400 font-bold">Auto-filled</span>}
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={calcDeliveryPincode}
+                                        onChange={(e) => setCalcDeliveryPincode(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="text-xs font-bold text-silver-400 uppercase">Package Weight (in Kg)</label>
+                                        {selectedOrder && <span className="text-[10px] text-accent-400 font-bold">Auto-calculated</span>}
+                                    </div>
+                                    <input
+                                        type="number"
+                                        step="0.05"
+                                        min="0.1"
+                                        value={calcWeight}
+                                        onChange={(e) => setCalcWeight(e.target.value)}
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-3 pt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-white">
+                                        <input
+                                            type="checkbox"
+                                            checked={calcIsCod}
+                                            onChange={(e) => setCalcIsCod(e.target.checked)}
+                                            className="w-4 h-4 rounded text-accent-500 focus:ring-accent-500 bg-dark-700 border-dark-600"
+                                        />
+                                        Cash on Delivery (COD)
+                                    </label>
+                                    {selectedOrder && <span className="text-[10px] text-accent-400 font-bold">Auto-filled</span>}
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={calcLoading}
+                                    className="w-full mt-4 py-3 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-500 hover:to-accent-400 text-dark-900 font-extrabold rounded-xl shadow-lg shadow-accent-500/20 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {calcLoading ? <RefreshCw size={16} className="animate-spin" /> : <Truck size={16} />}
+                                    Calculate Shipping Rates
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Right Results & Dispatch */}
+                        <div className="lg:col-span-2 bg-dark-800 rounded-3xl p-6 border border-dark-700 shadow-sm flex flex-col">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <h2 className="text-lg font-bold text-white">Available Logistics Partners</h2>
+                                    <div className="flex flex-wrap items-center gap-2 text-xs text-silver-400 mt-1">
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-dark-700/80 border border-dark-600 font-mono text-silver-200">
+                                            <Store size={12} className="text-accent-400" />
+                                            Origin: <strong>{calcPickupPincode}</strong>
+                                            {selectedOrder?.pickup_origin?.shop_name && (
+                                                <span className="text-accent-400 font-sans">({selectedOrder.pickup_origin.shop_name})</span>
+                                            )}
+                                        </span>
+                                        <span>➔</span>
+                                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-dark-700/80 border border-dark-600 font-mono text-silver-200">
+                                            <MapPin size={12} className="text-blue-400" />
+                                            Destination: <strong>{calcDeliveryPincode}</strong>
+                                            {selectedOrder?.delivery_city && (
+                                                <span className="text-blue-400 font-sans">({selectedOrder.delivery_city})</span>
+                                            )}
+                                        </span>
+                                    </div>
+                                </div>
+                                {selectedOrder && (
+                                    <span className={`self-start sm:self-auto px-2.5 py-1 text-xs font-bold rounded-lg border ${selectedOrder.is_cod ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-green-500/10 text-green-400 border-green-500/30'}`}>
+                                        {calcIsCod ? 'COD Order' : 'Prepaid Order'}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Dispatch Success Alert */}
+                            {dispatchSuccessMsg && (
+                                <div className="mb-4 p-4 rounded-2xl bg-green-500/10 border border-green-500/30 text-green-300 text-sm flex items-center justify-between animate-fade-in">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 size={18} className="text-green-400 flex-shrink-0" />
+                                        <span className="font-semibold">{dispatchSuccessMsg}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSubTab('shipments')}
+                                        className="px-3 py-1 bg-green-500 hover:bg-green-400 text-dark-900 rounded-lg text-xs font-extrabold transition-all"
+                                    >
+                                        View in Shipments
+                                    </button>
+                                </div>
+                            )}
+
+                            {calcResults === null ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-silver-500 border border-dashed border-dark-700 rounded-2xl">
+                                    <Truck size={36} className="opacity-30 mb-2" />
+                                    <p className="font-semibold text-white">No Calculation Yet</p>
+                                    <p className="text-xs max-w-sm mt-1">
+                                        Select an order above or enter pincodes on the left to compare delivery times and shipping rates across Shiprocket partner networks.
+                                    </p>
+                                </div>
+                            ) : calcResults.length === 0 ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center text-silver-500 border border-dashed border-dark-700 rounded-2xl">
+                                    <AlertCircle size={36} className="text-amber-500 mb-2" />
+                                    <p className="font-semibold text-white">No Courier Serviceable</p>
+                                    <p className="text-xs">No active carrier covers this pincode combination with COD.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 flex-1 overflow-y-auto">
+                                    {calcResults.map((c, i) => (
+                                        <div
+                                            key={i}
+                                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-dark-700/60 hover:bg-dark-700 rounded-2xl border border-dark-600 transition-all gap-4"
+                                        >
+                                            <div className="flex items-center gap-3.5">
+                                                <div className="w-10 h-10 rounded-xl bg-accent-500/10 border border-accent-500/20 flex items-center justify-center text-accent-400 font-extrabold text-sm">
+                                                    {i + 1}
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-extrabold text-white text-base">{c.courier_name}</h3>
+                                                    <div className="flex items-center gap-3 text-xs text-silver-400 mt-0.5">
+                                                        <span className="flex items-center gap-1 text-silver-300">
+                                                            <Clock size={12} className="text-silver-400" />
+                                                            Est. Delivery: {c.etd}
+                                                        </span>
+                                                        <span>•</span>
+                                                        <span>⭐ {c.rating} Rating</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between sm:justify-end gap-4">
+                                                <div className="text-right">
+                                                    <div className="text-xl font-black text-white">₹{c.rate}</div>
+                                                    <span className="text-[11px] text-green-400 font-semibold">Serviceable</span>
+                                                </div>
+
+                                                {selectedOrder && selectedOrder.status !== 'shipped' && selectedOrder.status !== 'delivered' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDispatchSelectedOrder(c)}
+                                                        disabled={dispatchingOrder}
+                                                        className="px-3.5 py-2 bg-gradient-to-r from-accent-500 to-accent-400 hover:from-accent-400 hover:to-accent-300 text-dark-900 text-xs font-black rounded-xl transition-all shadow-md shadow-accent-500/20 flex items-center gap-1.5 whitespace-nowrap"
+                                                        title={`Dispatch Order #${selectedOrder.order_id} with ${c.courier_name}`}
+                                                    >
+                                                        {dispatchingOrder ? <RefreshCw size={13} className="animate-spin" /> : <Package size={13} />}
+                                                        Dispatch Order
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
@@ -1108,13 +1482,16 @@ export default function CourierTab() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Pickup Pincode</label>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Default Hub PIN (Fallback)</label>
                                     <input
                                         type="text"
                                         value={editingPartner.pickup_pincode}
                                         onChange={(e) => setEditingPartner({ ...editingPartner, pickup_pincode: e.target.value })}
                                         className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
                                     />
+                                    <p className="text-[10px] text-silver-500 mt-1">
+                                        Central fallback pin. Multi-shop orders pick up from each shop's own pincode in Shop Management.
+                                    </p>
                                 </div>
                             </div>
 

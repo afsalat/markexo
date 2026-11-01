@@ -7,10 +7,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useCart } from '@/lib/cart';
 import { useRouter } from 'next/navigation';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { fetchProducts, fetchCategories } from '@/lib/api';
 
 export default function Header() {
     const router = useRouter();
+    const { settings } = useSiteSettings();
     const { totalItems } = useCart();
     const { customer, isAuthenticated, logout } = useCustomerAuth();
 
@@ -209,14 +211,11 @@ export default function Header() {
             <div className="container mx-auto px-4">
                 <div className="flex min-h-[64px] md:min-h-[80px] items-center gap-3 lg:gap-6">
                     <Link href="/" className="ml-2 mr-3 shrink-0 md:ml-4 md:mr-6" onClick={closeMenus}>
-                                            <Image
-                                                src="/logo-black-text.webp"
-                                                alt="VorionMart"
-                                                width={173}
-                                                height={160}
-                                                priority
-                                                className="h-12 w-auto object-contain md:h-16"
-                                            />
+                        <img
+                            src={settings?.logo_light || '/logo-black-text.webp'}
+                            alt={settings?.site_name || 'VorionMart'}
+                            className="h-10 md:h-14 w-auto max-w-[170px] object-contain"
+                        />
                     </Link>
 
                     <nav className="hidden items-center gap-7 lg:flex">

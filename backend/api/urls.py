@@ -23,6 +23,7 @@ from .views import (
     AdminLaunchChecklistItemCreateView, AdminLaunchChecklistItemDetailView, AdminLaunchChecklistSeedView,
     AdminGoogleMerchantView, GoogleMerchantFeedView, BlogPostViewSet, AdminSEOReportView,
     AdminCourierPartnerViewSet, AdminShipmentViewSet,
+    AdminCouponViewSet, ValidateCouponView, AvailableCouponsView,
     # Supplier API views
     AdminSupplierViewSet, OrderForwardLogViewSet, ForwardOrdersView, PendingOrdersForForwardingView,
     # Partner view
@@ -54,6 +55,7 @@ admin_router.register(r'forward-logs', OrderForwardLogViewSet, basename='admin-f
 admin_router.register(r'partners', AdminPartnerViewSet, basename='admin-partner')
 admin_router.register(r'courier-partners', AdminCourierPartnerViewSet, basename='admin-courier-partner')
 admin_router.register(r'shipments', AdminShipmentViewSet, basename='admin-shipment')
+admin_router.register(r'coupons', AdminCouponViewSet, basename='admin-coupon')
 
 urlpatterns = [
     # Public API
@@ -68,6 +70,8 @@ urlpatterns = [
     path('integrations/twilio/whatsapp/webhook/', TwilioWhatsAppWebhookView.as_view(), name='twilio-whatsapp-webhook'),
     path('enquiries/', CreateEnquiryView.as_view(), name='create-enquiry'),
     path('cart/', CartAPIView.as_view(), name='cart'),
+    path('coupons/validate/', ValidateCouponView.as_view(), name='validate-coupon'),
+    path('coupons/available/', AvailableCouponsView.as_view(), name='available-coupons'),
     
     # Payments API
     path('payments/cashfree/create-order/', CashfreeCreateOrderView.as_view(), name='cashfree-create-order'),

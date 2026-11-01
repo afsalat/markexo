@@ -3,6 +3,8 @@ Database models for VorionMart marketplace.
 """
 from django.db import models
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.utils import timezone
 from django.utils.text import slugify
 from api.image_utils import process_image_upload
 
@@ -42,6 +44,9 @@ class Shop(models.Model):
     description = models.TextField(blank=True)
     address = models.TextField()
     city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100, blank=True, default='')
+    pincode = models.CharField(max_length=10, blank=True, default='', help_text="Origin/Pickup pincode for courier fulfillment")
+    pickup_location_nickname = models.CharField(max_length=100, blank=True, default='', help_text="Pickup location nickname registered on Shiprocket")
     phone = models.CharField(max_length=20)
     email = models.EmailField(unique=True)
     shop_type = models.CharField(max_length=30, choices=SHOP_TYPE_CHOICES, default='other')
@@ -443,6 +448,14 @@ class Order(models.Model):
     shipped_at = models.DateTimeField(null=True, blank=True)
     delivered_at = models.DateTimeField(null=True, blank=True)
 
+    # Soft delete / Trash bin
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    # Coupon & Promo Discounts
+    coupon_code = models.CharField(max_length=50, blank=True, help_text="Applied promo / coupon code")
+    coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Total discount amount deducted via coupon in ₹")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -756,6 +769,8 @@ class SiteSetting(models.Model):
     site_name = models.CharField(max_length=200, default='VorionMart')
     site_tagline = models.CharField(max_length=300, blank=True)
     logo = models.ImageField(upload_to='site/', max_length=255, blank=True, null=True)
+    logo_light = models.ImageField(upload_to='site/', max_length=255, blank=True, null=True, help_text="Light mode logo (for white/light backgrounds)")
+    logo_dark = models.ImageField(upload_to='site/', max_length=255, blank=True, null=True, help_text="Dark mode logo (for dark backgrounds)")
     contact_email = models.EmailField(blank=True)
     contact_phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
@@ -807,6 +822,8 @@ class SiteSetting(models.Model):
 
     def save(self, *args, **kwargs):
         process_image_upload(self.logo)
+        process_image_upload(self.logo_light)
+        process_image_upload(self.logo_dark)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -1140,3 +1157,102 @@ class BlogPost(models.Model):
         ordering = ['-created_at']
         verbose_name = 'Blog Post'
         verbose_name_plural = 'Blog Posts'
+
+
+class Coupon(models.Model):
+    """Advanced Coupon and Promotional Code model."""
+    DISCOUNT_TYPE_CHOICES = [
+        ('percentage', 'Percentage Discount (%)'),
+        ('fixed', 'Fixed Amount Discount (₹)'),
+        ('free_shipping', 'Free Shipping'),
+    ]
+
+    code = models.CharField(max_length=50, unique=True, db_index=True, help_text="Coupon code in UPPERCASE")
+    title = models.CharField(max_length=200, help_text="Promotional title, e.g., 'Flat 10% Off on First Order'")
+    description = models.TextField(blank=True, help_text="Terms, conditions, and details")
+    
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, default='percentage')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Percentage value (e.g. 15 for 15%) or flat amount in ₹")
+    
+    min_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Minimum cart subtotal in ₹ to apply coupon")
+    max_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Maximum discount cap for percentage discounts in ₹")
+    
+    usage_limit = models.PositiveIntegerField(null=True, blank=True, help_text="Maximum total uses across all customers (blank for unlimited)")
+    usage_limit_per_user = models.PositiveIntegerField(default=1, help_text="Maximum uses per customer phone/account")
+    times_used = models.PositiveIntegerField(default=0, help_text="Total number of times successfully used")
+    
+    valid_from = models.DateTimeField(default=timezone.now, help_text="Start date & time of coupon validity")
+    valid_until = models.DateTimeField(null=True, blank=True, help_text="Expiry date & time (blank for never expires)")
+    
+    is_active = models.BooleanField(default=True, db_index=True, help_text="Whether this coupon is active")
+    is_featured = models.BooleanField(default=False, help_text="Show in 'Available Offers' list at checkout")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.code:
+            self.code = self.code.strip().upper()
+
+    def save(self, *args, **kwargs):
+        if self.code:
+            self.code = self.code.strip().upper()
+        super().save(*args, **kwargs)
+
+    def is_valid_now(self):
+        from django.utils import timezone
+        now = timezone.now()
+        if not self.is_active:
+            return False, "This coupon is currently inactive."
+        if self.valid_from and now < self.valid_from:
+            return False, f"This coupon starts on {self.valid_from.strftime('%d %b %Y')}."
+        if self.valid_until and now > self.valid_until:
+            return False, "This coupon has expired."
+        if self.usage_limit is not None and self.times_used >= self.usage_limit:
+            return False, "This coupon's usage limit has been reached."
+        return True, "Coupon is valid."
+
+    def calculate_discount(self, subtotal):
+        from decimal import Decimal
+        subtotal = Decimal(str(subtotal))
+        if subtotal < self.min_order_value:
+            return Decimal('0.00'), f"Minimum order value of ₹{self.min_order_value} required for this coupon."
+
+        if self.discount_type == 'percentage':
+            discount = (subtotal * self.discount_value) / Decimal('100.00')
+            if self.max_discount_amount and discount > self.max_discount_amount:
+                discount = self.max_discount_amount
+        elif self.discount_type == 'fixed':
+            discount = min(subtotal, self.discount_value)
+        elif self.discount_type == 'free_shipping':
+            discount = Decimal('0.00')
+        else:
+            discount = Decimal('0.00')
+
+        return round(discount, 2), "Discount calculated successfully."
+
+    def __str__(self):
+        return f"{self.code} ({self.get_discount_type_display()} - {self.discount_value})"
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Coupon'
+        verbose_name_plural = 'Coupons'
+
+
+class CouponUsage(models.Model):
+    """Tracks each individual redemption of a coupon."""
+    coupon = models.ForeignKey(Coupon, on_delete=models.CASCADE, related_name='usages')
+    order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='coupon_usages')
+    customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, blank=True, related_name='coupon_usages')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='coupon_usages')
+    customer_phone = models.CharField(max_length=20, blank=True, db_index=True)
+    discount_applied = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.coupon.code} used by {self.customer_phone or 'User'} - ₹{self.discount_applied}"
+
+    class Meta:
+        ordering = ['-used_at']
+

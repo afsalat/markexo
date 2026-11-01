@@ -1,4 +1,4 @@
-import { Search, Filter, RefreshCcw, Eye, ChevronLeft, ChevronRight, Download, Grid, List, Edit3 } from 'lucide-react';
+import { Search, Filter, RefreshCcw, Eye, ChevronLeft, ChevronRight, Download, Grid, List, Edit3, Trash2, RotateCcw, ArrowLeft } from 'lucide-react';
 import { Order } from '@/types/admin';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -27,6 +27,11 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+
+    // Trash Bin State
+    const [viewTrash, setViewTrash] = useState(false);
+    const [trashCount, setTrashCount] = useState(0);
+    const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
     const [stats, setStats] = useState({
         total: 0,
         pending: 0,
@@ -118,18 +123,36 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
 
     useEffect(() => {
         fetchOrders();
-    }, [debouncedSearch, statusFilter, currentPage]);
+    }, [debouncedSearch, statusFilter, currentPage, viewTrash]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [statusFilter]);
+    }, [statusFilter, viewTrash]);
+
+    const fetchTrashCount = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/trash_count/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setTrashCount(data.count || 0);
+            }
+        } catch (err) {
+            console.error('Error fetching trash count:', err);
+        }
+    };
 
     const fetchOrders = async () => {
         setLoading(true);
         try {
             const params = new URLSearchParams();
             if (debouncedSearch) params.append('search', debouncedSearch);
-            if (statusFilter) params.append('status', statusFilter);
+            if (viewTrash) {
+                params.append('show_trash', 'true');
+            } else if (statusFilter) {
+                params.append('status', statusFilter);
+            }
             params.append('page', currentPage.toString());
 
             const res = await fetch(`${API_BASE_URL}/admin/orders/?${params.toString()}`, {
@@ -151,6 +174,8 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                     setTotalCount(data.length);
                     setTotalPages(1);
                 }
+
+                fetchTrashCount();
 
                 const statsRes = await fetch(`${API_BASE_URL}/admin/orders/`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -180,6 +205,108 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
             console.error('Error fetching orders:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleMoveToTrash = async (order: Order) => {
+        if (!confirm(`Are you sure you want to move order #${order.order_id} to the trash bin?`)) {
+            return;
+        }
+        setActionLoadingId(order.id.toString());
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/move_to_trash/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                setOrders(prev => prev.filter(o => o.id !== order.id));
+                setTotalCount(prev => Math.max(0, prev - 1));
+                setTrashCount(prev => prev + 1);
+            } else {
+                alert('Failed to move order to trash');
+            }
+        } catch (err) {
+            console.error('Error moving order to trash:', err);
+            alert('An error occurred');
+        } finally {
+            setActionLoadingId(null);
+        }
+    };
+
+    const handleRestore = async (order: Order) => {
+        setActionLoadingId(order.id.toString());
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/restore/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                setOrders(prev => prev.filter(o => o.id !== order.id));
+                setTotalCount(prev => Math.max(0, prev - 1));
+                setTrashCount(prev => Math.max(0, prev - 1));
+            } else {
+                alert('Failed to restore order');
+            }
+        } catch (err) {
+            console.error('Error restoring order:', err);
+            alert('An error occurred');
+        } finally {
+            setActionLoadingId(null);
+        }
+    };
+
+    const handlePermanentDelete = async (order: Order) => {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete order #${order.order_id}? This action cannot be undone.`)) {
+            return;
+        }
+        setActionLoadingId(order.id.toString());
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/${order.id}/permanent_delete/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                setOrders(prev => prev.filter(o => o.id !== order.id));
+                setTotalCount(prev => Math.max(0, prev - 1));
+                setTrashCount(prev => Math.max(0, prev - 1));
+            } else {
+                alert('Failed to permanently delete order');
+            }
+        } catch (err) {
+            console.error('Error permanently deleting order:', err);
+            alert('An error occurred');
+        } finally {
+            setActionLoadingId(null);
+        }
+    };
+
+    const handleEmptyTrash = async () => {
+        if (!confirm('Are you sure you want to PERMANENTLY DELETE ALL orders in the trash bin? This action cannot be undone.')) {
+            return;
+        }
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/orders/empty_trash/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                setOrders([]);
+                setTotalCount(0);
+                setTrashCount(0);
+            } else {
+                alert('Failed to empty trash bin');
+            }
+        } catch (err) {
+            console.error('Error emptying trash:', err);
+            alert('An error occurred');
         }
     };
 
@@ -293,6 +420,27 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                     </button>
 
                     <button
+                        onClick={() => {
+                            setViewTrash(!viewTrash);
+                            setCurrentPage(1);
+                        }}
+                        className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-all ${
+                            viewTrash
+                                ? 'border border-red-500 bg-red-500/20 text-red-400 font-bold shadow-sm ring-1 ring-red-500/30'
+                                : 'border border-dark-700 bg-dark-800 text-silver-300 hover:text-red-400 hover:bg-dark-700'
+                        }`}
+                        title={viewTrash ? 'Return to Active Orders' : 'View Trash Bin'}
+                    >
+                        <Trash2 size={18} className={viewTrash ? 'text-red-400' : 'text-silver-400'} />
+                        <span className="text-sm font-medium">{viewTrash ? 'In Trash' : 'Trash'}</span>
+                        {trashCount > 0 && (
+                            <span className="rounded-full bg-red-500/20 border border-red-500/40 px-2 py-0.5 text-xs font-bold text-red-400">
+                                {trashCount}
+                            </span>
+                        )}
+                    </button>
+
+                    <button
                         onClick={handleExportOrders}
                         disabled={exporting}
                         className="flex items-center gap-2 rounded-lg bg-accent-600 px-4 py-2 text-white shadow-lg shadow-accent-500/20 transition-colors hover:bg-accent-500 disabled:opacity-50"
@@ -308,6 +456,44 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                 </div>
             </div>
 
+            {/* Trash Bin Active Banner */}
+            {viewTrash && (
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-silver-200 animate-fade-in shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 shadow-sm">
+                            <Trash2 size={20} />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-white text-base flex items-center gap-2">
+                                Trash Bin
+                                <span className="text-xs bg-red-500/20 text-red-400 font-mono px-2 py-0.5 rounded-full border border-red-500/30">
+                                    {totalCount} {totalCount === 1 ? 'order' : 'orders'}
+                                </span>
+                            </h4>
+                            <p className="text-xs text-silver-400 mt-0.5">
+                                Cancelled and deleted orders moved here. You can restore them or permanently delete them.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                        <button
+                            onClick={() => setViewTrash(false)}
+                            className="flex items-center gap-1.5 rounded-lg border border-dark-600 bg-dark-800 px-3.5 py-2 text-xs font-bold text-silver-200 hover:bg-dark-700 hover:text-white transition-colors"
+                        >
+                            <ArrowLeft size={14} /> Back to Active Orders
+                        </button>
+                        {orders.length > 0 && (
+                            <button
+                                onClick={handleEmptyTrash}
+                                className="flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-600/30 px-3.5 py-2 text-xs font-bold text-red-300 hover:bg-red-600 hover:text-white transition-colors"
+                            >
+                                <Trash2 size={14} /> Empty Trash
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div className="min-h-[400px] overflow-hidden rounded-2xl border border-dark-700 bg-dark-800 shadow-sm">
                 {loading ? (
                     <div className="flex h-64 items-center justify-center">
@@ -315,18 +501,19 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                     </div>
                 ) : viewMode === 'table' ? (
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[1240px] table-fixed">
+                        <table className="w-full min-w-[1360px] table-fixed">
                             <thead className="bg-dark-700/50">
                                 <tr>
                                     <th className="w-[170px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Order ID</th>
                                     <th className="w-[150px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Customer</th>
-                                    <th className="w-[320px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Products</th>
+                                    <th className="w-[300px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Products</th>
                                     <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Amount</th>
                                     <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Cost</th>
                                     <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Profit</th>
-                                    <th className="w-[170px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
-                                    <th className="w-[230px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Payment</th>
+                                    <th className="w-[160px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
+                                    <th className="w-[210px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Payment</th>
                                     <th className="w-[130px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Date</th>
+                                    <th className="w-[140px] px-6 py-3 text-center text-xs font-medium uppercase text-silver-500">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-dark-700">
@@ -371,7 +558,7 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                                     order.payment_status === 'failed_rto' ? 'border-red-500/20 bg-red-500/10 text-red-500' :
                                                         'border-dark-600 bg-dark-700 text-silver-500'
                                                     }`}>
-                                                    {order.payment_status_display || order.payment_status || 'Pending'}
+                                                {order.payment_status_display || order.payment_status || 'Pending'}
                                                 </span>
                                                 <button
                                                     onClick={(e) => {
@@ -410,12 +597,49 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 align-top whitespace-nowrap font-medium text-silver-500">{formatDate(order.created_at)}</td>
+                                        <td className="px-6 py-4 align-top text-center" onClick={(e) => e.stopPropagation()}>
+                                            {viewTrash ? (
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => handleRestore(order)}
+                                                        disabled={actionLoadingId === order.id.toString()}
+                                                        title="Restore Order"
+                                                        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all disabled:opacity-50"
+                                                    >
+                                                        <RotateCcw size={13} />
+                                                        <span>Restore</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handlePermanentDelete(order)}
+                                                        disabled={actionLoadingId === order.id.toString()}
+                                                        title="Delete Permanently"
+                                                        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-all disabled:opacity-50"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleMoveToTrash(order)}
+                                                    disabled={actionLoadingId === order.id.toString()}
+                                                    title={order.status === 'cancelled' ? 'Move cancelled order to trash' : 'Move order to trash'}
+                                                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all disabled:opacity-50 ${
+                                                        order.status === 'cancelled'
+                                                            ? 'text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 shadow-2xs'
+                                                            : 'text-silver-500 hover:text-red-400 bg-dark-700/50 hover:bg-red-500/10 border border-dark-600 hover:border-red-500/30'
+                                                    }`}
+                                                >
+                                                    <Trash2 size={13} />
+                                                    <span>Trash</span>
+                                                </button>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                                 {orders.length === 0 && (
                                     <tr>
-                                        <td colSpan={9} className="px-6 py-12 text-center text-silver-500">
-                                            No orders found matching your criteria.
+                                        <td colSpan={10} className="px-6 py-12 text-center text-silver-500">
+                                            {viewTrash ? 'Trash bin is empty. No deleted orders found.' : 'No orders found matching your criteria.'}
                                         </td>
                                     </tr>
                                 )}
@@ -428,42 +652,78 @@ export default function OrdersTab({ initialStatusFilter = '' }: OrdersTabProps) 
                             <div
                                 key={order.id}
                                 onClick={() => setSelectedOrder(order)}
-                                className="group cursor-pointer rounded-xl border border-dark-700 bg-dark-800 p-4 transition-all hover:border-accent-500/50 hover:shadow-lg"
+                                className="group cursor-pointer rounded-xl border border-dark-700 bg-dark-800 p-4 transition-all hover:border-accent-500/50 hover:shadow-lg flex flex-col justify-between"
                             >
-                                <div className="mb-3 flex items-start justify-between">
-                                    <div>
-                                        <p className="text-xs font-medium text-silver-500">Order ID</p>
-                                        <p className="text-sm font-bold text-accent-500 group-hover:text-accent-400">{order.order_id}</p>
+                                <div>
+                                    <div className="mb-3 flex items-start justify-between">
+                                        <div>
+                                            <p className="text-xs font-medium text-silver-500">Order ID</p>
+                                            <p className="text-sm font-bold text-accent-500 group-hover:text-accent-400">{order.order_id}</p>
+                                        </div>
+                                        <Eye size={16} className="text-silver-600 transition-colors group-hover:text-accent-500" />
                                     </div>
-                                    <Eye size={16} className="text-silver-600 transition-colors group-hover:text-accent-500" />
+
+                                    <div className="mb-3 space-y-2">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-xs text-silver-500">Customer</span>
+                                            <span className="text-right text-sm font-medium text-white">{order.customer?.name || 'Guest'}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-xs text-silver-500">Amount</span>
+                                            <span className="whitespace-nowrap text-sm font-bold text-white">&#8377;{formatNumber(order.total_amount)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-xs text-silver-500">Date</span>
+                                            <span className="whitespace-nowrap text-xs text-silver-400">{formatDate(order.created_at)}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase ${getStatusColor(order.status)}`}>
+                                            {order.status}
+                                        </span>
+                                        <span className={`inline-block whitespace-nowrap rounded border px-2 py-1 text-[10px] font-bold ${order.payment_status === 'received_from_meesho' ? 'border-green-500/20 bg-green-500/10 text-green-500' :
+                                            order.payment_status === 'failed_rto' ? 'border-red-500/20 bg-red-500/10 text-red-500' :
+                                                'border-dark-600 bg-dark-700 text-silver-500'
+                                            }`}>
+                                            {order.payment_status_display || order.payment_status || 'Pending'}
+                                        </span>
+                                        {order.is_cod && <span className="rounded border border-dark-600 bg-dark-700 px-2 py-1 text-[10px] text-silver-500">COD</span>}
+                                    </div>
                                 </div>
 
-                                <div className="mb-3 space-y-2">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-xs text-silver-500">Customer</span>
-                                        <span className="text-right text-sm font-medium text-white">{order.customer?.name || 'Guest'}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-xs text-silver-500">Amount</span>
-                                        <span className="whitespace-nowrap text-sm font-bold text-white">&#8377;{formatNumber(order.total_amount)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-xs text-silver-500">Date</span>
-                                        <span className="whitespace-nowrap text-xs text-silver-400">{formatDate(order.created_at)}</span>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2">
-                                    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold uppercase ${getStatusColor(order.status)}`}>
-                                        {order.status}
-                                    </span>
-                                    <span className={`inline-block whitespace-nowrap rounded border px-2 py-1 text-[10px] font-bold ${order.payment_status === 'received_from_meesho' ? 'border-green-500/20 bg-green-500/10 text-green-500' :
-                                        order.payment_status === 'failed_rto' ? 'border-red-500/20 bg-red-500/10 text-red-500' :
-                                            'border-dark-600 bg-dark-700 text-silver-500'
-                                        }`}>
-                                        {order.payment_status_display || order.payment_status || 'Pending'}
-                                    </span>
-                                    {order.is_cod && <span className="rounded border border-dark-600 bg-dark-700 px-2 py-1 text-[10px] text-silver-500">COD</span>}
+                                {/* Grid Card Actions */}
+                                <div className="pt-3 border-t border-dark-700/60 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+                                    {viewTrash ? (
+                                        <div className="flex items-center gap-2 w-full">
+                                            <button
+                                                onClick={() => handleRestore(order)}
+                                                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 px-3 text-xs font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-all"
+                                            >
+                                                <RotateCcw size={13} />
+                                                <span>Restore</span>
+                                            </button>
+                                            <button
+                                                onClick={() => handlePermanentDelete(order)}
+                                                className="inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 px-3 text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 transition-all"
+                                            >
+                                                <Trash2 size={13} />
+                                                <span>Delete</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleMoveToTrash(order)}
+                                            className={`w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-1.5 px-3 text-xs font-bold transition-all ${
+                                                order.status === 'cancelled'
+                                                    ? 'text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30'
+                                                    : 'text-silver-400 hover:text-red-400 bg-dark-700/60 hover:bg-red-500/10 border border-dark-600 hover:border-red-500/30'
+                                            }`}
+                                        >
+                                            <Trash2 size={13} />
+                                            <span>Move to Trash</span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}

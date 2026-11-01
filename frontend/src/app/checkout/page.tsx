@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus, Zap, Lock, ShieldCheck } from 'lucide-react';
+import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus, Zap, Lock, ShieldCheck, RotateCcw, Tag, Ticket, Sparkles } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { launchCashfreeCheckout, verifyCashfreePayment } from '@/lib/cashfree';
+import { Coupon } from '@/types/admin';
 
 export default function CheckoutPage() {
     const { items, totalAmount, clearCart, updateQuantity } = useCart();
@@ -21,6 +22,38 @@ export default function CheckoutPage() {
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
     const [useNewAddress, setUseNewAddress] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // CAPTCHA Bot Protection State
+    const [captchaCode, setCaptchaCode] = useState('');
+    const [userCaptcha, setUserCaptcha] = useState('');
+    const [captchaError, setCaptchaError] = useState('');
+
+    // Coupon & Promo Code State
+    const [couponInput, setCouponInput] = useState('');
+    const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [couponError, setCouponError] = useState<string | null>(null);
+    const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+    const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+    const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
+    const [showOffersDrawer, setShowOffersDrawer] = useState(false);
+
+    const finalPayableAmount = Math.max(0, totalAmount - discountAmount);
+
+    const generateCaptcha = () => {
+        const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        let code = '';
+        for (let i = 0; i < 5; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setCaptchaCode(code);
+        setUserCaptcha('');
+        setCaptchaError('');
+    };
+
+    useEffect(() => {
+        generateCaptcha();
+    }, []);
 
     // Payment Gateway State
     const [paymentMethod, setPaymentMethod] = useState<'cashfree' | 'cod'>('cashfree');
@@ -96,7 +129,69 @@ export default function CheckoutPage() {
             .catch(err => {
                 console.log('Using default gateway configuration:', err);
             });
+
+        // Fetch available checkout offers
+        fetch(`${API_BASE_URL}/coupons/available/`)
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    setAvailableCoupons(data);
+                }
+            })
+            .catch(err => console.log('Could not load offers:', err));
     }, []);
+
+    const handleApplyCoupon = async (codeToApply?: string) => {
+        const code = (codeToApply || couponInput).trim().toUpperCase();
+        if (!code) {
+            setCouponError('Please enter a coupon code.');
+            return;
+        }
+
+        setIsValidatingCoupon(true);
+        setCouponError(null);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/coupons/validate/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code,
+                    subtotal: totalAmount,
+                    phone: formData.phone,
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.valid) {
+                setAppliedCoupon(data.coupon);
+                setDiscountAmount(Number(data.discount_amount) || 0);
+                setCouponSuccess(data.savings_text || data.message);
+                setCouponError(null);
+                setCouponInput(code);
+                setShowOffersDrawer(false);
+            } else {
+                setCouponError(data.message || 'Invalid coupon code');
+                if (!codeToApply) {
+                    setAppliedCoupon(null);
+                    setDiscountAmount(0);
+                    setCouponSuccess(null);
+                }
+            }
+        } catch (err: any) {
+            setCouponError(err.message || 'Failed to validate coupon.');
+        } finally {
+            setIsValidatingCoupon(false);
+        }
+    };
+
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setDiscountAmount(0);
+        setCouponInput('');
+        setCouponSuccess(null);
+        setCouponError(null);
+    };
 
     useEffect(() => {
         if (customer && (customer.rto_count ?? 0) >= 2) {
@@ -137,25 +232,58 @@ export default function CheckoutPage() {
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
 
-        // Real-time phone validation
+        // Real-time phone validation & sanitation
         if (name === 'phone') {
-            if (value && !/^(0?[6-9]\d{9})$/.test(value)) {
+            const cleanPhone = value.replace(/\D/g, '').slice(0, 11);
+            setFormData((prev) => ({ ...prev, phone: cleanPhone }));
+            if (cleanPhone && !/^(0?[6-9]\d{9})$/.test(cleanPhone)) {
                 setPhoneError('Enter valid 10 or 11 digit mobile number');
             } else {
                 setPhoneError('');
             }
+            return;
         }
 
-        // Real-time pincode validation
+        // Real-time pincode validation & auto city lookup
         if (name === 'pincode') {
-            if (value && !/^[1-9][0-9]{5}$/.test(value)) {
-                setPincodeError('Enter valid 6-digit pincode');
+            const cleanPincode = value.replace(/\D/g, '').slice(0, 6);
+            setFormData((prev) => ({ ...prev, pincode: cleanPincode }));
+
+            if (cleanPincode.length > 0) {
+                if (cleanPincode.startsWith('0')) {
+                    setPincodeError('Indian pincodes cannot start with 0');
+                } else if (cleanPincode.length < 6) {
+                    setPincodeError(`Enter 6 digits (${cleanPincode.length}/6 entered)`);
+                } else {
+                    setPincodeError('');
+                    // Optional post office lookup for auto-city fill
+                    fetch(`https://api.postalpincode.in/pincode/${cleanPincode}`)
+                        .then(r => r.json())
+                        .then(d => {
+                            if (Array.isArray(d) && d[0]?.Status === 'Success' && d[0]?.PostOffice?.length > 0) {
+                                const po = d[0].PostOffice[0];
+                                const detectedCity = po.District || po.Division || po.Block;
+                                if (detectedCity) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        city: prev.city ? prev.city : detectedCity
+                                    }));
+                                }
+                                setPincodeError('');
+                            } else if (Array.isArray(d) && d[0]?.Status === 'Error') {
+                                setPincodeError('Postal code not found in India. Please check again.');
+                            }
+                        })
+                        .catch(() => {});
+                }
             } else {
                 setPincodeError('');
             }
+            return;
         }
+
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const validateStep1 = () => {
@@ -178,7 +306,19 @@ export default function CheckoutPage() {
 
         // Validate pincode format (6 digits, first digit non-zero)
         if (!/^[1-9][0-9]{5}$/.test(formData.pincode)) {
-            setPincodeError('Enter valid 6-digit pincode');
+            setPincodeError('Enter a valid 6-digit Indian delivery pincode');
+            return false;
+        }
+
+        // Validate CAPTCHA
+        if (!userCaptcha.trim()) {
+            setCaptchaError('Please enter the security verification code');
+            return false;
+        }
+
+        if (userCaptcha.trim().toUpperCase() !== captchaCode.toUpperCase()) {
+            setCaptchaError('Incorrect security code. Please try the new code shown.');
+            generateCaptcha();
             return false;
         }
 
@@ -198,6 +338,16 @@ export default function CheckoutPage() {
                 return;
             }
 
+            // Verify CAPTCHA before submitting order
+            if (userCaptcha.trim().toUpperCase() !== captchaCode.toUpperCase()) {
+                setErrorMessage('Security verification expired or invalid. Please re-enter the code.');
+                setCaptchaError('Verification code mismatch');
+                generateCaptcha();
+                setStep(1);
+                setIsSubmitting(false);
+                return;
+            }
+
             // Prepare order data
             const isCodSelected = paymentMethod === 'cod';
             const orderData = {
@@ -210,6 +360,7 @@ export default function CheckoutPage() {
                 notes: formData.notes,
                 is_cod: isCodSelected,
                 payment_method: paymentMethod,
+                coupon_code: appliedCoupon?.code || '',
                 return_url: typeof window !== 'undefined' ? `${window.location.origin}/track-order?id={order_id}` : undefined,
                 items: items.map(item => ({
                     product_id: item.product.id,
@@ -643,6 +794,82 @@ export default function CheckoutPage() {
                                         </div>
                                     </div>
 
+                                    {/* Security CAPTCHA Challenge */}
+                                    <div className="mt-6 pt-5 border-t border-gray-100">
+                                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center justify-between">
+                                            <span className="flex items-center gap-1.5">
+                                                <ShieldCheck size={16} className="text-accent-500" />
+                                                Security Verification (CAPTCHA)
+                                            </span>
+                                            <span className="text-red-500 font-bold">*</span>
+                                        </label>
+
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                            {/* Stylized Captcha Canvas Box */}
+                                            <div className="relative flex items-center justify-between bg-gradient-to-r from-gray-900 via-dark-800 to-gray-900 text-white px-5 py-3 rounded-xl border border-gray-700 select-none shadow-inner overflow-hidden min-w-[210px]">
+                                                {/* Background noise grid & slash lines */}
+                                                <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:8px_8px]" />
+                                                <div className="absolute inset-0 flex items-center justify-around pointer-events-none opacity-30">
+                                                    <div className="w-full h-0.5 bg-accent-400 rotate-[-9deg]" />
+                                                    <div className="w-full h-0.5 bg-emerald-400 rotate-[11deg]" />
+                                                </div>
+
+                                                {/* Captcha characters */}
+                                                <div className="relative z-10 flex items-center gap-2.5 tracking-[0.35em] font-mono text-2xl font-black text-silver-100 italic">
+                                                    {captchaCode.split('').map((ch, i) => (
+                                                        <span
+                                                            key={i}
+                                                            style={{
+                                                                transform: `rotate(${((i % 2 === 0 ? 1 : -1) * (5 + (i * 3)))}deg) translateY(${i % 2 === 0 ? '-2px' : '2px'})`,
+                                                                display: 'inline-block',
+                                                                color: ['#38bdf8', '#fbbf24', '#34d399', '#f472b6', '#a78bfa'][i % 5]
+                                                            }}
+                                                        >
+                                                            {ch}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                {/* Refresh button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={generateCaptcha}
+                                                    title="Refresh security code"
+                                                    className="relative z-10 p-1.5 hover:bg-gray-700/80 rounded-lg text-gray-300 hover:text-white transition-all ml-3"
+                                                >
+                                                    <RotateCcw size={18} className="hover:rotate-180 transition-transform duration-500" />
+                                                </button>
+                                            </div>
+
+                                            {/* Captcha Input */}
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={userCaptcha}
+                                                    onChange={(e) => {
+                                                        setUserCaptcha(e.target.value.toUpperCase());
+                                                        setCaptchaError('');
+                                                    }}
+                                                    maxLength={6}
+                                                    placeholder="Enter security code"
+                                                    className={`input-field uppercase font-mono font-bold tracking-wider bg-gray-50 border-gray-200 text-gray-900 focus:bg-white transition-colors ${
+                                                        captchaError ? 'border-red-500 bg-red-50 focus:border-red-500 focus:ring-red-500/20' : ''
+                                                    }`}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {captchaError ? (
+                                            <p className="text-red-500 font-medium text-xs mt-1.5 flex items-center gap-1">
+                                                <AlertCircle size={12} /> {captchaError}
+                                            </p>
+                                        ) : (
+                                            <p className="text-xs text-gray-500 mt-1.5">
+                                                Please type the code above to prevent spam/fake orders.
+                                            </p>
+                                        )}
+                                    </div>
+
                                     <button
                                         type="button"
                                         onClick={() => validateStep1() && setStep(2)}
@@ -911,7 +1138,7 @@ export default function CheckoutPage() {
                                                     ? 'Opening Cashfree Gateway...'
                                                     : 'Placing Order...'
                                                 : paymentMethod === 'cashfree'
-                                                ? `Pay ₹${totalAmount.toLocaleString()} via Cashfree`
+                                                ? `Pay ₹${finalPayableAmount.toLocaleString()} via Cashfree`
                                                 : 'Confirm Order (COD)'}
                                         </button>
                                     </div>
@@ -949,18 +1176,148 @@ export default function CheckoutPage() {
                                 )}
                             </div>
 
-                            <div className="border-t border-gray-100 pt-5 space-y-3">
+                            {/* Coupon / Promo Code Section */}
+                            <div className="border-t border-gray-100 pt-4 pb-2">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Tag size={13} className="text-accent-500" /> Have a Coupon?
+                                    </span>
+                                    {availableCoupons.length > 0 && !appliedCoupon && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowOffersDrawer(!showOffersDrawer)}
+                                            className="text-xs text-accent-600 hover:text-accent-700 font-bold flex items-center gap-1 transition-colors"
+                                        >
+                                            <Sparkles size={12} /> {showOffersDrawer ? 'Hide Offers' : `${availableCoupons.length} Offers`}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {appliedCoupon ? (
+                                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between animate-fade-in shadow-2xs">
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold shadow-2xs">
+                                                <Check size={16} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="font-mono font-bold text-emerald-950 text-xs tracking-wider">
+                                                        {appliedCoupon.code}
+                                                    </span>
+                                                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                                                        Applied
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                                                    {couponSuccess || `You saved ₹${discountAmount.toLocaleString()}!`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveCoupon}
+                                            className="text-gray-400 hover:text-red-500 p-1 text-xs font-bold transition-colors"
+                                            title="Remove Coupon"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter coupon code"
+                                                    value={couponInput}
+                                                    onChange={(e) => {
+                                                        setCouponInput(e.target.value.toUpperCase().replace(/\s+/g, ''));
+                                                        setCouponError(null);
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleApplyCoupon();
+                                                        }
+                                                    }}
+                                                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-mono font-bold uppercase text-xs focus:outline-none focus:border-accent-500 transition-colors"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleApplyCoupon()}
+                                                disabled={!couponInput.trim() || isValidatingCoupon}
+                                                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+                                            >
+                                                {isValidatingCoupon ? (
+                                                    <RotateCcw size={12} className="animate-spin" />
+                                                ) : 'Apply'}
+                                            </button>
+                                        </div>
+
+                                        {couponError && (
+                                            <p className="text-[11px] text-red-600 font-medium flex items-center gap-1 animate-fade-in">
+                                                <AlertCircle size={12} className="shrink-0" />
+                                                {couponError}
+                                            </p>
+                                        )}
+
+                                        {/* Available Offers Pills */}
+                                        {showOffersDrawer && availableCoupons.length > 0 && (
+                                            <div className="mt-2.5 p-3 bg-gray-50 border border-gray-200 rounded-xl space-y-2 animate-fade-in">
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                                    Available Offers (Click to apply)
+                                                </p>
+                                                <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar">
+                                                    {availableCoupons.map((c) => (
+                                                        <div
+                                                            key={c.id}
+                                                            onClick={() => handleApplyCoupon(c.code)}
+                                                            className="p-2 bg-white border border-gray-200 hover:border-accent-500 rounded-lg cursor-pointer transition-all flex items-center justify-between group shadow-2xs"
+                                                        >
+                                                            <div>
+                                                                <span className="font-mono font-bold text-xs text-gray-900 group-hover:text-accent-600">
+                                                                    {c.code}
+                                                                </span>
+                                                                <p className="text-[10px] text-gray-500">
+                                                                    {c.discount_type === 'percentage'
+                                                                        ? `${c.discount_value}% OFF`
+                                                                        : `₹${c.discount_value} OFF`}
+                                                                    {c.min_order_value > 0 ? ` on min ₹${c.min_order_value}` : ''}
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-[11px] font-bold text-accent-600 group-hover:underline">
+                                                                Apply
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="border-t border-gray-100 pt-4 space-y-3">
                                 <div className="flex justify-between text-sm font-medium">
                                     <span className="text-gray-600">Subtotal</span>
                                     <span className="text-gray-900">₹{totalAmount.toLocaleString()}</span>
                                 </div>
+                                {discountAmount > 0 && (
+                                    <div className="flex justify-between text-sm font-bold text-emerald-600 animate-fade-in">
+                                        <span className="flex items-center gap-1">
+                                            <Tag size={13} /> Coupon Discount
+                                        </span>
+                                        <span>-₹{discountAmount.toLocaleString()}</span>
+                                    </div>
+                                )}
                                 <div className="flex justify-between text-sm font-medium">
                                     <span className="text-gray-600">Delivery</span>
                                     <span className="text-accent-600 font-bold bg-accent-50 px-2 rounded">FREE</span>
                                 </div>
-                                <div className="flex justify-between text-xl font-black pt-4 border-t border-gray-200 mt-2">
+                                <div className="flex justify-between text-xl font-black pt-3 border-t border-gray-200 mt-2">
                                     <span className="text-gray-900">Total</span>
-                                    <span className="text-gray-900">₹{totalAmount.toLocaleString()}</span>
+                                    <span className="text-gray-900">₹{finalPayableAmount.toLocaleString()}</span>
                                 </div>
                             </div>
 
@@ -974,7 +1331,7 @@ export default function CheckoutPage() {
                             ) : (
                                 <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 shadow-sm">
                                     <p className="text-sm text-amber-800 text-center font-medium flex items-center justify-center gap-1.5">
-                                        💵 Pay <span className="font-black text-amber-950 text-base">₹{totalAmount.toLocaleString()}</span> on delivery
+                                        💵 Pay <span className="font-black text-amber-950 text-base">₹{finalPayableAmount.toLocaleString()}</span> on delivery
                                     </p>
                                 </div>
                             )}

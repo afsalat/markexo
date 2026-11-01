@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { Facebook, Instagram, Mail, Phone, MapPin, Truck, Shield, CreditCard, Headphones, ChevronRight } from 'lucide-react';
+import { useSiteSettings } from '@/context/SiteSettingsContext';
 
 export default function Footer() {
+    const { settings } = useSiteSettings();
     return (
         <footer
             className="bg-white border-t border-gray-100 text-gray-600"
@@ -41,30 +43,29 @@ export default function Footer() {
                     <div className="lg:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
                         <Link href="/" className="inline-flex items-center group mb-4 md:mb-6">
                             <img
-                                src="/logo-black-text.webp"
-                                alt="VorionMart"
-                                className="h-12 md:h-16 w-auto object-contain"
+                                src={settings?.logo_light || '/logo-black-text.webp'}
+                                alt={settings?.site_name || 'VorionMart'}
+                                className="h-12 md:h-16 w-auto max-w-[210px] object-contain"
                             />
                         </Link>
                         <p className="text-xs md:text-sm leading-relaxed mb-6 max-w-xs text-gray-500">
-                            Premium D2C platform bringing the future of shopping to your doorstep.
-                            Pay on delivery, no hassles.
+                            {settings?.site_tagline || 'Premium D2C platform bringing the future of shopping to your doorstep. Pay on delivery, no hassles.'}
                         </p>
                         <div className="flex gap-3">
                             <a
-                                href="https://www.facebook.com/vorionmart"
+                                href={settings?.facebook_url || 'https://www.facebook.com/vorionmart'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                aria-label="VorionMart on Facebook"
+                                aria-label={`${settings?.site_name || 'VorionMart'} on Facebook`}
                                 className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
                             >
                                 <Facebook size={18} />
                             </a>
                             <a
-                                href="https://www.instagram.com/vorionmart"
+                                href={settings?.instagram_url || 'https://www.instagram.com/vorionmart'}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                aria-label="VorionMart on Instagram"
+                                aria-label={`${settings?.site_name || 'VorionMart'} on Instagram`}
                                 className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
                             >
                                 <Instagram size={18} />
@@ -168,23 +169,23 @@ export default function Footer() {
                         </h3>
                         <ul className="space-y-4">
                             <li>
-                                <a href="tel:7356216468" className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-500 hover:text-accent-600">
+                                <a href={`tel:${settings?.contact_phone || '7356216468'}`} className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-500 hover:text-accent-600">
                                     <div
                                         className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-gray-50"
                                     >
                                         <Phone size={16} className="text-accent-500" />
                                     </div>
-                                    <span className="group-hover:underline">7356216468</span>
+                                    <span className="group-hover:underline">{settings?.contact_phone || '7356216468'}</span>
                                 </a>
                             </li>
                             <li>
-                                <a href="mailto:vorionmart@gmail.com" className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-500 hover:text-accent-600">
+                                <a href={`mailto:${settings?.contact_email || 'vorionmart@gmail.com'}`} className="flex items-center gap-3 group text-sm transition-colors duration-200 text-gray-500 hover:text-accent-600">
                                     <div
                                         className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-gray-50"
                                     >
                                         <Mail size={16} className="text-accent-500" />
                                     </div>
-                                    <span className="group-hover:underline break-all">vorionmart@gmail.com</span>
+                                    <span className="group-hover:underline break-all">{settings?.contact_email || 'vorionmart@gmail.com'}</span>
                                 </a>
                             </li>
                             <li className="flex items-start gap-3 text-sm text-gray-500">
@@ -194,9 +195,10 @@ export default function Footer() {
                                     <MapPin size={16} className="text-accent-500" />
                                 </div>
                                 <div>
-                                    <span className="block font-semibold mb-0.5 text-gray-800">Vorion Nexus Technology</span>
-                                    <span>Thoppayil Beach C.25, O.P Nadakkavu</span><br />
-                                    <span>Kozhikode, Kerala 673011</span>
+                                    <span className="block font-semibold mb-0.5 text-gray-800">{settings?.site_name || 'Vorion Nexus Technology'}</span>
+                                    <span className="text-xs sm:text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                                        {settings?.address || 'Thoppayil Beach C.25, O.P Nadakkavu\nKozhikode, Kerala 673011'}
+                                    </span>
                                 </div>
                             </li>
                         </ul>
@@ -233,10 +235,10 @@ export default function Footer() {
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 py-5 pb-24 md:pb-5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
                     <div className="text-center md:text-left">
                         <p className="text-sm text-gray-400">
-                            &copy; 2026 VorionMart. All Rights Reserved.
+                            &copy; {new Date().getFullYear()} {settings?.site_name || 'VorionMart'}. All Rights Reserved.
                         </p>
                         <p className="text-xs mt-1 text-gray-500">
-                            Powered by <span className="font-medium text-accent-500">Vorion Nexus Technology</span>
+                            Powered by <span className="font-medium text-accent-500">{settings?.site_name || 'Vorion Nexus Technology'}</span>
                         </p>
                     </div>
                     <div className="flex items-center justify-center md:justify-start gap-2 text-xs md:text-sm text-gray-400">
