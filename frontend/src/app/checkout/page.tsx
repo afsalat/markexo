@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus, Zap, Lock, ShieldCheck, RotateCcw, Tag, Ticket, Sparkles } from 'lucide-react';
+import { Check, ShoppingBag, MapPin, CreditCard, ArrowLeft, Truck, Shield, Clock, ChevronRight, AlertCircle, X, Minus, Plus, Zap, Lock, ShieldCheck, RotateCcw, Tag, Ticket, Sparkles, Trash2, Search, PlusCircle } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { launchCashfreeCheckout, verifyCashfreePayment } from '@/lib/cashfree';
 import { Coupon } from '@/types/admin';
+import { Product } from '@/lib/api';
 
 export default function CheckoutPage() {
-    const { items, totalAmount, clearCart, updateQuantity } = useCart();
+    const { items, totalAmount, clearCart, updateQuantity, removeItem, addItem, totalItems } = useCart();
     const { customer, isAuthenticated, isLoading, addresses, loginWithGoogle } = useCustomerAuth();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +38,12 @@ export default function CheckoutPage() {
     const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
     const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([]);
     const [showOffersDrawer, setShowOffersDrawer] = useState(false);
+
+    // Add-on products state & Quick Add modal
+    const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+    const [showAddonModal, setShowAddonModal] = useState(false);
+    const [addonSearch, setAddonSearch] = useState('');
+    const [selectedAddonCategory, setSelectedAddonCategory] = useState<string>('all');
 
     const finalPayableAmount = Math.max(0, totalAmount - discountAmount);
 
@@ -139,6 +146,15 @@ export default function CheckoutPage() {
                 }
             })
             .catch(err => console.log('Could not load offers:', err));
+
+        // Fetch products for add-ons & quick add
+        fetch(`${API_BASE_URL}/products/?is_active=true`)
+            .then(res => res.json())
+            .then(data => {
+                const prods = Array.isArray(data) ? data : (data?.results || []);
+                setAvailableProducts(prods);
+            })
+            .catch(err => console.log('Could not load products for add-ons:', err));
     }, []);
 
     const handleApplyCoupon = async (codeToApply?: string) => {
@@ -192,6 +208,49 @@ export default function CheckoutPage() {
         setCouponSuccess(null);
         setCouponError(null);
     };
+
+    // Keep applied coupon discount in sync with cart subtotal changes
+    useEffect(() => {
+        if (!appliedCoupon) return;
+        if (appliedCoupon.min_order_value > 0 && totalAmount < appliedCoupon.min_order_value) {
+            setAppliedCoupon(null);
+            setDiscountAmount(0);
+            setCouponSuccess(null);
+            setCouponError(`Coupon removed: Minimum order value of ₹${appliedCoupon.min_order_value} is required.`);
+            return;
+        }
+
+        let calculatedDiscount = 0;
+        if (appliedCoupon.discount_type === 'percentage') {
+            calculatedDiscount = (totalAmount * appliedCoupon.discount_value) / 100;
+            if (appliedCoupon.max_discount_amount && calculatedDiscount > appliedCoupon.max_discount_amount) {
+                calculatedDiscount = appliedCoupon.max_discount_amount;
+            }
+        } else {
+            calculatedDiscount = appliedCoupon.discount_value;
+        }
+        calculatedDiscount = Math.min(totalAmount, Math.round(calculatedDiscount));
+        setDiscountAmount(calculatedDiscount);
+    }, [totalAmount, appliedCoupon]);
+
+    // Unique categories for addon modal
+    const addonCategories = ['all', ...Array.from(new Set(
+        availableProducts
+            .map(p => p.category?.name)
+            .filter((name): name is string => Boolean(name))
+    ))];
+
+    // Filter available products for modal
+    const filteredAddonProducts = availableProducts.filter(p => {
+        const matchesCategory = selectedAddonCategory === 'all' || p.category?.name === selectedAddonCategory;
+        const matchesSearch = !addonSearch.trim() || p.name.toLowerCase().includes(addonSearch.toLowerCase());
+        return matchesCategory && matchesSearch;
+    });
+
+    // Quick add-on recommendations (not already in cart, affordable or top picks)
+    const quickAddons = availableProducts
+        .filter(p => p.is_active !== false && !items.some(item => item.product.id === p.id))
+        .slice(0, 3);
 
     useEffect(() => {
         if (customer && (customer.rto_count ?? 0) >= 2) {
@@ -1085,35 +1144,71 @@ export default function CheckoutPage() {
 
                                     {/* Order Items */}
                                     <div className="border border-gray-200 rounded-xl p-5">
-                                        <h3 className="font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100">Order Items ({items.length})</h3>
-                                        <div className="space-y-4">
+                                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                                            <h3 className="font-bold text-gray-900">Order Items ({items.length})</h3>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAddonModal(true)}
+                                                className="text-xs font-bold text-accent-600 hover:text-accent-700 bg-accent-50 hover:bg-accent-100 px-2.5 py-1 rounded-lg flex items-center gap-1 border border-accent-200/80 transition-colors"
+                                            >
+                                                <Plus size={12} strokeWidth={2.5} /> Add More Items
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3.5 divide-y divide-gray-100">
                                             {items.map((item) => (
-                                                <div key={item.product.id} className="flex justify-between items-center gap-4">
-                                                    <div className="flex-1">
-                                                        <p className="font-bold text-gray-900 leading-tight">{item.product.name}</p>
-                                                        <p className="text-sm font-medium text-gray-500 mt-0.5">₹{item.product.current_price.toLocaleString()} each</p>
+                                                <div key={item.product.id} className="pt-3.5 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                        <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-2xs">
+                                                            {item.product.image ? (
+                                                                <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <ShoppingBag size={18} className="text-gray-400" />
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="font-bold text-gray-900 leading-tight text-sm line-clamp-1">{item.product.name}</p>
+                                                            <p className="text-xs font-medium text-gray-500 mt-0.5">₹{item.product.current_price.toLocaleString()} each</p>
+                                                        </div>
                                                     </div>
 
-                                                    {/* Quantity Controls */}
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                                                    {/* Quantity Controls & Remove */}
+                                                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                                                        <div className="inline-flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden shadow-2xs">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                                                                onClick={() => {
+                                                                    if (item.quantity <= 1) {
+                                                                        removeItem(item.product.id);
+                                                                    } else {
+                                                                        updateQuantity(item.product.id, item.quantity - 1);
+                                                                    }
+                                                                }}
                                                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-600 font-bold"
+                                                                title={item.quantity <= 1 ? "Remove item" : "Decrease quantity"}
                                                             >
-                                                                <Minus size={14} strokeWidth={3} />
+                                                                <Minus size={13} strokeWidth={2.5} />
                                                             </button>
                                                             <span className="w-8 text-center font-bold text-gray-900 text-sm">{item.quantity}</span>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                                                                 className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 transition-colors text-gray-600 font-bold"
+                                                                title="Increase quantity"
                                                             >
-                                                                <Plus size={14} strokeWidth={3} />
+                                                                <Plus size={13} strokeWidth={2.5} />
                                                             </button>
                                                         </div>
-                                                        <p className="font-black text-gray-900 w-20 text-right">₹{(item.product.current_price * item.quantity).toLocaleString()}</p>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeItem(item.product.id)}
+                                                            className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                                                            title="Remove item"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+
+                                                        <p className="font-black text-gray-900 w-20 text-right text-sm">₹{(item.product.current_price * item.quantity).toLocaleString()}</p>
                                                     </div>
                                                 </div>
                                             ))}
@@ -1150,31 +1245,147 @@ export default function CheckoutPage() {
                     {/* Order Summary */}
                     <div className="lg:w-96" data-aos="fade-left" data-aos-delay="200">
                         <div className="bg-white border border-gray-200 shadow-sm rounded-2xl p-6 sticky top-24">
-                            <h2 className="font-display text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+                            <div className="flex items-center justify-between mb-5">
+                                <div>
+                                    <h2 className="font-display text-xl font-bold text-gray-900">Order Summary</h2>
+                                    <p className="text-xs text-gray-500 font-medium">{totalItems} {totalItems === 1 ? 'item' : 'items'} in cart</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddonModal(true)}
+                                    className="text-xs font-bold text-accent-600 hover:text-accent-700 bg-accent-50 hover:bg-accent-100/80 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors border border-accent-200/70"
+                                    title="Add more products to order"
+                                >
+                                    <Plus size={13} strokeWidth={2.5} /> Add Items
+                                </button>
+                            </div>
 
-                            <div className="space-y-4 mb-6">
-                                {items.slice(0, 3).map((item) => (
-                                    <div key={item.product.id} className="flex gap-4">
-                                        <div className="w-16 h-16 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm relative overflow-hidden">
+                            {/* Products List with +, - and Remove */}
+                            <div className="space-y-3 mb-5 max-h-[340px] overflow-y-auto pr-1 custom-scrollbar divide-y divide-gray-100">
+                                {items.map((item) => (
+                                    <div key={item.product.id} className="pt-3 first:pt-0 flex gap-3 items-center group">
+                                        {/* Product Thumbnail */}
+                                        <div className="w-14 h-14 bg-gray-50 border border-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 relative overflow-hidden shadow-2xs">
                                             {item.product.image ? (
                                                 <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
                                             ) : (
-                                                <ShoppingBag size={20} className="text-gray-400" />
+                                                <ShoppingBag size={18} className="text-gray-400" />
                                             )}
-                                            <span className="absolute -top-1 -right-1 bg-gray-900 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
-                                                {item.quantity}
-                                            </span>
                                         </div>
-                                        <div className="flex-1 min-w-0 flex justify-center flex-col">
-                                            <p className="font-bold text-gray-900 text-sm line-clamp-2 leading-tight">{item.product.name}</p>
-                                            <p className="font-black text-sm text-gray-900 mt-1">₹{(item.product.current_price * item.quantity).toLocaleString()}</p>
+
+                                        {/* Product Details & Qty Stepper */}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold text-gray-900 text-xs line-clamp-1 leading-snug" title={item.product.name}>
+                                                {item.product.name}
+                                            </p>
+                                            <p className="text-[11px] font-medium text-gray-500 mt-0.5">
+                                                ₹{item.product.current_price.toLocaleString()} each
+                                            </p>
+
+                                            {/* Quantity Controls & Remove */}
+                                            <div className="flex items-center gap-1.5 mt-1.5">
+                                                <div className="inline-flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden shadow-2xs">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (item.quantity <= 1) {
+                                                                removeItem(item.product.id);
+                                                            } else {
+                                                                updateQuantity(item.product.id, item.quantity - 1);
+                                                            }
+                                                        }}
+                                                        className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
+                                                        title={item.quantity <= 1 ? "Remove item" : "Decrease quantity"}
+                                                    >
+                                                        <Minus size={11} strokeWidth={2.5} />
+                                                    </button>
+                                                    <span className="w-6 text-center font-bold text-xs text-gray-900 select-none">
+                                                        {item.quantity}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                                                        className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
+                                                        title="Increase quantity"
+                                                    >
+                                                        <Plus size={11} strokeWidth={2.5} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Remove / Trash Button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeItem(item.product.id)}
+                                                    className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-md transition-colors"
+                                                    title="Remove item from order"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Subtotal */}
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="font-black text-sm text-gray-900">
+                                                ₹{(item.product.current_price * item.quantity).toLocaleString()}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
-                                {items.length > 3 && (
-                                    <p className="text-sm font-bold text-gray-500 text-center py-2 bg-gray-50 rounded-lg">+{items.length - 3} more items</p>
-                                )}
                             </div>
+
+                            {/* Quick Add-on Recommendations */}
+                            {quickAddons.length > 0 && (
+                                <div className="border-t border-gray-100 pt-3.5 pb-2 mb-2">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[11px] font-bold text-gray-700 flex items-center gap-1.5 uppercase tracking-wider">
+                                            <Sparkles size={12} className="text-amber-500" /> Quick Add-ons
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddonModal(true)}
+                                            className="text-[11px] text-accent-600 hover:text-accent-700 font-bold hover:underline"
+                                        >
+                                            + View more
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {quickAddons.slice(0, 2).map((prod) => (
+                                            <div
+                                                key={prod.id}
+                                                className="bg-amber-50/40 hover:bg-amber-50/70 border border-amber-200/50 rounded-xl p-2.5 flex items-center justify-between gap-2.5 transition-colors shadow-2xs"
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="w-10 h-10 rounded-lg bg-white border border-amber-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                                                        {prod.image ? (
+                                                            <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <ShoppingBag size={14} className="text-gray-400" />
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-xs font-bold text-gray-900 line-clamp-1">{prod.name}</p>
+                                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                                            <span className="text-xs font-black text-gray-900">₹{prod.current_price.toLocaleString()}</span>
+                                                            {prod.mrp && prod.mrp > prod.current_price && (
+                                                                <span className="text-[10px] text-gray-400 line-through">₹{prod.mrp.toLocaleString()}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addItem(prod, 1)}
+                                                    className="px-2.5 py-1 bg-white hover:bg-accent-600 hover:text-white border border-accent-300 text-accent-600 text-xs font-bold rounded-lg transition-all shrink-0 flex items-center gap-1 shadow-2xs active:scale-95"
+                                                    title="Add this product to order"
+                                                >
+                                                    <Plus size={12} strokeWidth={2.5} /> Add
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Coupon / Promo Code Section */}
                             <div className="border-t border-gray-100 pt-4 pb-2">
@@ -1396,6 +1607,168 @@ export default function CheckoutPage() {
                         >
                             Close
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* In-Checkout Add-on Products Modal */}
+            {showAddonModal && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[88vh] flex flex-col shadow-2xl overflow-hidden animate-scale-up">
+                        {/* Modal Header */}
+                        <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-white">
+                            <div>
+                                <h3 className="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <Sparkles size={18} className="text-amber-500" /> Add Products to Order
+                                </h3>
+                                <p className="text-xs text-gray-500 mt-0.5">Add items directly to your checkout with 1 tap</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddonModal(false)}
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Search & Category Filter */}
+                        <div className="p-3.5 sm:p-4 border-b border-gray-100 bg-gray-50/70 space-y-2.5">
+                            <div className="relative">
+                                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search products to add..."
+                                    value={addonSearch}
+                                    onChange={(e) => setAddonSearch(e.target.value)}
+                                    className="w-full pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:border-accent-500 transition-colors"
+                                />
+                                {addonSearch && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setAddonSearch('')}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {addonCategories.length > 1 && (
+                                <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                                    {addonCategories.map((cat) => (
+                                        <button
+                                            key={cat}
+                                            type="button"
+                                            onClick={() => setSelectedAddonCategory(cat)}
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold capitalize whitespace-nowrap transition-colors ${
+                                                selectedAddonCategory === cat
+                                                    ? 'bg-gray-900 text-white'
+                                                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            {cat}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Product List */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar divide-y divide-gray-100">
+                            {filteredAddonProducts.length === 0 ? (
+                                <div className="text-center py-10">
+                                    <ShoppingBag size={32} className="mx-auto text-gray-300 mb-2" />
+                                    <p className="text-sm font-bold text-gray-700">No products found</p>
+                                    <p className="text-xs text-gray-400 mt-1">Try another search term or category</p>
+                                </div>
+                            ) : (
+                                filteredAddonProducts.map((prod) => {
+                                    const inCartItem = items.find(it => it.product.id === prod.id);
+                                    return (
+                                        <div key={prod.id} className="pt-3 first:pt-0 flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-2xs">
+                                                    {prod.image ? (
+                                                        <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <ShoppingBag size={16} className="text-gray-400" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-xs font-bold text-gray-900 line-clamp-1 leading-snug">{prod.name}</p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <span className="text-xs font-black text-gray-900">₹{prod.current_price.toLocaleString()}</span>
+                                                        {prod.mrp && prod.mrp > prod.current_price && (
+                                                            <span className="text-[10px] text-gray-400 line-through">₹{prod.mrp.toLocaleString()}</span>
+                                                        )}
+                                                        {prod.discount_percent > 0 && (
+                                                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">
+                                                                {prod.discount_percent}% OFF
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Stepper or Add button */}
+                                            {inCartItem ? (
+                                                <div className="inline-flex items-center border border-gray-200 rounded-lg bg-gray-50 overflow-hidden shadow-2xs shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            if (inCartItem.quantity <= 1) {
+                                                                removeItem(prod.id);
+                                                            } else {
+                                                                updateQuantity(prod.id, inCartItem.quantity - 1);
+                                                            }
+                                                        }}
+                                                        className="w-7 h-7 flex items-center justify-center hover:bg-gray-200 text-gray-600 transition-colors"
+                                                        title={inCartItem.quantity <= 1 ? "Remove from cart" : "Decrease quantity"}
+                                                    >
+                                                        <Minus size={11} strokeWidth={2.5} />
+                                                    </button>
+                                                    <span className="w-7 text-center font-bold text-xs text-gray-900 select-none">
+                                                        {inCartItem.quantity}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateQuantity(prod.id, inCartItem.quantity + 1)}
+                                                        className="w-7 h-7 flex items-center justify-center hover:bg-gray-200 text-gray-600 transition-colors"
+                                                        title="Increase quantity"
+                                                    >
+                                                        <Plus size={11} strokeWidth={2.5} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addItem(prod, 1)}
+                                                    className="px-3 py-1.5 bg-accent-500 hover:bg-accent-600 text-white rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 shadow-sm shadow-accent-500/20 active:scale-95"
+                                                >
+                                                    <Plus size={12} strokeWidth={2.5} /> Add
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-3.5 sm:p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <div>
+                                <span className="text-xs text-gray-500 font-medium">{totalItems} {totalItems === 1 ? 'item' : 'items'} in order</span>
+                                <p className="text-sm font-black text-gray-900">Total: ₹{finalPayableAmount.toLocaleString()}</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddonModal(false)}
+                                className="px-5 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-xs font-bold transition-colors"
+                            >
+                                Done
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
