@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Building2, Edit, Loader2, MapPin, Package, Plus, Save, Search, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { AlertTriangle, Building2, CheckCircle2, Edit, Loader2, MapPin, Package, Plus, Save, Search, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { Shop } from '@/types/admin';
@@ -348,21 +348,32 @@ export default function ShopsTab() {
                             {shop.description && <p className="text-sm text-silver-300">{shop.description}</p>}
 
                             {/* Courier Multi-Shop Pickup Details */}
-                            <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div className={`rounded-xl border px-3 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs transition-all ${
+                                shop.pincode
+                                    ? 'border-emerald-500/30 bg-emerald-500/10'
+                                    : 'border-amber-500/40 bg-amber-500/10'
+                            }`}>
                                 <div className="flex items-center gap-2">
-                                    <Truck size={14} className="text-blue-400 shrink-0" />
-                                    <span className="text-silver-400">Pickup Origin:</span>
-                                    <span className="font-semibold text-white">
-                                        {shop.pincode ? `PIN ${shop.pincode}` : 'Default Hub (110020)'}
-                                    </span>
-                                    {shop.state && <span className="text-silver-500">({shop.state})</span>}
+                                    <Truck size={14} className={shop.pincode ? 'text-emerald-400 shrink-0' : 'text-amber-400 shrink-0'} />
+                                    <span className="text-silver-400">Direct Courier Pickup:</span>
+                                    {shop.pincode ? (
+                                        <span className="font-extrabold text-emerald-400">
+                                            PIN {shop.pincode}
+                                        </span>
+                                    ) : (
+                                        <span className="font-bold text-amber-400 flex items-center gap-1.5">
+                                            <AlertTriangle size={13} className="text-amber-400 shrink-0" />
+                                            ⚠️ No Pickup Pincode (Click Edit to configure)
+                                        </span>
+                                    )}
+                                    {shop.city && <span className="text-silver-300 font-medium">({shop.city}{shop.state ? `, ${shop.state}` : ''})</span>}
                                 </div>
                                 {shop.pickup_location_nickname ? (
                                     <div className="text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                                         SR Nickname: <strong className="text-white">{shop.pickup_location_nickname}</strong>
                                     </div>
                                 ) : (
-                                    <span className="text-silver-500 italic">No Shiprocket nickname set</span>
+                                    <span className="text-silver-500 italic text-[11px]">No Shiprocket nickname set</span>
                                 )}
                             </div>
 
@@ -471,26 +482,26 @@ export default function ShopsTab() {
                                     <input value={formData.state} onChange={(e) => setFormData((prev) => ({ ...prev, state: e.target.value }))} placeholder="e.g. Karnataka, Maharashtra" className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500" />
                                 </label>
 
-                                <div className="md:col-span-2 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
-                                    <div className="flex items-center gap-2 text-blue-400 font-semibold text-sm">
+                                <div className="md:col-span-2 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 space-y-3">
+                                    <div className="flex items-center gap-2 text-blue-400 font-bold text-sm">
                                         <Truck size={16} />
-                                        <span>Courier & Multi-Shop Pickup Settings</span>
+                                        <span>Supplier Stocking & Direct Courier Pickup Origin</span>
                                     </div>
-                                    <p className="text-xs text-silver-400">
-                                        When an order contains items from this shop, Shiprocket and couriers pick up the parcel directly from this origin location.
+                                    <p className="text-xs text-silver-300 leading-relaxed">
+                                        VorionMart does not stock items in a central warehouse. Courier partners (Shiprocket, Delhivery, etc.) collect orders directly from this supplier shop's origin address and pincode.
                                     </p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                                         <label className="space-y-2">
-                                            <span className="text-sm text-silver-300">Courier Pickup Pincode</span>
+                                            <span className="text-sm font-semibold text-silver-300">Courier Pickup Pincode *</span>
                                             <input
                                                 value={formData.pincode}
                                                 onChange={(e) => setFormData((prev) => ({ ...prev, pincode: e.target.value }))}
-                                                placeholder="e.g. 560001 (Shop origin pin)"
-                                                className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500"
+                                                placeholder="e.g. 560001 (Supplier shop dispatch pin)"
+                                                className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white focus:outline-none focus:border-accent-500 font-mono"
                                             />
                                         </label>
                                         <label className="space-y-2">
-                                            <span className="text-sm text-silver-300">Shiprocket Location Nickname</span>
+                                            <span className="text-sm font-semibold text-silver-300">Shiprocket Location Nickname</span>
                                             <input
                                                 value={formData.pickup_location_nickname}
                                                 onChange={(e) => setFormData((prev) => ({ ...prev, pickup_location_nickname: e.target.value }))}

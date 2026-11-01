@@ -214,13 +214,13 @@ class ShiprocketService:
             if item_shop and item_shop.pincode:
                 pickup_pincode = item_shop.pincode.strip()
             else:
-                pickup_pincode = courier_partner.pickup_pincode or getattr(site_setting, 'pickup_pincode', '110020')
+                pickup_pincode = courier_partner.pickup_pincode or getattr(site_setting, 'pickup_pincode', '673011')
 
         if not pickup_location:
             if item_shop and (item_shop.pickup_location_nickname or item_shop.name):
                 pickup_loc = (item_shop.pickup_location_nickname or item_shop.name).strip()
             else:
-                pickup_loc = courier_partner.default_pickup_location or getattr(site_setting, 'pickup_warehouse_name', 'Primary Warehouse')
+                pickup_loc = courier_partner.default_pickup_location or getattr(site_setting, 'pickup_warehouse_name', 'HQ Dispatch')
         else:
             pickup_loc = pickup_location.strip()
 
@@ -575,20 +575,20 @@ class ShiprocketService:
 
         if item_shop and (item_shop.address or item_shop.city or item_shop.pincode):
             sender_name = item_shop.name
-            sender_phone = item_shop.phone or getattr(site_setting, 'pickup_phone', '+91 9876543210')
+            sender_phone = item_shop.phone or getattr(site_setting, 'pickup_phone', '+91 8086216468')
             sender_address = item_shop.address
             sender_city = item_shop.city
-            sender_state = item_shop.state or getattr(site_setting, 'pickup_state', 'Delhi')
-            sender_pincode = item_shop.pincode or getattr(site_setting, 'pickup_pincode', '110020')
-            sender_gstin = getattr(site_setting, 'pickup_gstin', '07AAAAA0000A1Z5') or '07AAAAA0000A1Z5'
+            sender_state = item_shop.state or getattr(site_setting, 'pickup_state', 'Kerala')
+            sender_pincode = item_shop.pincode or getattr(site_setting, 'pickup_pincode', '673011')
+            sender_gstin = getattr(site_setting, 'pickup_gstin', '') or ''
         else:
-            sender_name = getattr(site_setting, 'pickup_warehouse_name', 'VorionMart Logistics Hub') or 'VorionMart Logistics Hub'
-            sender_phone = getattr(site_setting, 'pickup_phone', '+91 9876543210') or '+91 9876543210'
-            sender_address = getattr(site_setting, 'pickup_address', 'Plot 42, Logistics Park, Okhla Industrial Area') or 'Plot 42, Logistics Park, Okhla Industrial Area'
-            sender_city = getattr(site_setting, 'pickup_city', 'New Delhi') or 'New Delhi'
-            sender_state = getattr(site_setting, 'pickup_state', 'Delhi') or 'Delhi'
-            sender_pincode = getattr(site_setting, 'pickup_pincode', '110020') or '110020'
-            sender_gstin = getattr(site_setting, 'pickup_gstin', '07AAAAA0000A1Z5') or '07AAAAA0000A1Z5'
+            sender_name = getattr(site_setting, 'pickup_warehouse_name', 'VorionMart HQ') or 'VorionMart HQ'
+            sender_phone = getattr(site_setting, 'pickup_phone', '+91 8086216468') or '+91 8086216468'
+            sender_address = getattr(site_setting, 'pickup_address', 'Vorion Nexus Technology, English Church, West Nadakkavu') or 'Vorion Nexus Technology, English Church, West Nadakkavu'
+            sender_city = getattr(site_setting, 'pickup_city', 'Kozhikode') or 'Kozhikode'
+            sender_state = getattr(site_setting, 'pickup_state', 'Kerala') or 'Kerala'
+            sender_pincode = getattr(site_setting, 'pickup_pincode', '673011') or '673011'
+            sender_gstin = getattr(site_setting, 'pickup_gstin', '') or ''
 
         payment_badge_class = "cod-badge" if shipment.is_cod else "prepaid-badge"
         payment_text = "C.O.D (Cash on Delivery)" if shipment.is_cod else "PREPAID"

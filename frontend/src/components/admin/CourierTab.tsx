@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import {
     Truck, Package, ShieldCheck, MapPin, Search, RefreshCw, Printer, ExternalLink,
     CheckCircle2, Clock, AlertTriangle, ArrowRight, Settings, Plus, Edit3, X,
-    ChevronDown, DollarSign, Box, Check, Copy, AlertCircle, Sparkles, Navigation, Store
+    ChevronDown, DollarSign, Box, Check, Copy, AlertCircle, Sparkles, Navigation, Store,
+    Building2, Save, Loader2, Phone, Compass, Info
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
@@ -38,7 +39,7 @@ export default function CourierTab() {
     const [labelLoading, setLabelLoading] = useState(false);
 
     // Rate Calculator state
-    const [calcPickupPincode, setCalcPickupPincode] = useState('110020');
+    const [calcPickupPincode, setCalcPickupPincode] = useState('673011');
     const [calcDeliveryPincode, setCalcDeliveryPincode] = useState('560001');
     const [calcWeight, setCalcWeight] = useState('0.5');
     const [calcIsCod, setCalcIsCod] = useState(true);
@@ -47,7 +48,86 @@ export default function CourierTab() {
 
     // Multi-shop sourcing origins
     const [shops, setShops] = useState<Shop[]>([]);
-    const [selectedOriginType, setSelectedOriginType] = useState<string>('hub');
+    const [selectedOriginType, setSelectedOriginType] = useState<string>('default');
+
+    // Sourcing Shops Hubs Registry State (for SubTab 4)
+    const [shopOriginSearch, setShopOriginSearch] = useState('');
+    const [shopOriginFilter, setShopOriginFilter] = useState<'all' | 'ready' | 'missing'>('all');
+    const [editingShopPickup, setEditingShopPickup] = useState<Shop | null>(null);
+    const [shopPickupForm, setShopPickupForm] = useState({
+        name: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        pickup_location_nickname: '',
+        phone: '',
+    });
+    const [savingShopPickup, setSavingShopPickup] = useState(false);
+    const [shopPickupSavedMsg, setShopPickupSavedMsg] = useState<string | null>(null);
+
+    const handleOpenEditShopPickup = (shop: Shop) => {
+        setEditingShopPickup(shop);
+        setShopPickupForm({
+            name: shop.name || '',
+            address: shop.address || '',
+            city: shop.city || '',
+            state: shop.state || '',
+            pincode: shop.pincode || '',
+            pickup_location_nickname: shop.pickup_location_nickname || '',
+            phone: shop.phone || '',
+        });
+        setShopPickupSavedMsg(null);
+    };
+
+    const handleSaveShopPickup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingShopPickup) return;
+        setSavingShopPickup(true);
+        setShopPickupSavedMsg(null);
+        try {
+            const res = await fetch(`${API_BASE_URL}/admin/shops/${editingShopPickup.id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    address: shopPickupForm.address,
+                    city: shopPickupForm.city,
+                    state: shopPickupForm.state,
+                    pincode: shopPickupForm.pincode,
+                    pickup_location_nickname: shopPickupForm.pickup_location_nickname,
+                    phone: shopPickupForm.phone,
+                }),
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setShops((prev) => prev.map((s) => (s.id === updated.id ? { ...s, ...updated } : s)));
+                setShopPickupSavedMsg(`Pickup origin for "${updated.name}" updated successfully!`);
+                setTimeout(() => {
+                    setEditingShopPickup(null);
+                    setShopPickupSavedMsg(null);
+                }, 1200);
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Failed to update shop pickup details.');
+            }
+        } catch (e) {
+            console.error('Failed to update shop pickup', e);
+            alert('Network error while saving shop pickup details.');
+        } finally {
+            setSavingShopPickup(false);
+        }
+    };
+
+    const handleTestShopServiceability = (shop: Shop) => {
+        setSelectedOriginType(String(shop.id));
+        if (shop.pincode) {
+            setCalcPickupPincode(shop.pincode.trim());
+        }
+        setSubTab('calculator');
+    };
 
     // Arrived / Pending Orders for easy calculation & dispatch
     const [orders, setOrders] = useState<Order[]>([]);
@@ -91,15 +171,35 @@ export default function CourierTab() {
         return orderIdMatch || nameMatch || phoneMatch || cityMatch || pincodeMatch || amountMatch || codMatch;
     });
 
-    // Warehouse Settings state
+    // Filtered Sourcing Shops for SubTab 4 Origin Registry
+    const readyShopsCount = shops.filter((s) => Boolean(s.pincode && s.pincode.trim().length >= 6)).length;
+    const missingShopsCount = shops.filter((s) => !s.pincode || s.pincode.trim().length < 6).length;
+    const totalProductsStocked = shops.reduce((sum, s) => sum + (s.product_count || 0), 0);
+
+    const filteredOriginShops = shops.filter((s) => {
+        const hasPin = Boolean(s.pincode && s.pincode.trim().length >= 6);
+        if (shopOriginFilter === 'ready' && !hasPin) return false;
+        if (shopOriginFilter === 'missing' && hasPin) return false;
+
+        if (!shopOriginSearch.trim()) return true;
+        const q = shopOriginSearch.toLowerCase().trim();
+        const nameMatch = String(s.name || '').toLowerCase().includes(q);
+        const cityMatch = String(s.city || '').toLowerCase().includes(q);
+        const stateMatch = String(s.state || '').toLowerCase().includes(q);
+        const pinMatch = String(s.pincode || '').toLowerCase().includes(q);
+        const platformMatch = String(s.source_platform || s.shop_type || '').toLowerCase().includes(q);
+        return nameMatch || cityMatch || stateMatch || pinMatch || platformMatch;
+    });
+
+    // Brand Invoicing & Fallback Return (RTO) Address state (VorionMart HQ registered office)
     const [warehouseForm, setWarehouseForm] = useState({
-        pickup_warehouse_name: 'VorionMart Central Hub',
-        pickup_phone: '+91 9876543210',
-        pickup_address: 'Plot 42, Logistics Park, Okhla Industrial Area',
-        pickup_city: 'New Delhi',
-        pickup_state: 'Delhi',
-        pickup_pincode: '110020',
-        pickup_gstin: '07AAAAA0000A1Z5',
+        pickup_warehouse_name: 'VorionMart HQ',
+        pickup_phone: '+91 8086216468',
+        pickup_address: 'Vorion Nexus Technology, English Church, West Nadakkavu',
+        pickup_city: 'Kozhikode',
+        pickup_state: 'Kerala',
+        pickup_pincode: '673011',
+        pickup_gstin: '',
     });
     const [savingWarehouse, setSavingWarehouse] = useState(false);
     const [warehouseSavedMessage, setWarehouseSavedMessage] = useState(false);
@@ -150,7 +250,7 @@ export default function CourierTab() {
         }
     };
 
-    // Fetch Warehouse Settings
+    // Fetch Brand Legal Invoicing / RTO Return Address
     const fetchWarehouseSettings = async () => {
         if (!token) return;
         try {
@@ -160,17 +260,17 @@ export default function CourierTab() {
             if (res.ok) {
                 const data = await res.json();
                 setWarehouseForm({
-                    pickup_warehouse_name: data.pickup_warehouse_name || 'VorionMart Central Hub',
-                    pickup_phone: data.pickup_phone || '+91 9876543210',
-                    pickup_address: data.pickup_address || 'Plot 42, Logistics Park, Okhla Industrial Area',
-                    pickup_city: data.pickup_city || 'New Delhi',
-                    pickup_state: data.pickup_state || 'Delhi',
-                    pickup_pincode: data.pickup_pincode || '110020',
-                    pickup_gstin: data.pickup_gstin || '07AAAAA0000A1Z5',
+                    pickup_warehouse_name: data.pickup_warehouse_name || 'VorionMart HQ',
+                    pickup_phone: data.pickup_phone || '+91 8086216468',
+                    pickup_address: data.pickup_address || 'Vorion Nexus Technology, English Church, West Nadakkavu',
+                    pickup_city: data.pickup_city || 'Kozhikode',
+                    pickup_state: data.pickup_state || 'Kerala',
+                    pickup_pincode: data.pickup_pincode || '673011',
+                    pickup_gstin: data.pickup_gstin || '',
                 });
             }
         } catch (e) {
-            console.error('Failed to fetch warehouse settings', e);
+            console.error('Failed to fetch legal invoicing and return settings', e);
         }
     };
 
@@ -205,6 +305,15 @@ export default function CourierTab() {
                 const data = await res.json();
                 const list: Shop[] = data.results || (Array.isArray(data) ? data : []);
                 setShops(list);
+                if (list.length > 0) {
+                    const shopWithPin = list.find(s => s.pincode && s.pincode.trim().length >= 6) || list[0];
+                    if (shopWithPin) {
+                        setSelectedOriginType(String(shopWithPin.id));
+                        if (shopWithPin.pincode) {
+                            setCalcPickupPincode(shopWithPin.pincode.trim());
+                        }
+                    }
+                }
             }
         } catch (e) {
             console.error('Failed to fetch shops for courier calculation', e);
@@ -393,10 +502,9 @@ export default function CourierTab() {
     // Handle Origin Dropdown Change
     const handleOriginChange = (val: string) => {
         setSelectedOriginType(val);
-        if (val === 'hub') {
-            const defaultPartner = partners.find(p => p.is_default) || partners[0];
-            const hubPin = defaultPartner?.pickup_pincode || warehouseForm.pickup_pincode || '110020';
-            setCalcPickupPincode(hubPin);
+        if (val === 'hq') {
+            const hqPin = warehouseForm.pickup_pincode || '673011';
+            setCalcPickupPincode(hqPin);
         } else if (val !== 'custom') {
             const shop = shops.find(s => String(s.id) === val);
             if (shop && shop.pincode) {
@@ -602,8 +710,8 @@ export default function CourierTab() {
                         : 'border-transparent text-silver-400 hover:text-white'
                         }`}
                 >
-                    <MapPin size={16} />
-                    Warehouse Origin Settings
+                    <Store size={16} />
+                    Sourcing Shops & Pickup Origins
                 </button>
             </div>
 
@@ -1164,25 +1272,33 @@ export default function CourierTab() {
                             <form onSubmit={handleCalculateRate} className="space-y-4">
                                 <div>
                                     <div className="flex justify-between items-center mb-1">
-                                        <label className="text-xs font-bold text-silver-400 uppercase">Pickup Origin (Multi-Shop Pickup)</label>
+                                        <label className="text-xs font-bold text-silver-400 uppercase">Pickup Origin (Supplier Sourcing Shop)</label>
                                         {selectedOrder?.pickup_origin ? (
-                                            <span className="text-[10px] text-accent-400 font-bold">Auto-detected from Shop</span>
-                                        ) : selectedOriginType !== 'hub' && (
-                                            <span className="text-[10px] text-blue-400 font-bold">Shop Origin</span>
+                                            <span className="text-[10px] text-accent-400 font-bold">Auto-detected from Order's Shop</span>
+                                        ) : selectedOriginType !== 'hq' && selectedOriginType !== 'custom' ? (
+                                            <span className="text-[10px] text-emerald-400 font-bold">Direct Supplier Origin</span>
+                                        ) : (
+                                            <span className="text-[10px] text-silver-400 font-bold">Registered Office / HQ</span>
                                         )}
                                     </div>
                                     <select
                                         value={selectedOriginType}
                                         onChange={(e) => handleOriginChange(e.target.value)}
-                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-accent-500 mb-2 cursor-pointer"
+                                        className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-accent-500 mb-2 cursor-pointer"
                                     >
-                                        <option value="hub">🏢 Default Hub Warehouse (110020 - Delhi)</option>
-                                        {shops.map((s) => (
-                                            <option key={s.id} value={String(s.id)}>
-                                                🏪 {s.name} • {s.city || 'City'} {s.pincode ? `(PIN ${s.pincode})` : '(No PIN set)'}
-                                            </option>
-                                        ))}
-                                        <option value="custom">✏️ Custom Pickup Pincode...</option>
+                                        <optgroup label="🏪 Sourcing Shops (External Supplier Stocking Locations)">
+                                            {shops.map((s) => (
+                                                <option key={s.id} value={String(s.id)}>
+                                                    🏪 {s.name} • {s.city || 'Supplier City'} {s.pincode ? `(PIN ${s.pincode})` : '(⚠️ Missing PIN)'} {s.product_count ? `• ${s.product_count} products` : ''}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="🏢 Brand Registered Office / Fallback Hub">
+                                            <option value="hq">🏢 VorionMart HQ (673011 - Kozhikode)</option>
+                                        </optgroup>
+                                        <optgroup label="✏️ Manual Origin">
+                                            <option value="custom">✏️ Custom Pickup Pincode...</option>
+                                        </optgroup>
                                     </select>
                                     <input
                                         type="text"
@@ -1195,8 +1311,9 @@ export default function CourierTab() {
                                         required
                                         className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
                                     />
-                                    <p className="text-[11px] text-silver-500 mt-1">
-                                        Each shop's products route courier pickup from that shop's origin pincode.
+                                    <p className="text-[11px] text-silver-400 mt-1 flex items-center gap-1.5">
+                                        <Store size={12} className="text-accent-400 shrink-0" />
+                                        Stockless model: Couriers pick up orders directly from the external supplier shop's location.
                                     </p>
                                 </div>
 
@@ -1367,113 +1484,496 @@ export default function CourierTab() {
                 </div>
             )}
 
-            {/* SUBTAB 4: WAREHOUSE ORIGIN SETTINGS */}
+            {/* SUBTAB 4: SOURCING SHOPS & MULTI-ORIGIN DISPATCH HUBS */}
             {subTab === 'warehouse' && (
-                <div className="max-w-2xl bg-dark-800 rounded-3xl p-8 border border-dark-700 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                        <MapPin size={22} className="text-accent-400" />
-                        <h2 className="text-xl font-bold text-white">Pickup Warehouse / Consignor Address</h2>
+                <div className="space-y-8 animate-fade-in">
+                    {/* Architectural Hero Banner */}
+                    <div className="bg-gradient-to-r from-dark-800 via-dark-800 to-accent-950/20 p-6 md:p-8 rounded-3xl border border-dark-700 shadow-sm relative overflow-hidden">
+                        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-accent-500/5 to-transparent pointer-events-none" />
+                        <div className="relative z-10">
+                            <div className="flex flex-wrap items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-2xl bg-accent-500/10 border border-accent-500/20 flex items-center justify-center text-accent-400">
+                                    <Store size={22} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                                        Sourcing Shops & Multi-Origin Dispatch Hubs
+                                    </h2>
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-accent-500/10 text-accent-400 border border-accent-500/20 mt-1">
+                                        <Sparkles size={11} /> 100% Stockless Supplier Fulfillment Model
+                                    </span>
+                                </div>
+                            </div>
+
+                            <p className="text-silver-300 text-sm max-w-3xl leading-relaxed mt-2">
+                                <strong>You do not need a central warehouse.</strong> VorionMart operates on a direct external-shop sourcing model where inventory is held and packaged by partner shops (e.g. Meesho, wholesale suppliers, local vendors). When an order is placed, courier partners (Shiprocket, Delhivery, etc.) pick up packages <strong>directly from each supplier's origin address and pincode</strong>.
+                            </p>
+
+                            {/* 4 Architecture Metrics */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6">
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/80">
+                                    <div className="text-[11px] uppercase font-bold text-silver-400 flex items-center gap-1.5">
+                                        <Store size={13} className="text-accent-400" />
+                                        Total Shops
+                                    </div>
+                                    <div className="text-2xl font-black text-white mt-1">{shops.length}</div>
+                                    <p className="text-[11px] text-silver-500 mt-0.5">Supplier Stocking Hubs</p>
+                                </div>
+
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/80">
+                                    <div className="text-[11px] uppercase font-bold text-emerald-400 flex items-center gap-1.5">
+                                        <CheckCircle2 size={13} className="text-emerald-400" />
+                                        Ready for Pickup
+                                    </div>
+                                    <div className="text-2xl font-black text-emerald-400 mt-1">{readyShopsCount}</div>
+                                    <p className="text-[11px] text-silver-500 mt-0.5">Origin PIN configured</p>
+                                </div>
+
+                                <div className={`rounded-2xl p-4 border ${missingShopsCount > 0 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-dark-900/60 border-dark-700/80'}`}>
+                                    <div className="text-[11px] uppercase font-bold flex items-center gap-1.5 text-amber-400">
+                                        <AlertTriangle size={13} className="text-amber-400" />
+                                        Action Needed
+                                    </div>
+                                    <div className="text-2xl font-black text-amber-400 mt-1">{missingShopsCount}</div>
+                                    <p className="text-[11px] text-silver-400 mt-0.5">{missingShopsCount > 0 ? 'Missing pickup pincode' : 'All shops configured'}</p>
+                                </div>
+
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/80">
+                                    <div className="text-[11px] uppercase font-bold text-blue-400 flex items-center gap-1.5">
+                                        <Box size={13} className="text-blue-400" />
+                                        Products Stocked
+                                    </div>
+                                    <div className="text-2xl font-black text-blue-400 mt-1">{totalProductsStocked}</div>
+                                    <p className="text-[11px] text-silver-500 mt-0.5">External supplier items</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-silver-400 text-xs mb-6">
-                        This origin address appears on all shipping manifests, thermal labels, tax invoices, and is sent to Shiprocket as the default pickup hub.
-                    </p>
 
-                    <form onSubmit={handleSaveWarehouse} className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Warehouse / Seller Name</label>
-                            <input
-                                type="text"
-                                value={warehouseForm.pickup_warehouse_name}
-                                onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_warehouse_name: e.target.value })}
-                                required
-                                className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
-                            />
-                        </div>
+                    {/* SECTION 1: SOURCING SHOPS ORIGINS REGISTRY */}
+                    <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                                    <Package size={18} className="text-accent-400" />
+                                    External Sourcing Shops (Supplier Dispatch Hubs)
+                                </h3>
+                                <p className="text-silver-400 text-xs mt-0.5">
+                                    Couriers route directly to these origin addresses for parcels containing each shop's products.
+                                </p>
+                            </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Contact Phone</label>
-                                <input
-                                    type="text"
-                                    value={warehouseForm.pickup_phone}
-                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_phone: e.target.value })}
-                                    required
-                                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Seller GSTIN</label>
-                                <input
-                                    type="text"
-                                    value={warehouseForm.pickup_gstin}
-                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_gstin: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
-                                />
-                            </div>
-                        </div>
+                            {/* Search & Filter */}
+                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                <div className="relative flex-1 sm:w-64">
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-silver-500" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search shop, city, pin..."
+                                        value={shopOriginSearch}
+                                        onChange={(e) => setShopOriginSearch(e.target.value)}
+                                        className="w-full pl-9 pr-3 py-1.5 bg-dark-800 border border-dark-700 rounded-xl text-white placeholder-silver-500 text-xs focus:outline-none focus:border-accent-500"
+                                    />
+                                </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Pickup Street Address</label>
-                            <textarea
-                                rows={2}
-                                value={warehouseForm.pickup_address}
-                                onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_address: e.target.value })}
-                                required
-                                className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">City</label>
-                                <input
-                                    type="text"
-                                    value={warehouseForm.pickup_city}
-                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_city: e.target.value })}
-                                    required
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">State</label>
-                                <input
-                                    type="text"
-                                    value={warehouseForm.pickup_state}
-                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_state: e.target.value })}
-                                    required
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Pincode</label>
-                                <input
-                                    type="text"
-                                    value={warehouseForm.pickup_pincode}
-                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_pincode: e.target.value })}
-                                    required
-                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
-                                />
+                                <div className="flex items-center gap-1 bg-dark-800 p-1 rounded-xl border border-dark-700 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShopOriginFilter('all')}
+                                        className={`px-2.5 py-1 rounded-lg font-bold transition-all ${shopOriginFilter === 'all' ? 'bg-accent-500 text-dark-900' : 'text-silver-400 hover:text-white'}`}
+                                    >
+                                        All ({shops.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShopOriginFilter('ready')}
+                                        className={`px-2.5 py-1 rounded-lg font-bold transition-all ${shopOriginFilter === 'ready' ? 'bg-emerald-500 text-dark-900' : 'text-silver-400 hover:text-white'}`}
+                                    >
+                                        Ready ({readyShopsCount})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShopOriginFilter('missing')}
+                                        className={`px-2.5 py-1 rounded-lg font-bold transition-all ${shopOriginFilter === 'missing' ? 'bg-amber-500 text-dark-900' : 'text-silver-400 hover:text-white'}`}
+                                    >
+                                        Missing PIN ({missingShopsCount})
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {warehouseSavedMessage && (
-                            <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-300 rounded-xl text-sm font-semibold flex items-center gap-2">
-                                <CheckCircle2 size={16} />
-                                Origin warehouse settings updated successfully!
+                        {/* Shops Grid */}
+                        {filteredOriginShops.length === 0 ? (
+                            <div className="p-12 text-center bg-dark-800 rounded-3xl border border-dark-700 text-silver-400">
+                                <Store size={36} className="opacity-30 mx-auto mb-2" />
+                                <p className="font-semibold text-white">No shops found</p>
+                                <p className="text-xs mt-1">Try adjusting your search query or filter.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {filteredOriginShops.map((s) => {
+                                    const hasPin = Boolean(s.pincode && s.pincode.trim().length >= 6);
+                                    return (
+                                        <div
+                                            key={s.id}
+                                            className={`rounded-3xl p-5 border transition-all flex flex-col justify-between ${
+                                                hasPin
+                                                    ? 'bg-dark-800 border-dark-700 hover:border-emerald-500/40'
+                                                    : 'bg-dark-800/90 border-amber-500/40 hover:border-amber-500/60 shadow-lg shadow-amber-500/5'
+                                            }`}
+                                        >
+                                            <div className="space-y-3">
+                                                {/* Header Row */}
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div>
+                                                        <h4 className="font-black text-white text-base leading-tight">{s.name}</h4>
+                                                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                                            <span className="px-2 py-0.5 rounded-md bg-dark-700 border border-dark-600 text-[10px] font-bold text-silver-300 capitalize">
+                                                                {s.source_platform || s.shop_type?.replace('_', ' ') || 'Supplier'}
+                                                            </span>
+                                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${s.is_active ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                                                {s.is_active ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="px-2.5 py-1 rounded-xl bg-dark-700/80 border border-dark-600 text-xs font-mono font-bold text-silver-300 whitespace-nowrap">
+                                                        {s.product_count || 0} items
+                                                    </span>
+                                                </div>
+
+                                                {/* Address details */}
+                                                <div className="text-xs text-silver-400 space-y-1">
+                                                    <div className="flex items-center gap-1.5 text-silver-300 font-medium">
+                                                        <MapPin size={13} className="text-accent-400 shrink-0" />
+                                                        <span>{s.city || 'No City'}{s.state ? `, ${s.state}` : ''}</span>
+                                                    </div>
+                                                    <p className="text-[11px] text-silver-400 line-clamp-2 pl-4">
+                                                        {s.address || 'No physical street address specified yet.'}
+                                                    </p>
+                                                    {s.phone && (
+                                                        <div className="flex items-center gap-1.5 text-[11px] text-silver-400 pl-4 font-mono">
+                                                            <Phone size={11} className="text-silver-500" />
+                                                            {s.phone}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Courier Dispatch Status Box */}
+                                                <div className={`p-3 rounded-2xl border text-xs ${
+                                                    hasPin
+                                                        ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                                                        : 'bg-amber-500/10 border-amber-500/35 text-amber-300'
+                                                }`}>
+                                                    {hasPin ? (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                                                                <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                                                                <span>Ready for Courier Pickup</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-xs pt-0.5">
+                                                                <span className="text-silver-300">Dispatch PIN:</span>
+                                                                <span className="font-mono font-extrabold text-white text-sm">PIN {s.pincode}</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between text-[11px] pt-0.5 border-t border-emerald-500/20">
+                                                                <span className="text-silver-400">Shiprocket Nickname:</span>
+                                                                <span className="font-mono text-white font-semibold">
+                                                                    {s.pickup_location_nickname || 'Auto (Shop Name)'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                                                                <AlertTriangle size={14} className="text-amber-400 shrink-0" />
+                                                                <span>Missing Dispatch Pincode</span>
+                                                            </div>
+                                                            <p className="text-[11px] text-silver-300 leading-tight">
+                                                                Couriers cannot pick up parcels from this shop until its origin pincode is configured.
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex items-center gap-2 pt-4 mt-3 border-t border-dark-700/60">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenEditShopPickup(s)}
+                                                    className="flex-1 py-2 px-3 rounded-xl bg-dark-700 hover:bg-dark-600 text-silver-200 hover:text-white text-xs font-bold transition-all border border-dark-600 flex items-center justify-center gap-1.5"
+                                                >
+                                                    <Edit3 size={13} className="text-accent-400" />
+                                                    Configure Origin
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleTestShopServiceability(s)}
+                                                    className="py-2 px-3 rounded-xl bg-accent-500/10 hover:bg-accent-500/20 text-accent-400 text-xs font-bold transition-all border border-accent-500/30 flex items-center justify-center gap-1.5 whitespace-nowrap"
+                                                    title="Check shipping rates from this shop in calculator"
+                                                >
+                                                    <Truck size={13} />
+                                                    Calculate Rate
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
+                    </div>
 
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={savingWarehouse}
-                                className="px-6 py-3 bg-accent-500 hover:bg-accent-400 text-dark-900 font-bold rounded-xl transition-all shadow-md shadow-accent-500/20 flex items-center gap-2"
-                            >
-                                {savingWarehouse ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
-                                Save Origin Settings
-                            </button>
+                    {/* SECTION 2: BRAND INVOICING & DEFAULT RETURN (RTO) ADDRESS */}
+                    <div className="bg-dark-800 rounded-3xl p-6 md:p-8 border border-dark-700 shadow-sm max-w-3xl">
+                        <div className="flex items-start gap-3 mb-2">
+                            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                <Building2 size={22} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white">Brand Legal Invoicing & Fallback Return (RTO) Address</h3>
+                                <p className="text-silver-400 text-xs mt-1 leading-relaxed">
+                                    Because VorionMart holds no warehouse stock and suppliers ship directly to customers, this registered business office is used strictly for <strong>legal GST Tax Invoices</strong>, <strong>Brand Shipping Manifests</strong>, and as the <strong>fallback Customer Return (RTO) destination</strong>.
+                                </p>
+                            </div>
                         </div>
-                    </form>
+
+                        <form onSubmit={handleSaveWarehouse} className="space-y-4 mt-6">
+                            <div>
+                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Brand / Consignor Name</label>
+                                <input
+                                    type="text"
+                                    value={warehouseForm.pickup_warehouse_name}
+                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_warehouse_name: e.target.value })}
+                                    required
+                                    className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Official Contact Phone</label>
+                                    <input
+                                        type="text"
+                                        value={warehouseForm.pickup_phone}
+                                        onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_phone: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Seller GSTIN (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={warehouseForm.pickup_gstin}
+                                        onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_gstin: e.target.value })}
+                                        placeholder="e.g. 32AAAAA0000A1Z5"
+                                        className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Registered Office Address</label>
+                                <textarea
+                                    rows={2}
+                                    value={warehouseForm.pickup_address}
+                                    onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_address: e.target.value })}
+                                    required
+                                    className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">City</label>
+                                    <input
+                                        type="text"
+                                        value={warehouseForm.pickup_city}
+                                        onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_city: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">State</label>
+                                    <input
+                                        type="text"
+                                        value={warehouseForm.pickup_state}
+                                        onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_state: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-silver-400 uppercase mb-1">Pincode</label>
+                                    <input
+                                        type="text"
+                                        value={warehouseForm.pickup_pincode}
+                                        onChange={(e) => setWarehouseForm({ ...warehouseForm, pickup_pincode: e.target.value })}
+                                        required
+                                        className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                    />
+                                </div>
+                            </div>
+
+                            {warehouseSavedMessage && (
+                                <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-300 rounded-xl text-sm font-semibold flex items-center gap-2">
+                                    <CheckCircle2 size={16} />
+                                    Legal invoicing and fallback return address updated successfully!
+                                </div>
+                            )}
+
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={savingWarehouse}
+                                    className="px-6 py-3 bg-accent-500 hover:bg-accent-400 text-dark-900 font-bold rounded-xl transition-all shadow-md shadow-accent-500/20 flex items-center gap-2"
+                                >
+                                    {savingWarehouse ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
+                                    Save Invoicing & RTO Address
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* MODAL: QUICK CONFIGURE SHOP PICKUP ORIGIN */}
+                    {editingShopPickup && (
+                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                            <div className="bg-dark-800 rounded-3xl p-6 md:p-8 max-w-xl w-full border border-dark-700 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-accent-500/10 border border-accent-500/20 flex items-center justify-center text-accent-400">
+                                            <Store size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-black text-white">Configure Dispatch Origin</h3>
+                                            <p className="text-xs text-silver-400">Shop: <strong>{editingShopPickup.name}</strong></p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingShopPickup(null)}
+                                        className="p-1.5 hover:bg-dark-700 rounded-xl text-silver-400 hover:text-white transition-all"
+                                    >
+                                        <X size={18} />
+                                    </button>
+                                </div>
+
+                                <p className="text-xs text-silver-300 mb-5 leading-relaxed bg-blue-500/10 border border-blue-500/20 p-3 rounded-2xl">
+                                    Couriers dispatched for products from <strong>{editingShopPickup.name}</strong> will arrive at this physical origin address and pincode to collect parcels.
+                                </p>
+
+                                <form onSubmit={handleSaveShopPickup} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-silver-400 uppercase mb-1">
+                                            Pickup Pincode (Required for Courier Dispatch) *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={shopPickupForm.pincode}
+                                            onChange={(e) => setShopPickupForm({ ...shopPickupForm, pincode: e.target.value })}
+                                            placeholder="6-digit dispatch pincode, e.g. 560001"
+                                            required
+                                            className="w-full px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-silver-400 uppercase mb-1">
+                                            Pickup Street Address *
+                                        </label>
+                                        <textarea
+                                            rows={2}
+                                            value={shopPickupForm.address}
+                                            onChange={(e) => setShopPickupForm({ ...shopPickupForm, address: e.target.value })}
+                                            placeholder="Floor, building, street, area..."
+                                            required
+                                            className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-silver-400 uppercase mb-1">City *</label>
+                                            <input
+                                                type="text"
+                                                value={shopPickupForm.city}
+                                                onChange={(e) => setShopPickupForm({ ...shopPickupForm, city: e.target.value })}
+                                                placeholder="e.g. Bengaluru"
+                                                required
+                                                className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-silver-400 uppercase mb-1">State *</label>
+                                            <input
+                                                type="text"
+                                                value={shopPickupForm.state}
+                                                onChange={(e) => setShopPickupForm({ ...shopPickupForm, state: e.target.value })}
+                                                placeholder="e.g. Karnataka"
+                                                required
+                                                className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-silver-400 uppercase mb-1">
+                                            Shiprocket Pickup Location Nickname
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={shopPickupForm.pickup_location_nickname}
+                                            onChange={(e) => setShopPickupForm({ ...shopPickupForm, pickup_location_nickname: e.target.value })}
+                                            placeholder="e.g. Meesho_Bengaluru (Optional, as registered in Shiprocket panel)"
+                                            className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                        />
+                                        <p className="text-[11px] text-silver-500 mt-1">
+                                            If left blank, Shiprocket will use the shop name as the location identifier.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-silver-400 uppercase mb-1">
+                                            Shop Contact Phone (for Courier Delivery Boy)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={shopPickupForm.phone}
+                                            onChange={(e) => setShopPickupForm({ ...shopPickupForm, phone: e.target.value })}
+                                            placeholder="+91..."
+                                            className="w-full px-4 py-2 bg-dark-700 border border-dark-600 rounded-xl text-white text-sm focus:outline-none focus:border-accent-500 font-mono"
+                                        />
+                                    </div>
+
+                                    {shopPickupSavedMsg && (
+                                        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl text-sm font-semibold flex items-center gap-2">
+                                            <CheckCircle2 size={16} />
+                                            {shopPickupSavedMsg}
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-end gap-3 pt-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingShopPickup(null)}
+                                            className="px-4 py-2.5 rounded-xl border border-dark-600 text-silver-300 hover:text-white text-sm font-semibold hover:bg-dark-700 transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={savingShopPickup}
+                                            className="px-5 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-dark-900 text-sm font-black transition-all shadow-md shadow-accent-500/20 flex items-center gap-2"
+                                        >
+                                            {savingShopPickup ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
+                                            Save Dispatch Origin
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

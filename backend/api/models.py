@@ -355,9 +355,9 @@ class CourierPartner(models.Model):
     api_password = models.CharField(max_length=200, blank=True, help_text="Shiprocket Password or API Secret")
     api_key = models.CharField(max_length=255, blank=True, help_text="API Key or Bearer Token")
 
-    # Default Warehouse / Origin
-    default_pickup_location = models.CharField(max_length=100, default='Primary Warehouse', help_text="Pickup location nickname registered on courier portal")
-    pickup_pincode = models.CharField(max_length=10, default='110020', help_text="Origin warehouse pincode")
+    # Default Origin (Fallback)
+    default_pickup_location = models.CharField(max_length=100, default='HQ Dispatch', help_text="Pickup location nickname registered on courier portal")
+    pickup_pincode = models.CharField(max_length=10, default='673011', help_text="Origin fallback pincode")
 
     # Rates & Charges
     base_rate = models.DecimalField(max_digits=8, decimal_places=2, default=50.0, help_text="Base rate up to 500g")
@@ -664,8 +664,8 @@ class Shipment(models.Model):
     is_cod = models.BooleanField(default=True)
 
     # Origin & Destination details
-    pickup_location = models.CharField(max_length=150, default='Primary Warehouse')
-    pickup_pincode = models.CharField(max_length=10, default='110020')
+    pickup_location = models.CharField(max_length=150, default='HQ Dispatch')
+    pickup_pincode = models.CharField(max_length=10, default='673011')
     delivery_address = models.TextField()
     delivery_city = models.CharField(max_length=100)
     delivery_pincode = models.CharField(max_length=10)
@@ -811,14 +811,14 @@ class SiteSetting(models.Model):
     cashfree_secret_key = models.CharField(max_length=200, blank=True, help_text="Cashfree Secret Key")
     cashfree_api_version = models.CharField(max_length=50, default='2023-08-01')
 
-    # Warehouse / Origin Pickup Address (for Courier & Shipping Manifests)
-    pickup_warehouse_name = models.CharField(max_length=150, default='VorionMart Central Hub', blank=True)
-    pickup_phone = models.CharField(max_length=20, default='+91 9876543210', blank=True)
-    pickup_address = models.TextField(default='Plot 42, Logistics Park, Okhla Industrial Area', blank=True)
-    pickup_city = models.CharField(max_length=100, default='New Delhi', blank=True)
-    pickup_state = models.CharField(max_length=100, default='Delhi', blank=True)
-    pickup_pincode = models.CharField(max_length=10, default='110020', blank=True)
-    pickup_gstin = models.CharField(max_length=20, default='07AAAAA0000A1Z5', blank=True)
+    # Brand Legal / Consignor Invoicing & Fallback Return (RTO) Address
+    pickup_warehouse_name = models.CharField(max_length=150, default='VorionMart HQ', blank=True)
+    pickup_phone = models.CharField(max_length=20, default='+91 8086216468', blank=True)
+    pickup_address = models.TextField(default='Vorion Nexus Technology, English Church, West Nadakkavu', blank=True)
+    pickup_city = models.CharField(max_length=100, default='Kozhikode', blank=True)
+    pickup_state = models.CharField(max_length=100, default='Kerala', blank=True)
+    pickup_pincode = models.CharField(max_length=10, default='673011', blank=True)
+    pickup_gstin = models.CharField(max_length=20, default='', blank=True)
 
     def save(self, *args, **kwargs):
         process_image_upload(self.logo)
