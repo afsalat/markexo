@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Truck, Package, ShieldCheck, MapPin, Search, RefreshCw, Printer, ExternalLink,
     CheckCircle2, Clock, AlertTriangle, ArrowRight, Settings, Plus, Edit3, X,
@@ -55,6 +55,41 @@ export default function CourierTab() {
     const [ordersLoading, setOrdersLoading] = useState(false);
     const [dispatchingOrder, setDispatchingOrder] = useState(false);
     const [dispatchSuccessMsg, setDispatchSuccessMsg] = useState<string | null>(null);
+
+    // Searchable Arrived Orders Dropdown state
+    const [isOrderDropdownOpen, setIsOrderDropdownOpen] = useState(false);
+    const [orderSearchQuery, setOrderSearchQuery] = useState('');
+    const orderDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close searchable dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (orderDropdownRef.current && !orderDropdownRef.current.contains(event.target as Node)) {
+                setIsOrderDropdownOpen(false);
+            }
+        };
+
+        if (isOrderDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOrderDropdownOpen]);
+
+    // Real-time filtered orders based on orderSearchQuery
+    const filteredOrders = orders.filter((o) => {
+        if (!orderSearchQuery.trim()) return true;
+        const q = orderSearchQuery.toLowerCase().trim();
+        const orderIdMatch = String(o.order_id || '').toLowerCase().includes(q);
+        const nameMatch = String(o.customer?.name || '').toLowerCase().includes(q);
+        const phoneMatch = String(o.customer?.phone || '').toLowerCase().includes(q);
+        const cityMatch = String(o.delivery_city || '').toLowerCase().includes(q);
+        const pincodeMatch = String(o.delivery_pincode || '').toLowerCase().includes(q);
+        const amountMatch = String(o.total_amount || '').includes(q);
+        const codMatch = (o.is_cod ? 'cod' : 'prepaid').includes(q);
+        return orderIdMatch || nameMatch || phoneMatch || cityMatch || pincodeMatch || amountMatch || codMatch;
+    });
 
     // Warehouse Settings state
     const [warehouseForm, setWarehouseForm] = useState({
@@ -876,23 +911,155 @@ export default function CourierTab() {
                                 </div>
                             </div>
 
-                            {/* Dropdown & Actions */}
+                            {/* Searchable Dropdown & Actions */}
                             <div className="flex items-center gap-2">
-                                <select
-                                    value={selectedOrder ? selectedOrder.id : ''}
-                                    onChange={(e) => {
-                                        const found = orders.find(o => o.id === parseInt(e.target.value));
-                                        handleSelectOrder(found || null);
-                                    }}
-                                    className="px-4 py-2.5 bg-dark-700 border border-dark-600 rounded-xl text-white text-xs font-semibold focus:outline-none focus:border-accent-500 min-w-[280px] cursor-pointer"
-                                >
-                                    <option value="">-- Choose an arrived order --</option>
-                                    {orders.map((o) => (
-                                        <option key={o.id} value={o.id}>
-                                            #{o.order_id} • {o.customer?.name || 'Customer'} • {o.delivery_city || 'City'} ({o.delivery_pincode || 'No Pin'}) • ₹{Number(o.total_amount).toLocaleString()} {o.is_cod ? '(COD)' : '(Prepaid)'}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div ref={orderDropdownRef} className="relative min-w-[300px] sm:min-w-[360px] max-w-lg">
+                                    {/* Trigger Button */}
+                                    <div
+                                        onClick={() => setIsOrderDropdownOpen((prev) => !prev)}
+                                        className={`flex items-center justify-between px-3.5 py-2.5 bg-dark-700/90 hover:bg-dark-700 border ${
+                                            isOrderDropdownOpen ? 'border-accent-500 ring-2 ring-accent-500/20' : 'border-dark-600'
+                                        } rounded-xl text-white text-xs font-semibold cursor-pointer transition-all shadow-sm select-none`}
+                                    >
+                                        <div className="flex items-center gap-2 truncate pr-2">
+                                            <Search size={14} className={selectedOrder ? 'text-accent-400' : 'text-silver-400'} />
+                                            {selectedOrder ? (
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <span className="font-mono text-accent-400 font-bold">#{selectedOrder.order_id}</span>
+                                                    <span className="text-silver-300">• {selectedOrder.customer?.name || 'Customer'}</span>
+                                                    <span className="text-silver-400 text-[11px]">• {selectedOrder.delivery_city} ({selectedOrder.delivery_pincode})</span>
+                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-extrabold ${
+                                                        selectedOrder.is_cod ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'
+                                                    }`}>
+                                                        {selectedOrder.is_cod ? 'COD' : 'PREPAID'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-silver-400 font-normal">-- Choose or search an arrived order --</span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0 text-silver-400">
+                                            <ChevronDown size={14} className={`transition-transform duration-200 ${isOrderDropdownOpen ? 'rotate-180 text-accent-400' : ''}`} />
+                                        </div>
+                                    </div>
+
+                                    {/* Dropdown Menu */}
+                                    {isOrderDropdownOpen && (
+                                        <div className="absolute right-0 left-0 sm:left-auto sm:right-0 sm:w-[480px] mt-2 bg-dark-800 border border-dark-600 rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in">
+                                            {/* Search Input Bar */}
+                                            <div className="p-3 border-b border-dark-700 bg-dark-800/95 sticky top-0 z-10">
+                                                <div className="relative">
+                                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-silver-400" />
+                                                    <input
+                                                        type="text"
+                                                        autoFocus
+                                                        value={orderSearchQuery}
+                                                        onChange={(e) => setOrderSearchQuery(e.target.value)}
+                                                        placeholder="Search by Order ID, name, city, pincode, COD..."
+                                                        className="w-full pl-9 pr-8 py-2 bg-dark-700 border border-dark-600 rounded-xl text-xs text-white placeholder-silver-500 font-medium focus:outline-none focus:border-accent-500"
+                                                    />
+                                                    {orderSearchQuery && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setOrderSearchQuery('')}
+                                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-silver-400 hover:text-white p-0.5"
+                                                        >
+                                                            <X size={13} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center justify-between mt-2 px-1 text-[11px] text-silver-400">
+                                                    <span>{filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'} found</span>
+                                                    {selectedOrder && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleSelectOrder(null);
+                                                                setIsOrderDropdownOpen(false);
+                                                            }}
+                                                            className="text-red-400 hover:text-red-300 font-bold transition-colors"
+                                                        >
+                                                            Clear Selection
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Orders List */}
+                                            <div className="max-h-72 overflow-y-auto p-1.5 space-y-1 custom-scrollbar">
+                                                {/* Default Empty Option */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        handleSelectOrder(null);
+                                                        setIsOrderDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-colors ${
+                                                        !selectedOrder ? 'bg-dark-700 text-silver-300 font-semibold' : 'text-silver-400 hover:bg-dark-700/60 hover:text-white'
+                                                    }`}
+                                                >
+                                                    <span>-- None (Manual Calculation) --</span>
+                                                    {!selectedOrder && <Check size={14} className="text-accent-400" />}
+                                                </button>
+
+                                                {filteredOrders.length === 0 ? (
+                                                    <div className="py-8 text-center text-silver-400 text-xs">
+                                                        <Package size={24} className="mx-auto text-silver-500 mb-2 opacity-50" />
+                                                        <p className="font-semibold text-silver-300">No arrived orders match &ldquo;{orderSearchQuery}&rdquo;</p>
+                                                        <p className="text-[11px] text-silver-500 mt-1">Try searching by order number, customer name, or pincode.</p>
+                                                    </div>
+                                                ) : (
+                                                    filteredOrders.map((o) => {
+                                                        const isSelected = selectedOrder?.id === o.id;
+                                                        return (
+                                                            <button
+                                                                key={o.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    handleSelectOrder(o);
+                                                                    setIsOrderDropdownOpen(false);
+                                                                }}
+                                                                className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all ${
+                                                                    isSelected
+                                                                        ? 'bg-accent-500/15 border border-accent-500/40 text-white'
+                                                                        : 'hover:bg-dark-700/80 text-silver-200 border border-transparent'
+                                                                }`}
+                                                            >
+                                                                <div className="min-w-0 flex-1 pr-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="font-mono font-bold text-accent-400 text-xs">#{o.order_id}</span>
+                                                                        <span className="font-bold text-white text-xs truncate">{o.customer?.name || 'Customer'}</span>
+                                                                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${
+                                                                            o.is_cod ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'
+                                                                        }`}>
+                                                                            {o.is_cod ? 'COD' : 'PREPAID'}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 mt-1 text-[11px] text-silver-400">
+                                                                        <span>📍 {o.delivery_city || 'City'} ({o.delivery_pincode || 'No Pin'})</span>
+                                                                        <span>•</span>
+                                                                        <span className="font-semibold text-silver-300">₹{Number(o.total_amount).toLocaleString()}</span>
+                                                                        {o.items && o.items.length > 0 && (
+                                                                            <>
+                                                                                <span>•</span>
+                                                                                <span className="text-silver-500 truncate max-w-[140px]">{o.items[0]?.product?.name || `${o.items.length} items`}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                {isSelected && (
+                                                                    <div className="w-6 h-6 rounded-full bg-accent-500/20 text-accent-400 flex items-center justify-center shrink-0">
+                                                                        <Check size={14} strokeWidth={3} />
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {selectedOrder && (
                                     <button
