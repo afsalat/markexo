@@ -1063,7 +1063,8 @@ class Review(models.Model):
             items__product=self.product,
             status__in=['delivered', 'completed']
         ).exists()
-        self.verified = has_purchased
+        if not self.verified:
+            self.verified = has_purchased
         super().save(*args, **kwargs)
 
         # Update product's rating and review count

@@ -56,6 +56,10 @@ from .serializers import (
     normalize_email_value, get_or_create_customer_for_user,
 )
 from .ai_service import GeminiBlogService
+from .kerala_reviews import (
+    generate_kerala_reviews_for_product,
+    get_product_review_stats,
+)
 from .cashfree_service import (
     create_cashfree_order,
     verify_cashfree_order,
@@ -1385,6 +1389,114 @@ class AdminProductViewSet(viewsets.ModelViewSet):
             'current_stock': product.stock,
             'log': StockLogSerializer(log).data
         }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='generate-kerala-reviews')
+    def generate_kerala_reviews(self, request, pk=None):
+        """Action to generate 100+ authentic Kerala reviews for a specific product."""
+        product = self.get_object()
+        try:
+            count = int(request.data.get('count', 100))
+            count = max(1, min(count, 500))
+        except (ValueError, TypeError):
+            count = 100
+
+        tone = request.data.get('tone', 'natural')
+        rating_skew = request.data.get('rating_skew', 'high')
+        verified = bool(request.data.get('verified', True))
+        clear_existing = bool(request.data.get('clear_existing', False))
+
+        try:
+            result = generate_kerala_reviews_for_product(
+                product=product,
+                count=count,
+                tone=tone,
+                rating_skew=rating_skew,
+                verified=verified,
+                clear_existing=clear_existing
+            )
+            cache.delete(f'product_{product.slug}')
+            return Response(result, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error("Error generating Kerala reviews for product %s: %s", product.id, e, exc_info=True)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['get'], url_path='kerala-reviews-stats')
+    def kerala_reviews_stats(self, request, pk=None):
+        """Action to get review statistics and samples for a product."""
+        product = self.get_object()
+        try:
+            stats_data = get_product_review_stats(product)
+            return Response(stats_data)
+        except Exception as e:
+            logger.error("Error fetching review stats for product %s: %s", product.id, e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['delete'], url_path='clear-reviews')
+    def clear_reviews(self, request, pk=None):
+        """Action to clear all reviews for a product."""
+        product = self.get_object()
+        try:
+            deleted_count, _ = Review.objects.filter(product=product).delete()
+            product.rating = 0.0
+            product.review_count = 0
+            product.save(update_fields=['rating', 'review_count'])
+            cache.delete(f'product_{product.slug}')
+            return Response({
+                'success': True,
+                'deleted_count': deleted_count,
+                'product_id': product.id
+            })
+        except Exception as e:
+            logger.error("Error clearing reviews for product %s: %s", product.id, e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], url_path='bulk-generate-kerala-reviews')
+    def bulk_generate_kerala_reviews(self, request):
+        """Action to bulk generate Kerala reviews across multiple products in 1-click."""
+        product_ids = request.data.get('product_ids')
+        if product_ids and isinstance(product_ids, list):
+            products = Product.objects.filter(id__in=product_ids)
+        else:
+            products = Product.objects.filter(is_active=True, approval_status='approved')
+
+        try:
+            count = int(request.data.get('count', 100))
+            count = max(1, min(count, 500))
+        except (ValueError, TypeError):
+            count = 100
+
+        tone = request.data.get('tone', 'natural')
+        rating_skew = request.data.get('rating_skew', 'high')
+        verified = bool(request.data.get('verified', True))
+        clear_existing = bool(request.data.get('clear_existing', False))
+
+        results = []
+        for prod in products:
+            try:
+                res = generate_kerala_reviews_for_product(
+                    product=prod,
+                    count=count,
+                    tone=tone,
+                    rating_skew=rating_skew,
+                    verified=verified,
+                    clear_existing=clear_existing
+                )
+                results.append(res)
+            except Exception as e:
+                logger.error("Failed bulk review gen for product %s: %s", prod.id, e)
+                results.append({
+                    'success': False,
+                    'product_id': prod.id,
+                    'product_name': prod.name,
+                    'error': str(e)
+                })
+
+        return Response({
+            'success': True,
+            'processed_products': len(results),
+            'results': results
+        }, status=status.HTTP_200_OK)
+
 
 
 class AdminOrderViewSet(viewsets.ModelViewSet):

@@ -3,6 +3,8 @@ import { Product, StockLog } from '@/types/admin';
 import { ArrowLeft, Edit, Trash2, Package, ShoppingBag, Tag, Calendar, Layers, Activity, Star, Info, Link as LinkIcon, Plus, AlertTriangle, CheckCircle2, History, TrendingUp, TrendingDown, RefreshCcw, X, Truck, Scale } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { API_BASE_URL } from '@/config/apiConfig';
+import { formatImageUrl } from '@/lib/imageUrl';
+import KeralaReviewGeneratorModal from './KeralaReviewGeneratorModal';
 
 interface ProductDetailProps {
     product: Product;
@@ -85,10 +87,11 @@ export default function ProductDetail({ product, onBack, onEdit, onDelete }: Pro
     const { hasPermission, token } = useAuth();
     const allImages = useMemo(() => {
         const candidates = [product.image, ...(product.images?.map((image) => image.image) ?? [])];
-        return Array.from(new Set(candidates.map((image) => image?.trim()).filter((image): image is string => Boolean(image))));
+        return Array.from(new Set(candidates.map((image) => formatImageUrl(image)).filter(Boolean)));
     }, [product.image, product.images]);
     const [activeImage, setActiveImage] = useState(allImages[0] || '');
     const [failedImages, setFailedImages] = useState<Set<string>>(() => new Set());
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
     const canEdit = hasPermission('change_product');
     const canDelete = hasPermission('delete_product');
@@ -258,7 +261,17 @@ export default function ProductDetail({ product, onBack, onEdit, onDelete }: Pro
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                    {canEdit && (
+                        <button
+                            type="button"
+                            onClick={() => setIsReviewModalOpen(true)}
+                            className="bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold px-4 py-2 rounded-xl hover:bg-amber-500/20 flex items-center gap-2 shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                            title="Generate 100+ Kerala Reviews for this product"
+                        >
+                            <Star size={18} className="fill-amber-400/30" /> 1-Click Kerala Reviews
+                        </button>
+                    )}
                     {canEdit && (
                         <button
                             type="button"
@@ -918,6 +931,18 @@ export default function ProductDetail({ product, onBack, onEdit, onDelete }: Pro
                         </form>
                     </div>
                 </div>
+            )}
+
+            {isReviewModalOpen && (
+                <KeralaReviewGeneratorModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                    product={product}
+                    token={token}
+                    onSuccess={() => {
+                        window.location.reload();
+                    }}
+                />
             )}
         </div>
     );

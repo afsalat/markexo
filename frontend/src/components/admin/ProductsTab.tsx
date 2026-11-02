@@ -1,4 +1,4 @@
-import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X, Sparkles, Download, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Info, CheckCircle, Search, ChevronDown, X, Sparkles, Download, Loader2, Star } from 'lucide-react';
 import { Product, Category } from '@/types/admin';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
@@ -6,6 +6,7 @@ import { API_BASE_URL } from '@/config/apiConfig';
 import { exportProductsToExcel } from '@/lib/excelExport';
 import ProductDetail from './ProductDetail';
 import ProductForm from './ProductForm';
+import KeralaReviewGeneratorModal from './KeralaReviewGeneratorModal';
 
 interface ProductsTabProps {
     products: Product[];
@@ -45,6 +46,8 @@ export default function ProductsTab({
     const [showForm, setShowForm] = useState(false);
     const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
     const [exporting, setExporting] = useState(false);
+    const [reviewGeneratorProduct, setReviewGeneratorProduct] = useState<Product | null>(null);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
     const handleEdit = (product: Product) => {
         setViewingProduct(null);
@@ -388,6 +391,18 @@ export default function ProductsTab({
                         </div>
                         <button
                             type="button"
+                            onClick={() => {
+                                setReviewGeneratorProduct(null);
+                                setIsReviewModalOpen(true);
+                            }}
+                            className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-sm font-semibold text-amber-400 shadow-sm transition-colors hover:bg-amber-500/20"
+                            title="1-Click Kerala Reviews Generator"
+                        >
+                            <Star size={16} className="fill-amber-400/40 text-amber-400" />
+                            <span className="hidden sm:inline">1-Click Kerala Reviews</span>
+                        </button>
+                        <button
+                            type="button"
                             onClick={handleExportProducts}
                             disabled={exporting}
                             className="flex shrink-0 items-center justify-center gap-2 rounded-lg border border-dark-600 bg-dark-700 px-4 py-2 font-medium text-white shadow-sm transition-colors hover:bg-dark-600 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -515,6 +530,19 @@ export default function ProductsTab({
                                                     )}
                                                     {canEdit && (
                                                         <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setReviewGeneratorProduct(product);
+                                                                setIsReviewModalOpen(true);
+                                                            }}
+                                                            className="rounded-lg p-2 text-amber-400 transition-colors hover:bg-amber-500/10 hover:text-amber-300"
+                                                            title="Generate 100+ Kerala Reviews for this product"
+                                                        >
+                                                            <Star size={16} className="fill-amber-400/20" />
+                                                        </button>
+                                                    )}
+                                                    {canEdit && (
+                                                        <button
                                                             onClick={(e) => handleGenerateBlog(e, product)}
                                                             className="rounded-lg p-2 text-accent-500 transition-colors hover:bg-accent-500/10"
                                                             title="Generate AI Blog"
@@ -548,6 +576,19 @@ export default function ProductsTab({
                     </table>
                 </div>
             </div>
+
+            {isReviewModalOpen && (
+                <KeralaReviewGeneratorModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                    product={reviewGeneratorProduct}
+                    allProducts={products}
+                    token={token}
+                    onSuccess={() => {
+                        if (onRefresh) onRefresh();
+                    }}
+                />
+            )}
         </div>
     );
 }
