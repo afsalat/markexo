@@ -496,44 +496,44 @@ export default function ProductDetail({ product, onBack, onEdit, onDelete }: Pro
                             </div>
 
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60 min-w-0 overflow-hidden">
                                     <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
-                                        <Scale size={13} className="text-accent-500" /> Dead Weight
+                                        <Scale size={13} className="text-accent-500 shrink-0" /> Dead Weight
                                     </div>
-                                    <div className="text-lg font-bold text-white">
-                                        {product.weight_kg ? `${product.weight_kg} kg` : '0.50 kg'}
+                                    <div className="text-base sm:text-lg font-bold text-white truncate" title={product.weight_kg ? `${product.weight_kg} kg` : '0.50 kg'}>
+                                        {product.weight_kg ? `${Number(product.weight_kg).toFixed(2)} kg` : '0.50 kg'}
                                     </div>
-                                    <div className="text-[10px] text-silver-500 mt-0.5">Physical weight</div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5 truncate">Physical weight</div>
                                 </div>
 
-                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60 min-w-0 overflow-hidden">
                                     <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
-                                        <Package size={13} className="text-accent-500" /> Dimensions
+                                        <Package size={13} className="text-accent-500 shrink-0" /> Dimensions
                                     </div>
-                                    <div className="text-lg font-bold text-white">
-                                        {product.package_length || 10}×{product.package_width || 10}×{product.package_height || 5}
+                                    <div className="text-base sm:text-lg font-bold text-white truncate" title={`${product.package_length || 10} × ${product.package_width || 10} × ${product.package_height || 5} cm`}>
+                                        {Number(product.package_length || 10)} × {Number(product.package_width || 10)} × {Number(product.package_height || 5)}
                                     </div>
-                                    <div className="text-[10px] text-silver-500 mt-0.5">L × W × H (cm)</div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5 truncate">L × W × H (cm)</div>
                                 </div>
 
-                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60 min-w-0 overflow-hidden">
                                     <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
-                                        <Activity size={13} className="text-purple-400" /> Volumetric
+                                        <Activity size={13} className="text-purple-400 shrink-0" /> Volumetric
                                     </div>
-                                    <div className="text-lg font-bold text-purple-300">
-                                        {(product.volumetric_weight != null ? product.volumetric_weight : (((product.package_length || 10) * (product.package_width || 10) * (product.package_height || 5)) / 5000)).toFixed(2)} kg
+                                    <div className="text-base sm:text-lg font-bold text-purple-300 truncate">
+                                        {(product.volumetric_weight != null ? Number(product.volumetric_weight) : (((Number(product.package_length) || 10) * (Number(product.package_width) || 10) * (Number(product.package_height) || 5)) / 5000)).toFixed(2)} kg
                                     </div>
-                                    <div className="text-[10px] text-silver-500 mt-0.5">(L×W×H) / 5000</div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5 truncate">(L×W×H) / 5000</div>
                                 </div>
 
-                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60">
+                                <div className="bg-dark-900/60 rounded-2xl p-4 border border-dark-700/60 min-w-0 overflow-hidden">
                                     <div className="text-xs text-silver-500 mb-1 flex items-center gap-1.5 font-medium">
-                                        <Tag size={13} className="text-emerald-400" /> HSN Code
+                                        <Tag size={13} className="text-emerald-400 shrink-0" /> HSN Code
                                     </div>
-                                    <div className="text-lg font-bold text-white font-mono">
+                                    <div className="text-base sm:text-lg font-bold text-white font-mono truncate" title={product.hsn_code || '—'}>
                                         {product.hsn_code || '—'}
                                     </div>
-                                    <div className="text-[10px] text-silver-500 mt-0.5">GST Tax classification</div>
+                                    <div className="text-[10px] text-silver-500 mt-0.5 truncate">GST Tax classification</div>
                                 </div>
                             </div>
 

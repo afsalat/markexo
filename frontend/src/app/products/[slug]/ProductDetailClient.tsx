@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw,
-    Award, ChevronRight, ChevronLeft, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X, MessageSquare, AlertTriangle
+    Award, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Plus, Minus, Check, MapPin, Store, CreditCard, Package, ImagePlus, X, MessageSquare, AlertTriangle
 } from 'lucide-react';
 import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
@@ -58,6 +58,30 @@ function sanitizeDescription(value: string) {
     return parsed.body.innerHTML.trim();
 }
 
+function ReviewCommentText({ comment }: { comment: string }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const MAX_LENGTH = 180;
+
+    if (!comment || comment.length <= MAX_LENGTH) {
+        return <p className="text-sm lg:text-base text-gray-700 leading-relaxed font-medium">{comment}</p>;
+    }
+
+    return (
+        <div>
+            <p className="text-sm lg:text-base text-gray-700 leading-relaxed font-medium">
+                {isExpanded ? comment : `${comment.slice(0, MAX_LENGTH)}...`}
+            </p>
+            <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="mt-1 text-xs lg:text-sm font-bold text-accent-600 hover:text-accent-700 hover:underline inline-flex items-center gap-1 cursor-pointer"
+            >
+                {isExpanded ? 'Read less' : 'Read more'}
+            </button>
+        </div>
+    );
+}
+
 type RelatedProductCard = {
     id: number;
     name: string;
@@ -80,6 +104,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     const { addItem } = useCart();
     const [productData, setProductData] = useState<Product | null>(initialProduct);
     const [reviews, setReviews] = useState<Review[]>([]);
+    const [visibleReviewsLimit, setVisibleReviewsLimit] = useState<number>(10);
     const [loading, setLoading] = useState(!initialProduct);
     const [error, setError] = useState<string | null>(null);
     const [selectedImage, setSelectedImage] = useState(0);
@@ -1168,7 +1193,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
-                                        {reviews.map((review) => (
+                                        {reviews.slice(0, visibleReviewsLimit).map((review) => (
                                             <div key={review.id} className="p-4 lg:p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:border-gray-200 transition-colors">
                                                 <div className="flex items-start justify-between mb-3 lg:mb-4">
                                                     <div className="flex items-center gap-2 lg:gap-3">
@@ -1193,7 +1218,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                         ))}
                                                     </div>
                                                 </div>
-                                                <p className="text-sm lg:text-base text-gray-700 leading-relaxed font-medium">{review.comment}</p>
+                                                <ReviewCommentText comment={review.comment} />
                                                 {review.images?.length > 0 && (
                                                     <div className="mt-4 overflow-x-auto pb-2 custom-scrollbar">
                                                         <div className="flex min-w-max gap-4">
@@ -1222,6 +1247,50 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                 )}
                                             </div>
                                         ))}
+
+                                        {/* Read More / Load More Controls (Max 10 per page) */}
+                                        {reviews.length > 10 && (
+                                            <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                                <div className="text-xs lg:text-sm text-gray-500 font-medium">
+                                                    Showing <span className="font-bold text-gray-900">{Math.min(visibleReviewsLimit, reviews.length)}</span> of <span className="font-bold text-gray-900">{reviews.length}</span> reviews
+                                                </div>
+
+                                                <div className="flex items-center gap-2.5 flex-wrap justify-center sm:justify-end w-full sm:w-auto">
+                                                    {visibleReviewsLimit < reviews.length ? (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setVisibleReviewsLimit((prev) => Math.min(prev + 10, reviews.length))}
+                                                                className="px-5 py-2.5 bg-accent-600 hover:bg-accent-500 text-white rounded-xl font-bold text-xs lg:text-sm transition-all flex items-center justify-center gap-2 shadow-md shadow-accent-500/20 active:scale-95 cursor-pointer"
+                                                            >
+                                                                <span>Read More Reviews (+{Math.min(10, reviews.length - visibleReviewsLimit)})</span>
+                                                                <ChevronDown size={15} />
+                                                            </button>
+                                                            {reviews.length > 20 && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setVisibleReviewsLimit(reviews.length)}
+                                                                    className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-xl font-semibold text-xs lg:text-sm transition-all cursor-pointer"
+                                                                >
+                                                                    View All ({reviews.length})
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setVisibleReviewsLimit(10);
+                                                                document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+                                                            }}
+                                                            className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-xs lg:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                                                        >
+                                                            <ChevronUp size={15} /> Show Less (First 10)
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

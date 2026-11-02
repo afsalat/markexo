@@ -186,8 +186,48 @@ DELIVERY_SNIPPETS = [
 
 # Category-specific template bank
 CATEGORY_TEMPLATES = {
+    "watch": {
+        "keywords": ["watch", "watches", "timepiece", "chronograph", "dial", "analog", "quartz", "smartwatch", "wrist watch", "metal strap"],
+        "openings_5star": [
+            "Adipoli watch! The dial finish and weight feel super premium.",
+            "Really impressive timepiece. Looks much more expensive than its price.",
+            "Valare nannayittund! Dial clarity is sharp and strap fitting is very comfortable.",
+            "Pakka quality! Heavy stainless steel build, finish looks classy.",
+            "Super stylish watch! Got many compliments from office colleagues.",
+            "Crown adjustment and quartz movement are very smooth and accurate.",
+            "Best watch purchase from VorionMart. Sturdy metal strap and secure clasp.",
+            "Looks stunning on wrist. Premium glass with great reflection resistance.",
+        ],
+        "openings_4star": [
+            "Good watch for everyday office and casual use. Keeps accurate time.",
+            "Nice dial and sturdy strap. Adjusted 1 link for my wrist size, now fits perfectly.",
+            "Classy look, dial glass has good scratch resistance. Decent buy.",
+            "Value for money watch. Packaging came in a neat presentation box.",
+            "Solid metal build. Looks rich and feels durable.",
+        ],
+        "openings_3star": [
+            "Looks good on wrist, strap was slightly stiff initially but got better.",
+            "Decent timepiece for the price, dial is slightly heavier than expected.",
+        ],
+        "features": [
+            "The metal strap clasp clicks securely without any wobble.",
+            "Dial markers and hands are very easy to read even in dim light.",
+            "Dial glass has nice clarity and doesn't pick up smudges easily.",
+            "Pairs nicely with both formal office shirts and casual outfits.",
+            "Battery was pre-installed and running with zero time lag.",
+            "Water resistance held up fine during light Kerala drizzle.",
+        ],
+        "closings": [
+            "Highly recommended for daily wear and formal occasions.",
+            "Superb gifting option for brothers, husbands, and friends.",
+            "Five stars for quality and fast delivery!",
+            "Adipoli watch from VorionMart, go for it!",
+            "Very satisfied with this purchase!",
+        ]
+    },
+
     "perfume": {
-        "keywords": ["perfume", "fragrance", "scent", "cologne", "edp", "edc", "attar", "body spray", "deodorant", "oud", "man"],
+        "keywords": ["perfume", "fragrance", "scent", "cologne", "edp", "edc", "attar", "body spray", "deodorant", "oud"],
         "openings_5star": [
             "Adipoli fragrance set! All bottles have distinct rich notes.",
             "Really impressed with the scent quality. Feels very luxury.",
@@ -271,7 +311,7 @@ CATEGORY_TEMPLATES = {
     },
 
     "apparel": {
-        "keywords": ["shirt", "t-shirt", "kurti", "saree", "dress", "pant", "jeans", "cotton", "cloth", "fashion", "wear", "fabric", "hoodie"],
+        "keywords": ["shirt", "t-shirt", "tshirt", "kurti", "saree", "dress", "pant", "pants", "jeans", "trousers", "cotton", "kurta", "cloth", "clothing", "fabric", "hoodie", "trackpant"],
         "openings_5star": [
             "Adipoli fabric quality! Pure soft cotton feel.",
             "Very comfortable to wear, especially in Kerala's humid climate.",

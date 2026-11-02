@@ -426,17 +426,17 @@ export default function ProductsTab({
 
             <div className="overflow-hidden rounded-2xl border border-dark-700 bg-dark-800 shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1080px] table-fixed">
+                    <table className="w-full min-w-[1190px] table-fixed">
                         <thead className="bg-dark-700/50">
                             <tr>
-                                <th className="w-[380px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Product</th>
-                                <th className="w-[180px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Category</th>
-                                <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Our Price</th>
-                                <th className="w-[110px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Profit</th>
-                                <th className="w-[90px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Stock</th>
-                                <th className="w-[120px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
-                                <th className="w-[130px] px-6 py-3 text-left text-xs font-medium uppercase text-silver-500">Approval</th>
-                                {(canEdit || canDelete) && <th className="w-[110px] px-6 py-3 text-right text-xs font-medium uppercase text-silver-500">Actions</th>}
+                                <th className="w-[320px] px-5 py-3 text-left text-xs font-medium uppercase text-silver-500">Product</th>
+                                <th className="w-[160px] px-4 py-3 text-left text-xs font-medium uppercase text-silver-500">Category</th>
+                                <th className="w-[100px] px-3 py-3 text-left text-xs font-medium uppercase text-silver-500">Our Price</th>
+                                <th className="w-[100px] px-3 py-3 text-left text-xs font-medium uppercase text-silver-500">Profit</th>
+                                <th className="w-[85px] px-3 py-3 text-left text-xs font-medium uppercase text-silver-500">Stock</th>
+                                <th className="w-[115px] px-3 py-3 text-left text-xs font-medium uppercase text-silver-500">Status</th>
+                                <th className="w-[125px] px-3 py-3 text-left text-xs font-medium uppercase text-silver-500">Approval</th>
+                                {(canEdit || canDelete) && <th className="w-[185px] px-3 py-3 text-right text-xs font-medium uppercase text-silver-500">Actions</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-dark-700">
@@ -506,7 +506,7 @@ export default function ProductsTab({
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 align-top">
+                                        <td className="px-3 py-4 align-top">
                                             <span className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium ${product.approval_status === 'approved'
                                                 ? 'border-blue-500/20 bg-blue-500/10 text-blue-500'
                                                 : product.approval_status === 'rejected'
@@ -517,8 +517,8 @@ export default function ProductsTab({
                                             </span>
                                         </td>
                                         {(canEdit || canDelete) && (
-                                            <td className="px-6 py-4 text-right align-top">
-                                                <div className="flex justify-end gap-1 whitespace-nowrap">
+                                            <td className="px-3 py-4 text-right align-top">
+                                                <div className="flex items-center justify-end gap-1 whitespace-nowrap">
                                                     {canEdit && user?.is_superuser && product.approval_status === 'pending' && (
                                                         <button
                                                             onClick={(e) => handleApprove(e, product)}
