@@ -1,5 +1,6 @@
 import { Product, Review } from '@/lib/api';
 import { APP_URL } from '@/config/siteConfig';
+import { formatImageUrl } from '@/lib/imageUrl';
 
 interface ProductSchemaProps {
     product: Product;
@@ -17,8 +18,8 @@ export default function ProductSchema({ product, reviews = [], faqs = [] }: Prod
     const sku = String(product.sku || `VM-${product.id}`);
     const productUrl = `${APP_URL}/products/${product.slug}`;
     const allImages = [
-        product.image,
-        ...(product.images || []).map((img: any) => img.image)
+        product.image ? formatImageUrl(product.image) : null,
+        ...(product.images || []).map((img: any) => formatImageUrl(typeof img === 'string' ? img : img?.image))
     ].filter(Boolean);
     
     // Generate structured data for SEO

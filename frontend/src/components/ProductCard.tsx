@@ -9,17 +9,11 @@ import { Product } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 
+import { formatImageUrl } from '@/lib/imageUrl';
+
 interface ProductCardProps {
     product: Product;
 }
-
-const getFormattedImageUrl = (url: string | null | undefined) => {
-    if (!url) return null;
-    if (url.includes('://backend:8000') || url.includes('://backend/')) {
-        return url.replace(/^https?:\/\/backend(:8000)?/, 'https://api.vorionmart.com');
-    }
-    return url;
-};
 
 export default function ProductCard({ product }: ProductCardProps) {
     const { addItem } = useCart();
@@ -30,7 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     const [imageError, setImageError] = useState(false);
 
     const displayRating = Number(product.rating) > 0 ? Number(product.rating) : 4.6;
-    const imageUrl = getFormattedImageUrl(product.image);
+    const imageUrl = formatImageUrl(product.image);
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault();

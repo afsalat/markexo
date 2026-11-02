@@ -3,6 +3,10 @@ import { fetchProduct, fetchReviews, Product } from '@/lib/api';
 import ProductDetailClient from './ProductDetailClient';
 import ProductSchema from '@/components/ProductSchema';
 import { Metadata } from 'next';
+import { formatImageUrl } from '@/lib/imageUrl';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 type Props = {
     params: { slug: string };
@@ -39,13 +43,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             openGraph: {
                 title: `${product.name} | ${category} | ₹${displayPrice}${discountText}`,
                 description: `Shop ${product.name} - Premium ${category.toLowerCase()} with cash on delivery. Fast shipping across India.`,
-                images: product.image ? [product.image] : [],
+                images: product.image ? [formatImageUrl(product.image)] : [],
             },
             twitter: {
                 card: 'summary_large_image',
                 title: `${product.name} | ${category} | ₹${displayPrice}${discountText}`,
                 description: `Shop ${product.name} - Premium ${category.toLowerCase()} with cash on delivery. Fast shipping across India.`,
-                images: product.image ? [product.image] : [],
+                images: product.image ? [formatImageUrl(product.image)] : [],
             },
             alternates: {
                 canonical: `https://vorionmart.com/products/${product.slug}`,

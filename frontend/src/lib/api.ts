@@ -172,13 +172,13 @@ async function parseApiError(response: Response, fallbackMessage: string) {
 // Fetch functions
 export async function fetchProducts(params?: Record<string, string>) {
     const searchParams = new URLSearchParams(params);
-    const res = await fetch(`${API_URL}/products/?${searchParams}`);
+    const res = await fetch(`${API_URL}/products/?${searchParams}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch products');
     return res.json();
 }
 
 export async function fetchProduct(slug: string) {
-    const res = await fetch(`${API_URL}/products/${slug}/`);
+    const res = await fetch(`${API_URL}/products/${slug}/`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch product');
     return res.json();
 }
@@ -187,26 +187,26 @@ export async function fetchCategories(params?: Record<string, string>) {
     const searchParams = new URLSearchParams(params);
     const queryString = searchParams.toString();
     const url = queryString ? `${API_URL}/categories/?${queryString}` : `${API_URL}/categories/`;
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch categories');
     return res.json();
 }
 
 export async function fetchBanners() {
-    const res = await fetch(`${API_URL}/banners/`);
+    const res = await fetch(`${API_URL}/banners/`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch banners');
     return res.json();
 }
 
 export async function fetchSettings() {
-    const res = await fetch(`${API_URL}/settings/`);
+    const res = await fetch(`${API_URL}/settings/`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch settings');
     return res.json();
 }
 
 export async function fetchReviews(productId?: number) {
     const url = productId ? `${API_URL}/reviews/?product=${productId}` : `${API_URL}/reviews/`;
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch reviews');
     return res.json();
 }

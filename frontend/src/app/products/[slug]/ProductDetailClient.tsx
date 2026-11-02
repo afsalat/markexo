@@ -11,6 +11,7 @@ import { useCart } from '@/lib/cart';
 import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { fetchProduct, fetchProducts, fetchReviews, createReview, Product, Review } from '@/lib/api';
 import ProductBenefits from '@/components/ProductBenefits';
+import { formatImageUrl } from '@/lib/imageUrl';
 
 const DESCRIPTION_TAGS = new Set([
     'A', 'BLOCKQUOTE', 'BR', 'CODE', 'EM', 'H2', 'H3', 'H4', 'LI', 'OL', 'P', 'PRE', 'STRONG', 'UL'
@@ -181,40 +182,54 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
 
     // Fetch reviews and related products, and refresh product data on route changes.
     useEffect(() => {
+        let isMounted = true;
         const loadProductData = async () => {
             try {
                 setError(null);
-                const product = initialProduct?.slug === slug
-                    ? initialProduct
-                    : await fetchProduct(slug);
-
-                setProductData(product);
-                setSelectedImage(0);
-                setRelatedProducts([]);
-                setLoading(false);
-
-                try {
-                    await loadRelatedProducts(product);
-                } catch (relatedErr) {
-                    console.error('Error fetching related products:', relatedErr);
-                    setRelatedProducts([]);
+                let product = initialProduct?.slug === slug ? initialProduct : null;
+                if (!product) {
+                    product = await fetchProduct(slug);
                 }
 
-                // Fetch reviews for this product
-                try {
-                    const productReviews = await fetchReviews(product.id);
-                    setReviews(Array.isArray(productReviews) ? productReviews : productReviews.results || []);
-                } catch (reviewErr) {
-                    console.error('Error fetching reviews:', reviewErr);
-                    // Don't set error for reviews, just log it
-                    setReviews([]);
+                if (isMounted && product) {
+                    setProductData(product);
+                    setLoading(false);
+                }
+
+                // Asynchronously revalidate from API to ensure fresh images, stock, and pricing
+                fetchProduct(slug).then((freshProduct) => {
+                    if (isMounted && freshProduct) {
+                        setProductData(freshProduct);
+                    }
+                }).catch(() => {});
+
+                if (product) {
+                    try {
+                        await loadRelatedProducts(product);
+                    } catch (relatedErr) {
+                        console.error('Error fetching related products:', relatedErr);
+                        if (isMounted) setRelatedProducts([]);
+                    }
+
+                    // Fetch reviews for this product
+                    try {
+                        const productReviews = await fetchReviews(product.id);
+                        if (isMounted) {
+                            setReviews(Array.isArray(productReviews) ? productReviews : productReviews.results || []);
+                        }
+                    } catch (reviewErr) {
+                        console.error('Error fetching reviews:', reviewErr);
+                        if (isMounted) setReviews([]);
+                    }
                 }
             } catch (err: any) {
                 console.error('Error fetching product:', err);
-                setError(err.message || 'Failed to load product');
-                setRelatedProducts([]);
+                if (isMounted && !productData && !initialProduct) {
+                    setError(err.message || 'Failed to load product');
+                    setRelatedProducts([]);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
@@ -224,6 +239,9 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
             }
             loadProductData();
         }
+        return () => {
+            isMounted = false;
+        };
     }, [slug, initialProduct]);
 
     useEffect(() => {
@@ -571,20 +589,35 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                         <div className="space-y-4 -mx-4 lg:mx-0" data-aos="fade-right" data-aos-delay="100">
                             {(() => {
                                 // Construct all images list (Main Image + Gallery Images)
-                                const allImages = [
-                                    ...(productData.image ? [{ id: 'main', image: productData.image }] : []),
-                                    ...(productData.images || [])
-                                ];
+                                const allImages: { id: string | number; image: string }[] = [];
 
-                                // Safe check if no images exist
-                                const displayImage = allImages.length > 0
-                                    ? allImages[selectedImage]?.image
-                                    : 'https://placehold.co/600x600/1a1a2e/ffffff?text=No+Image';
+                                if (productData.image) {
+                                    const formattedMain = formatImageUrl(productData.image);
+                                    if (formattedMain) {
+                                        allImages.push({ id: 'main', image: formattedMain });
+                                    }
+                                }
+
+                                if (Array.isArray(productData.images)) {
+                                    productData.images.forEach((img: any, idx: number) => {
+                                        const rawUrl = typeof img === 'string' ? img : img?.image;
+                                        const formatted = formatImageUrl(rawUrl);
+                                        if (formatted && !allImages.some(existing => existing.image === formatted)) {
+                                            allImages.push({
+                                                id: img?.id ?? `gallery-${idx}`,
+                                                image: formatted,
+                                            });
+                                        }
+                                    });
+                                }
+
+                                const safeSelected = Math.min(Math.max(0, selectedImage), Math.max(0, allImages.length - 1));
+                                const displayImage = allImages.length > 0 ? allImages[safeSelected]?.image : '';
 
                                 return (
                                     <>
                                         {/* Main Image */}
-                                        <div className="relative aspect-square bg-white lg:rounded-3xl overflow-hidden border-y lg:border border-gray-100 group shadow-sm">
+                                        <div className="relative aspect-square bg-white lg:rounded-3xl overflow-hidden border-y lg:border border-gray-100 group shadow-sm flex items-center justify-center">
                                             {/* Floating Back Button (Mobile Only) */}
                                             <button
                                                 onClick={() => router.back()}
@@ -593,11 +626,26 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                 <ChevronLeft size={24} />
                                             </button>
 
-                                            <img
-                                                src={displayImage || 'https://placehold.co/600x600/1a1a2e/ffffff?text=No+Image'}
-                                                alt={productData.name}
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                            />
+                                            {displayImage ? (
+                                                <img
+                                                    src={displayImage}
+                                                    alt={productData.name}
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    onError={(e) => {
+                                                        const target = e.currentTarget;
+                                                        if (!target.src.includes('placehold.co')) {
+                                                            target.src = 'https://placehold.co/600x600/f8fafc/64748b?text=VorionMart';
+                                                        }
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-8">
+                                                    <ShoppingCart size={48} strokeWidth={1.2} className="mb-3 text-slate-300" />
+                                                    <span className="text-sm font-semibold text-slate-500">VorionMart</span>
+                                                    <span className="text-xs text-slate-400 mt-1">Image coming soon</span>
+                                                </div>
+                                            )}
+
                                             {productData.discount_percent > 0 && (
                                                 <div className="absolute top-4 left-16 lg:left-4 badge badge-sale px-4 py-2 text-lg font-bold">
                                                     {productData.discount_percent}% OFF
@@ -618,9 +666,19 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                     <button
                                                         key={img.id || index}
                                                         onClick={() => setSelectedImage(index)}
-                                                        className={`aspect-square w-20 lg:w-auto shrink-0 rounded-xl overflow-hidden border-2 transition-all snap-center ${selectedImage === index ? 'border-accent-500 shadow-sm' : 'border-gray-200 hover:border-accent-500/50'}`}
+                                                        className={`aspect-square w-20 lg:w-auto shrink-0 rounded-xl overflow-hidden border-2 transition-all snap-center ${safeSelected === index ? 'border-accent-500 shadow-sm' : 'border-gray-200 hover:border-accent-500/50'}`}
                                                     >
-                                                        <img src={img.image} alt={`View ${index + 1}`} className="w-full h-full object-cover" />
+                                                        <img
+                                                            src={img.image}
+                                                            alt={`View ${index + 1}`}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                const target = e.currentTarget;
+                                                                if (!target.src.includes('placehold.co')) {
+                                                                    target.src = 'https://placehold.co/100x100/f8fafc/64748b?text=Photo';
+                                                                }
+                              }}
+                                                        />
                                                     </button>
                                                 ))}
                                             </div>
@@ -1144,14 +1202,14 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                                                     key={image.id}
                                                                     type="button"
                                                                     onClick={() => setActiveReviewImage({
-                                                                        src: image.image,
+                                                                        src: formatImageUrl(image.image),
                                                                         alt: `Review photo ${index + 1} by ${review.customer_name}`,
                                                                     })}
                                                                     className="group block w-[280px] flex-none overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:border-accent-500/60 sm:w-[340px]"
                                                                 >
                                                                     <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
                                                                         <img
-                                                                            src={image.image}
+                                                                            src={formatImageUrl(image.image)}
                                                                             alt={`Review photo ${index + 1} by ${review.customer_name}`}
                                                                             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                                                                             loading="lazy"
