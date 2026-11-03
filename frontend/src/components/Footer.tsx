@@ -8,10 +8,10 @@ export default function Footer() {
     const { settings } = useSiteSettings();
     return (
         <footer
-            className="bg-white border-t border-gray-100 text-gray-600"
+            className="bg-white/85 backdrop-blur-md border-t border-slate-200/60 text-gray-600"
         >
             {/* Trust Badges Strip */}
-            <div className="border-b border-gray-100">
+            <div className="border-b border-slate-200/50">
                 <div className="max-w-7xl mx-auto px-4 py-4 md:py-6">
                     <div className="flex md:grid overflow-x-auto md:grid-cols-4 gap-6 md:gap-6 pb-2 md:pb-0 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {[
@@ -22,7 +22,7 @@ export default function Footer() {
                         ].map((item) => (
                             <div key={item.title} className="flex items-center gap-3.5 shrink-0 w-[220px] md:w-auto snap-start">
                                 <div
-                                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gray-50 text-accent-600"
+                                    className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 neumorph-inset text-accent-600"
                                 >
                                     {item.icon}
                                 </div>
@@ -57,7 +57,7 @@ export default function Footer() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={`${settings?.site_name || 'VorionMart'} on Facebook`}
-                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 neumorph-inset text-gray-500 hover:text-accent-600"
                             >
                                 <Facebook size={18} />
                             </a>
@@ -66,7 +66,7 @@ export default function Footer() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={`${settings?.site_name || 'VorionMart'} on Instagram`}
-                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 bg-gray-50 text-gray-400 hover:bg-accent-500 hover:text-white"
+                                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 neumorph-inset text-gray-500 hover:text-accent-600"
                             >
                                 <Instagram size={18} />
                             </a>

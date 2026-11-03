@@ -606,7 +606,7 @@ export default function HomePage() {
                 </div>
             </section>
 
-            <section className="relative overflow-hidden bg-white min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
+            <section className="relative overflow-hidden min-h-[105px] sm:min-h-[150px] md:min-h-[280px] lg:min-h-[450px]">
                 {loading ? (
                     <HeroBannerSkeleton />
                 ) : (
@@ -671,7 +671,7 @@ export default function HomePage() {
                 )}
             </section>
 
-            <section className="bg-white pt-6 pb-2 md:pt-8 md:pb-4 border-b border-gray-100">
+            <section className="bg-white/60 backdrop-blur-md pt-6 pb-2 md:pt-8 md:pb-4 border-b border-slate-200/50">
                 <div className="container mx-auto px-8 md:px-12">
                     {/* Hide scrollbar but allow horizontal scroll */}
                     <div className="overflow-x-auto pb-2 -mx-4 px-4 hide-scrollbar">
@@ -758,7 +758,7 @@ export default function HomePage() {
             {/* ========================================
                 TRENDING PRODUCTS
             ======================================== */}
-            <section className="relative overflow-hidden bg-white pt-4 pb-8 md:pt-8 md:pb-16 border-b border-gray-100">
+            <section className="relative overflow-hidden pt-4 pb-8 md:pt-8 md:pb-16 border-b border-slate-200/50">
                 <div className="container mx-auto px-4 lg:px-8">
                     <div className="relative z-10 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4" data-aos="fade-up">
                         <div className="max-w-xl">
@@ -791,7 +791,7 @@ export default function HomePage() {
             {/* ========================================
                 FEATURED PRODUCTS
             ======================================== */}
-            <section className="py-12 md:py-20 bg-gray-50/50">
+            <section className="py-12 md:py-20 bg-white/30 backdrop-blur-xs">
                 <div className="container mx-auto px-4 lg:px-8">
                     <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4" data-aos="fade-up">
                         <div className="text-left">
@@ -820,7 +820,7 @@ export default function HomePage() {
             {/* ========================================
                 BEST SELLERS
             ======================================== */}
-            <section className="py-12 md:py-20 bg-white">
+            <section className="py-12 md:py-20">
                 <div className="container mx-auto px-4 lg:px-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4" data-aos="fade-up">
                         <div className="max-w-xl">
@@ -854,7 +854,7 @@ export default function HomePage() {
             {/* ========================================
                 NEW ARRIVALS
             ======================================== */}
-            <section className="py-8 bg-white overflow-hidden">
+            <section className="py-8 overflow-hidden">
                 <div className="container mx-auto px-4">
                     <div className="flex justify-between items-center mb-6" data-aos="fade-up">
                         <div>
@@ -886,7 +886,7 @@ export default function HomePage() {
             {/* ========================================
                 DEALS OF THE DAY
             ======================================== */}
-            <section className="py-10 bg-red-50/30 overflow-hidden relative border-y border-red-100/50">
+            <section className="py-10 bg-red-500/5 backdrop-blur-xs overflow-hidden relative border-y border-red-200/40">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-[80px] -mr-32 -mt-32" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent-500/5 rounded-full blur-[80px] -ml-32 -mb-32" />
 
@@ -941,7 +941,7 @@ export default function HomePage() {
             {/* ========================================
                 SUGGESTED FOR YOU
             ======================================== */}
-            <section className="py-10 bg-white border-t border-gray-100">
+            <section className="py-10 border-t border-slate-200/50">
                 <div className="container mx-auto px-4 lg:px-8">
                     <div className="mb-8 flex items-center justify-between" data-aos="fade-up">
                         <div className="flex items-center gap-3">
@@ -971,7 +971,7 @@ export default function HomePage() {
             {/* ========================================
                 CUSTOMER TESTIMONIALS
             ======================================== */}
-            <section className="py-10 md:py-16 bg-gray-50">
+            <section className="py-10 md:py-16 bg-white/30 backdrop-blur-xs">
                 <div className="container mx-auto px-4">
                     <div className="text-left mb-8" data-aos="fade-up">
                         <h2 className="font-display text-xl md:text-3xl font-bold text-slate-900 mb-1">What Our Customers Say</h2>
@@ -980,7 +980,7 @@ export default function HomePage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {testimonials.map((testimonial, index) => (
-                            <div key={testimonial.id} className="bg-white border border-slate-200 rounded-2xl p-4 md:p-6 hover:border-accent-500/30 transition-colors shadow-sm" data-aos="fade-up" data-aos-delay={index * 100}>
+                            <div key={testimonial.id} className="neumorph-card p-4 md:p-6 hover:border-accent-500/30 transition-all" data-aos="fade-up" data-aos-delay={index * 100}>
                                 <div className="flex items-center gap-1 mb-4">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <Star key={star} size={18} className={star <= testimonial.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
@@ -1015,32 +1015,32 @@ export default function HomePage() {
             {/* ========================================
                 ABOUT VORIONMART
             ======================================== */}
-            <section className="py-10 md:py-20 bg-white border-t border-slate-200">
+            <section className="py-10 md:py-20 border-t border-slate-200/60">
                 <div className="container mx-auto px-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
                         <div className="relative" data-aos="fade-right">
                             <div className="absolute -top-10 -left-10 w-40 h-40 bg-accent-500/10 rounded-full blur-3xl" />
                             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary-600/10 rounded-full blur-3xl" />
 
-                            <div className="relative z-10 bg-slate-50 rounded-2xl p-4 md:p-8 border border-slate-200 shadow-xl overflow-hidden group">
+                            <div className="relative z-10 neumorph-card p-4 md:p-8 overflow-hidden group">
                                 <div className="absolute inset-0 bg-gradient-to-br from-accent-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 <div className="grid grid-cols-2 gap-3 md:gap-4">
-                                    <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-200">
+                                    <div className="neumorph-inset p-3 md:p-4 rounded-xl">
                                         <Award className="text-accent-500 mb-1.5 md:mb-2" size={24} />
                                         <p className="text-lg md:text-2xl font-bold text-slate-900">#1</p>
                                         <p className="text-[10px] md:text-sm text-slate-500">Trusted Store</p>
                                     </div>
-                                    <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-200">
+                                    <div className="neumorph-inset p-3 md:p-4 rounded-xl">
                                         <Shield className="text-primary-500 mb-1.5 md:mb-2" size={24} />
                                         <p className="text-lg md:text-2xl font-bold text-slate-900">100%</p>
                                         <p className="text-[10px] md:text-sm text-slate-500">Secure COD</p>
                                     </div>
-                                    <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-200">
+                                    <div className="neumorph-inset p-3 md:p-4 rounded-xl">
                                         <User className="text-green-500 mb-1.5 md:mb-2" size={24} />
                                         <p className="text-lg md:text-2xl font-bold text-slate-900">50k+</p>
                                         <p className="text-[10px] md:text-sm text-slate-500">Users</p>
                                     </div>
-                                    <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-200">
+                                    <div className="neumorph-inset p-3 md:p-4 rounded-xl">
                                         <Star className="text-amber-500 mb-1.5 md:mb-2" size={24} />
                                         <p className="text-lg md:text-2xl font-bold text-slate-900">4.8</p>
                                         <p className="text-[10px] md:text-sm text-slate-500">Rating</p>
@@ -1079,7 +1079,7 @@ export default function HomePage() {
             {/* ========================================
                 WHY CHOOSE US - Stats
             ======================================== */}
-            <section className="py-10 md:py-16 bg-gray-50">
+            <section className="py-10 md:py-16 bg-white/30 backdrop-blur-xs">
                 <div className="container mx-auto px-4">
                     <div className="text-left mb-8" data-aos="fade-up">
                         <h2 className="font-display text-xl md:text-3xl font-bold text-slate-900 mb-1">Why Choose VorionMart?</h2>
@@ -1126,7 +1126,7 @@ export default function HomePage() {
             {/* ========================================
                 ENQUIRY FORM
             ======================================== */}
-            <section className="py-10 md:py-16 bg-white border-t border-slate-200">
+            <section className="py-10 md:py-16 border-t border-slate-200/60">
                 <div className="container mx-auto px-4">
                     <div className="max-w-4xl mx-auto" data-aos="fade-up">
                         <div className="text-center mb-8">
@@ -1134,7 +1134,7 @@ export default function HomePage() {
                             <p className="text-slate-500 text-xs mt-1">Send us a message and we&apos;ll get back to you shortly.</p>
                         </div>
 
-                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-10 shadow-sm transition-all hover:shadow-md">
+                        <div className="neumorph-card p-5 md:p-10 transition-all">
                             <EnquiryForm />
                         </div>
                     </div>

@@ -213,9 +213,9 @@ function ProductsPageContent({
     };
 
     return (
-        <div className="min-h-screen bg-[#f8f9fb]">
+        <div className="min-h-screen">
             {/* Page Header */}
-            <div className="bg-white border-b border-gray-100 sm:border-none">
+            <div className="bg-white/70 backdrop-blur-md border-b border-slate-200/50 sm:border-none">
                 <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-3 sm:py-6">
                     <nav className="hidden sm:flex items-center gap-2 text-sm text-gray-400 mb-3">
                         <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
@@ -621,9 +621,9 @@ function ProductsPageContent({
 
                                 {/* Empty State */}
                                 {filteredProducts.length === 0 && (
-                                    <div className="text-center py-20 bg-white rounded-2xl border border-gray-100">
-                                        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
-                                            <ShoppingCart size={28} className="text-gray-300" />
+                                    <div className="text-center py-20 neumorph-card p-6">
+                                        <div className="w-16 h-16 rounded-2xl neumorph-inset flex items-center justify-center mx-auto mb-4">
+                                            <ShoppingCart size={28} className="text-gray-400" />
                                         </div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-1">No products found</h3>
                                         <p className="text-gray-500 text-sm mb-6">Try adjusting your filters or search criteria</p>

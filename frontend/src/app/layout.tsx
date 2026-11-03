@@ -161,7 +161,7 @@ export default function RootLayout({
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavigationJsonLd) }}
                 />
             </head>
-            <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-[#f8f9fb] text-gray-900`}>
+            <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans text-gray-900 antialiased`}>
                 <ThemeProvider>
                     <SiteSettingsProvider>
                         <CustomerAuthProvider>
