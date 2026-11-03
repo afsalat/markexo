@@ -22,9 +22,9 @@ export default function RelatedProductCard({ product }: RelatedProductCardProps)
   };
 
   return (
-    <div className="my-8 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 md:flex">
+    <div className="my-8 overflow-hidden neumorph-card p-3 md:flex gap-4">
       {product.image && (
-        <div className="relative h-48 w-full shrink-0 bg-gray-50 dark:bg-gray-800 md:h-auto md:w-48">
+        <div className="relative h-48 w-full shrink-0 neumorph-inset rounded-xl overflow-hidden md:h-auto md:w-48">
           <Image
             src={product.image}
             alt={product.name}
@@ -35,9 +35,9 @@ export default function RelatedProductCard({ product }: RelatedProductCardProps)
           />
         </div>
       )}
-      <div className="flex flex-col justify-between p-6">
+      <div className="flex flex-col justify-between p-4 sm:p-5 flex-1">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-accent-600">
             Featured Product Recommendation
           </span>
           <h4 className="mt-2 text-xl font-bold text-gray-950 dark:text-white">
@@ -51,7 +51,7 @@ export default function RelatedProductCard({ product }: RelatedProductCardProps)
           <Link
             href={product.url}
             onClick={handleProductClick}
-            className="inline-flex items-center justify-center rounded-xl bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-850 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+            className="neumorph-btn-primary inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold shadow-md"
           >
             Shop Now & Get COD
           </Link>

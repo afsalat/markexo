@@ -463,15 +463,15 @@ function ProductsPageContent({
                         {loading ? (
                             <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6' : 'grid-cols-1 gap-4 sm:gap-6'}`}>
                                 {Array.from({ length: 12 }).map((_, i) => (
-                                    <div key={i} className="bg-white border border-gray-100 rounded-2xl overflow-hidden animate-pulse">
-                                        <div className="aspect-[4/5] bg-gray-100" />
-                                        <div className="p-4 space-y-3">
-                                            <div className="h-3 bg-gray-100 rounded-full w-16" />
-                                            <div className="h-4 bg-gray-100 rounded-full w-full" />
-                                            <div className="h-4 bg-gray-100 rounded-full w-3/4" />
+                                    <div key={i} className="neumorph-card p-2.5 sm:p-3 overflow-hidden animate-pulse">
+                                        <div className="aspect-[4/5] neumorph-inset rounded-xl mb-3" />
+                                        <div className="p-2 space-y-3">
+                                            <div className="h-3 bg-gray-200/80 rounded-full w-16" />
+                                            <div className="h-4 bg-gray-200/80 rounded-full w-full" />
+                                            <div className="h-4 bg-gray-200/80 rounded-full w-3/4" />
                                             <div className="flex justify-between pt-2">
-                                                <div className="h-5 bg-gray-100 rounded-full w-20" />
-                                                <div className="h-8 w-8 bg-gray-100 rounded-full" />
+                                                <div className="h-5 bg-gray-200/80 rounded-full w-20" />
+                                                <div className="h-8 w-8 bg-gray-200/80 rounded-full" />
                                             </div>
                                         </div>
                                     </div>
@@ -486,45 +486,45 @@ function ProductsPageContent({
                                             key={product.id}
                                             data-aos="fade-up"
                                             data-aos-delay={(index % 12) * 40}
-                                            className={`bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 overflow-hidden sm:rounded-2xl transition-all hover:shadow-md group ${viewMode === 'list' ? 'flex' : ''}`}
+                                            className={`product-grid-card neumorph-card p-2 sm:p-2.5 group cursor-pointer transition-all ${viewMode === 'list' ? 'flex gap-4' : ''}`}
                                         >
-                                            <Link href={`/products/${product.slug}`} className={`block ${viewMode === 'list' ? 'flex flex-1' : ''}`}>
-                                                {/* Image */}
-                                                <div className={`relative overflow-hidden bg-gray-50 ${viewMode === 'list' ? 'w-32 sm:w-44 flex-shrink-0' : 'aspect-[4/5]'}`}>
+                                            <Link href={`/products/${product.slug}`} className={`block ${viewMode === 'list' ? 'flex flex-1' : 'h-full flex flex-col justify-between'}`}>
+                                                {/* Image with Inset Frame */}
+                                                <div className={`relative overflow-hidden neumorph-inset rounded-xl sm:rounded-2xl ${viewMode === 'list' ? 'w-32 sm:w-44 flex-shrink-0' : 'aspect-[4/5] mb-2 sm:mb-2.5'}`}>
                                                     {product.image ? (
                                                         <img
                                                             src={product.image}
                                                             alt={product.name}
-                                                            className="w-full h-full object-cover product-image"
+                                                            className="w-full h-full object-cover product-image transition-transform duration-500 group-hover:scale-105"
                                                         />
                                                     ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-200 min-h-[180px]">
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-300 min-h-[180px]">
                                                             <ShoppingCart size={40} strokeWidth={1.2} />
                                                         </div>
                                                     )}
 
                                                     {/* Gradient Overlay on Hover */}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                                                     {/* Badges */}
-                                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                                                    <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
                                                         {product.discount_percent > 0 && (
-                                                            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                                                            <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg neumorph-badge">
                                                                 -{product.discount_percent}%
                                                             </span>
                                                         )}
                                                         {product.is_featured && (
-                                                            <span className="bg-accent-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                                                            <span className="bg-accent-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-lg neumorph-badge">
                                                                 HOT
                                                             </span>
                                                         )}
                                                     </div>
 
-                                                    {/* Rating Badge on Hover */}
-                                                    <div className="absolute top-3 right-3 z-10 product-action-overlay">
-                                                        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-1 rounded-md shadow-sm">
+                                                    {/* Rating Badge */}
+                                                    <div className="absolute top-2.5 right-2.5 z-10">
+                                                        <div className="flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-lg neumorph-badge text-gray-800">
                                                             <Star size={10} className="text-amber-400 fill-amber-400" />
-                                                            <span className="text-[10px] font-bold text-gray-800">{displayRating(product).toFixed(1)}</span>
+                                                            <span className="text-[10px] font-bold">{displayRating(product).toFixed(1)}</span>
                                                         </div>
                                                     </div>
 
@@ -539,29 +539,29 @@ function ProductsPageContent({
                                                                 addToWishlist(product);
                                                             }
                                                         }}
-                                                        className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all product-action-overlay z-10 ${isWishlisted(product.id)
-                                                            ? 'bg-red-500 text-white scale-100'
-                                                            : 'bg-white/95 backdrop-blur-sm text-gray-400 hover:text-red-500 border border-white/20'
+                                                        className={`absolute bottom-2.5 right-2.5 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center neumorph-btn-circle z-10 ${isWishlisted(product.id)
+                                                            ? '!bg-red-500 !text-white'
+                                                            : 'text-gray-400 hover:text-red-500'
                                                             }`}
                                                     >
-                                                        <Heart size={15} className={isWishlisted(product.id) ? 'fill-current' : ''} />
+                                                        <Heart size={14} className={isWishlisted(product.id) ? 'fill-current text-white' : ''} />
                                                     </button>
                                                 </div>
 
                                                 {/* Content */}
-                                                <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                                                <div className="p-1 sm:p-2 flex-1 flex flex-col">
                                                     {/* Category */}
-                                                    <span className="text-[9px] sm:text-[10px] font-bold tracking-widest text-accent-500 uppercase mb-1 sm:mb-1.5 line-clamp-1">
+                                                    <span className="text-[9px] sm:text-[10px] font-extrabold tracking-widest text-accent-600 uppercase mb-1 line-clamp-1">
                                                         {product.category?.name || 'Curated'}
                                                     </span>
 
                                                     {/* Title */}
-                                                    <h3 className="font-semibold text-gray-900 text-xs sm:text-sm leading-snug mb-1 line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2rem] sm:min-h-[2.5rem]">
+                                                    <h3 className="font-bold text-gray-900 text-xs sm:text-sm leading-snug mb-1 line-clamp-2 group-hover:text-accent-600 transition-colors min-h-[2rem] sm:min-h-[2.5rem]">
                                                         {product.name}
                                                     </h3>
 
                                                     {/* Rating inline */}
-                                                    <div className="flex items-center gap-1 mb-3">
+                                                    <div className="flex items-center gap-1 mb-2.5">
                                                         <div className="flex items-center">
                                                             {[1, 2, 3, 4, 5].map((star) => (
                                                                 <Star
@@ -571,14 +571,14 @@ function ProductsPageContent({
                                                                 />
                                                             ))}
                                                         </div>
-                                                        <span className="text-[10px] text-gray-400 ml-0.5">({product.review_count || 128})</span>
+                                                        <span className="text-[10px] text-gray-400 font-semibold ml-0.5">({product.review_count || 128})</span>
                                                     </div>
 
                                                     {/* Price & Cart Actions */}
-                                                    <div className="mt-auto flex flex-col pt-2 sm:pt-3 border-t border-gray-50">
-                                                        <div className="flex items-end justify-between mb-2 sm:mb-3">
+                                                    <div className="mt-auto flex flex-col pt-2 border-t border-gray-100">
+                                                        <div className="flex items-end justify-between mb-2">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">
+                                                                <span className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight">
                                                                     ₹{product.current_price.toLocaleString()}
                                                                 </span>
                                                                 {product.price > product.current_price && (
@@ -596,9 +596,9 @@ function ProductsPageContent({
                                                                     e.preventDefault();
                                                                     addItem(product as any);
                                                                 }}
-                                                                className="w-8 h-8 sm:w-auto sm:flex-1 flex items-center justify-center sm:gap-1.5 sm:py-2 sm:px-2 bg-gray-50 border border-gray-100 text-gray-600 rounded-lg sm:rounded-xl hover:bg-gray-100 hover:text-gray-900 active:scale-95 transition-all shrink-0"
+                                                                className="neumorph-btn-raised w-8 h-8 sm:w-auto sm:flex-1 flex items-center justify-center sm:gap-1.5 py-1.5 sm:py-2 px-1 sm:px-2 font-bold text-[10px] sm:text-[11px] shrink-0"
                                                             >
-                                                                <ShoppingCart size={14} className="sm:w-3 sm:h-3" /> <span className="hidden sm:inline font-bold text-[10px]">Add</span>
+                                                                <ShoppingCart size={13} className="sm:w-3.5 sm:h-3.5" /> <span className="hidden sm:inline">Add</span>
                                                             </button>
                                                             <button
                                                                 onClick={(e) => {
@@ -607,7 +607,7 @@ function ProductsPageContent({
                                                                     addItem(product as any);
                                                                     router.push('/checkout');
                                                                 }}
-                                                                className="flex-1 flex items-center justify-center py-1.5 sm:py-2 px-1 sm:px-2 bg-accent-500 text-white rounded-lg sm:rounded-xl font-bold text-[10px] hover:bg-accent-600 active:scale-95 transition-all shadow-sm shadow-accent-500/20"
+                                                                className="neumorph-btn-primary flex-1 flex items-center justify-center py-1.5 sm:py-2 px-1 sm:px-2 font-bold text-[10px] sm:text-[11px]"
                                                             >
                                                                 Buy Now
                                                             </button>

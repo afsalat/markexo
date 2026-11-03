@@ -61,26 +61,26 @@ const CategorySkeleton = () => (
 );
 
 const ProductCardSkeleton = () => (
-    <div className="product-grid-card bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-sm p-3 h-full animate-pulse flex flex-col justify-between">
+    <div className="product-grid-card neumorph-card p-2.5 sm:p-3 h-full animate-pulse flex flex-col justify-between">
         <div>
-            <div className="relative aspect-[4/5] bg-slate-100 rounded-xl mb-3 overflow-hidden">
+            <div className="relative aspect-[4/5] neumorph-inset rounded-2xl mb-3 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200/50 to-transparent animate-shimmer" />
             </div>
-            <div className="h-2.5 bg-slate-100 rounded-full w-1/3 mb-2" />
-            <div className="h-4 bg-slate-100 rounded-md w-full mb-1.5" />
-            <div className="h-4 bg-slate-100 rounded-md w-2/3 mb-3" />
+            <div className="h-2.5 bg-slate-200/80 rounded-full w-1/3 mb-2" />
+            <div className="h-4 bg-slate-200/80 rounded-md w-full mb-1.5" />
+            <div className="h-4 bg-slate-200/80 rounded-md w-2/3 mb-3" />
             <div className="flex items-center gap-1 mb-3">
-                <div className="h-3 w-12 bg-slate-100 rounded-md" />
-                <div className="h-3 w-8 bg-slate-100 rounded-md" />
+                <div className="h-3 w-12 bg-slate-200/80 rounded-md" />
+                <div className="h-3 w-8 bg-slate-200/80 rounded-md" />
             </div>
             <div className="flex items-baseline gap-2 mb-3">
-                <div className="h-5 w-16 bg-slate-100 rounded-md" />
-                <div className="h-3.5 w-10 bg-slate-100 rounded-md" />
+                <div className="h-5 w-16 bg-slate-200/80 rounded-md" />
+                <div className="h-3.5 w-10 bg-slate-200/80 rounded-md" />
             </div>
         </div>
         <div className="grid grid-cols-2 gap-2 mt-2">
-            <div className="h-8 bg-slate-100 rounded-xl" />
-            <div className="h-8 bg-slate-100 rounded-xl" />
+            <div className="h-8 neumorph-inset rounded-xl" />
+            <div className="h-8 neumorph-inset rounded-xl" />
         </div>
     </div>
 );
