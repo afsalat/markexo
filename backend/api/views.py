@@ -2897,7 +2897,9 @@ class GoogleMerchantFeedView(APIView):
         channel = ET.SubElement(rss, "channel")
 
         frontend_url = getattr(settings, 'APP_URL', 'https://vorionmart.com').rstrip('/')
-        api_host = os.environ.get('PUBLIC_API_HOST', 'api.vorionmart.com')
+        media_host = os.environ.get('PUBLIC_MEDIA_HOST', '').strip() or 'vorionmart.com'
+        if media_host == 'api.vorionmart.com':
+            media_host = 'vorionmart.com'
 
         ET.SubElement(channel, "title").text = "VorionMart Product Feed"
         ET.SubElement(channel, "link").text = frontend_url
@@ -2912,10 +2914,10 @@ class GoogleMerchantFeedView(APIView):
             if clean_str.startswith(('http://', 'https://')):
                 if '/media/' in clean_str:
                     media_path = clean_str[clean_str.index('/media/'):]
-                    return f"https://{api_host}{media_path}"
+                    return f"https://{media_host}{media_path}"
                 return clean_str
             clean_path = '/' + clean_str.lstrip('/')
-            return f"https://{api_host}{clean_path}"
+            return f"https://{media_host}{clean_path}"
 
         for p in products:
             item = ET.SubElement(channel, "item")
@@ -2959,11 +2961,16 @@ class GoogleMerchantFeedView(APIView):
             else:
                 ET.SubElement(item, "g:price").text = f"{current_price:.2f} INR"
 
-            ET.SubElement(item, "g:brand").text = "VorionMart"
+            specs = p.specifications if isinstance(p.specifications, dict) else {}
+            brand_val = specs.get('Brand') or specs.get('brand') or (p.shop.name if p.shop and p.shop.name else None) or "Vorion Mart"
+            ET.SubElement(item, "g:brand").text = str(brand_val)[:70]
 
             category_name = p.category.name if p.category else "General"
             ET.SubElement(item, "g:product_type").text = category_name
             ET.SubElement(item, "g:google_product_category").text = category_name
+
+            # Adult Content Policy Flag (explicitly 'no' for standard ecommerce)
+            ET.SubElement(item, "g:adult").text = "no"
 
             if p.sku:
                 ET.SubElement(item, "g:mpn").text = str(p.sku)
@@ -2971,15 +2978,71 @@ class GoogleMerchantFeedView(APIView):
             else:
                 ET.SubElement(item, "g:identifier_exists").text = "no"
 
-            # Mandatory Shipping block for Google Merchant Center Shipping Calculator
+            # Mandatory Shipping block for Google Merchant Center
             shipping = ET.SubElement(item, "g:shipping")
             ET.SubElement(shipping, "g:country").text = "IN"
             ET.SubElement(shipping, "g:service").text = "Standard Delivery"
             ET.SubElement(shipping, "g:price").text = "0.00 INR"
 
-            # Shipping Weight
+            # Package dimensions & weight
             weight = float(p.weight_kg or 0.5)
             ET.SubElement(item, "g:shipping_weight").text = f"{weight:.2f} kg"
+
+            pkg_length = float(p.package_length or 10.0)
+            pkg_width = float(p.package_width or 10.0)
+            pkg_height = float(p.package_height or 5.0)
+            ET.SubElement(item, "g:shipping_length").text = f"{pkg_length:.1f} cm"
+            ET.SubElement(item, "g:shipping_width").text = f"{pkg_width:.1f} cm"
+            ET.SubElement(item, "g:shipping_height").text = f"{pkg_height:.1f} cm"
+
+            # Shipping & fulfillment labels
+            ET.SubElement(item, "g:shipping_label").text = "free_shipping"
+            ET.SubElement(item, "g:transit_time_label").text = "standard_shipping"
+            ET.SubElement(item, "g:min_handling_time").text = "0"
+            ET.SubElement(item, "g:max_handling_time").text = "1"
+            ET.SubElement(item, "g:return_policy_label").text = "7_day_return"
+
+            # Product Highlights (Up to 150 chars each)
+            ET.SubElement(item, "g:product_highlight").text = "Cash on Delivery (COD) Available Across India"
+            ET.SubElement(item, "g:product_highlight").text = "Free Shipping Across India with Quality Guarantee"
+            ET.SubElement(item, "g:product_highlight").text = "7-Day Easy Return and Replacement Policy"
+
+            # Custom Labels for Campaign Filtering
+            ET.SubElement(item, "g:custom_label_0").text = "Cash on Delivery"
+            ET.SubElement(item, "g:custom_label_1").text = category_name[:100]
+            ET.SubElement(item, "g:custom_label_2").text = "Free Shipping"
+            if p.is_featured:
+                ET.SubElement(item, "g:custom_label_3").text = "Trending"
+
+            # Specifications (Color, Material, Size, Demographics)
+            color_val = specs.get('Color') or specs.get('color') or specs.get('Colour') or specs.get('colour')
+            if color_val:
+                ET.SubElement(item, "g:color").text = str(color_val)[:100]
+
+            material_val = specs.get('Material') or specs.get('material')
+            if material_val:
+                ET.SubElement(item, "g:material").text = str(material_val)[:200]
+
+            size_val = specs.get('Size') or specs.get('size')
+            if size_val:
+                ET.SubElement(item, "g:size").text = str(size_val)[:100]
+
+            cat_lower = category_name.lower()
+            title_lower = (p.name or "").lower()
+            if 'kid' in cat_lower or 'kid' in title_lower or 'toy' in cat_lower or 'baby' in cat_lower:
+                ET.SubElement(item, "g:age_group").text = "kids"
+            else:
+                ET.SubElement(item, "g:age_group").text = "adult"
+
+            if 'men' in cat_lower or 'men' in title_lower or 'man' in title_lower:
+                if 'women' in title_lower or 'unisex' in title_lower:
+                    ET.SubElement(item, "g:gender").text = "unisex"
+                else:
+                    ET.SubElement(item, "g:gender").text = "male"
+            elif 'women' in cat_lower or 'women' in title_lower or 'lady' in title_lower:
+                ET.SubElement(item, "g:gender").text = "female"
+            else:
+                ET.SubElement(item, "g:gender").text = "unisex"
 
         xml_str = ET.tostring(rss, encoding='utf-8', method='xml')
         return HttpResponse(xml_str, content_type='application/xml; charset=utf-8')
