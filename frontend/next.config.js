@@ -59,6 +59,17 @@ const nextConfig = {
             },
         ];
     },
+    async rewrites() {
+        const backendOrigin = process.env.NEXT_PUBLIC_API_URL
+            ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '')
+            : 'https://api.vorionmart.com';
+        return [
+            {
+                source: '/media/:path*',
+                destination: `${backendOrigin}/media/:path*`,
+            },
+        ];
+    },
     async headers() {
         return [
             {

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Mail, Phone, MapPin, Send, CheckCircle, Store, Users, TrendingUp } from 'lucide-react';
+import { ChevronRight, Mail, Phone, MapPin, Send, CheckCircle, Store, Users, TrendingUp, Clock, Shield } from 'lucide-react';
 import { API_BASE_URL } from '@/config/apiConfig';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 
@@ -114,12 +114,45 @@ export default function ContactPage() {
                                         <MapPin className="text-purple-600" size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
-                                        <p className="text-gray-600 whitespace-pre-line">
+                                        <h3 className="font-semibold text-gray-900 mb-1">Registered Address</h3>
+                                        <p className="text-gray-600 whitespace-pre-line text-sm leading-relaxed">
                                             {settings?.address || 'Vorion Nexus Technology\nThoppayil Beach C.25, O.P Nadakkavu\nKozhikode, Kerala 673011\nIndia'}
                                         </p>
                                     </div>
                                 </div>
+
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Clock className="text-amber-600" size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 mb-1">Business Hours</h3>
+                                        <p className="text-gray-600 text-sm">Mon - Sat: 9:00 AM - 6:00 PM IST</p>
+                                        <p className="text-gray-400 text-xs">Sunday: Closed (Online Orders 24/7)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Grievance Redressal Card for India E-Commerce Compliance */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 bg-accent-100 rounded-xl flex items-center justify-center">
+                                    <Shield className="text-accent-600" size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 text-base">Grievance Redressal</h3>
+                                    <p className="text-xs text-gray-500">Consumer Protection (E-Commerce) Rules, 2020</p>
+                                </div>
+                            </div>
+                            <div className="space-y-2 text-sm text-gray-600">
+                                <p><strong className="text-gray-900">Entity:</strong> Vorion Nexus Technology</p>
+                                <p><strong className="text-gray-900">Designation:</strong> Grievance Redressal Officer</p>
+                                <p><strong className="text-gray-900">Email:</strong> <a href="mailto:vorionmart@gmail.com" className="text-accent-600 hover:underline">vorionmart@gmail.com</a></p>
+                                <p><strong className="text-gray-900">Phone:</strong> <a href="tel:+917356216468" className="text-accent-600 hover:underline">+91 735 621 6468</a></p>
+                                <p className="text-xs text-gray-400 pt-2 border-t border-gray-100">
+                                    All consumer complaints are acknowledged within 48 hours and redressed within 30 days of receipt.
+                                </p>
                             </div>
                         </div>
 

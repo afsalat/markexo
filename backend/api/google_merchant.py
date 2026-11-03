@@ -33,26 +33,56 @@ class GoogleMerchantService:
             return False, "Service not initialized"
 
         try:
-            # Construct links
-            # settings.APP_URL should be the frontend base URL (e.g., https://vorionmart.com)
+            import os
+            from django.utils.html import strip_tags
+
+            # Base frontend and media API hosts
             base_url = getattr(settings, 'APP_URL', 'https://vorionmart.com').rstrip('/')
+            api_host = os.environ.get('PUBLIC_API_HOST', 'api.vorionmart.com')
             product_link = f"{base_url}/products/{product.slug}"
-            
-            # Construct image link
+
+            def resolve_image_url(raw_url):
+                if not raw_url:
+                    return ""
+                clean_str = str(raw_url).strip()
+                if not clean_str:
+                    return ""
+                if clean_str.startswith(('http://', 'https://')):
+                    if '/media/' in clean_str:
+                        media_path = clean_str[clean_str.index('/media/'):]
+                        return f"https://{api_host}{media_path}"
+                    return clean_str
+                clean_path = '/' + clean_str.lstrip('/')
+                return f"https://{api_host}{clean_path}"
+
+            # Construct primary image link
             image_link = ""
             if product.image:
-                # settings.BACKEND_ORIGIN should be the backend base URL (e.g., https://api.vorionmart.com)
-                backend_base = getattr(settings, 'BACKEND_ORIGIN', base_url).rstrip('/')
-                image_link = f"{backend_base}{product.image.url}"
+                image_link = resolve_image_url(product.image.url)
             elif product.images.exists():
                 primary = product.images.filter(is_primary=True).first() or product.images.first()
-                backend_base = getattr(settings, 'BACKEND_ORIGIN', base_url).rstrip('/')
-                image_link = f"{backend_base}{primary.image.url}"
+                if primary and primary.image:
+                    image_link = resolve_image_url(primary.image.url)
+
+            # Additional gallery images
+            additional_images = []
+            if product.images.exists():
+                for img_obj in product.images.all()[:10]:
+                    if img_obj.image:
+                        img_url = resolve_image_url(img_obj.image.url)
+                        if img_url and img_url != image_link and img_url not in additional_images:
+                            additional_images.append(img_url)
+
+            category_name = product.category.name if product.category else "General"
+            clean_desc = strip_tags(product.description or "").strip() or product.name
+
+            current_price = float(product.current_price or 0.0)
+            mrp = float(product.mrp or 0.0)
 
             product_data = {
                 "offerId": product.sku or str(product.id),
-                "title": product.name,
-                "description": product.description[:5000], # Google limit is 5000 chars
+                "title": strip_tags(product.name or "")[:150],
+                "description": clean_desc[:5000],
                 "link": product_link,
                 "imageLink": image_link,
                 "contentLanguage": "en",
@@ -60,13 +90,43 @@ class GoogleMerchantService:
                 "channel": "online",
                 "availability": "in stock" if product.stock > 0 else "out of stock",
                 "condition": "new",
-                "price": {
-                    "value": str(product.current_price),
-                    "currency": "INR"
-                },
-                "brand": "VorionMart", # You might want to make this dynamic
-                "googleProductCategory": product.category.name if product.category else "General",
+                "brand": "VorionMart",
+                "googleProductCategory": category_name,
+                "productTypes": [category_name],
+                "shipping": [{
+                    "country": "IN",
+                    "service": "Standard Delivery",
+                    "price": {
+                        "value": "0.00",
+                        "currency": "INR"
+                    }
+                }],
+                "shippingWeight": {
+                    "value": f"{float(product.weight_kg or 0.5):.2f}",
+                    "unit": "kg"
+                }
             }
+
+            if mrp > current_price > 0:
+                product_data["price"] = {
+                    "value": f"{mrp:.2f}",
+                    "currency": "INR"
+                }
+                product_data["salePrice"] = {
+                    "value": f"{current_price:.2f}",
+                    "currency": "INR"
+                }
+            else:
+                product_data["price"] = {
+                    "value": f"{current_price:.2f}",
+                    "currency": "INR"
+                }
+
+            if additional_images:
+                product_data["additionalImageLinks"] = additional_images
+
+            if product.sku:
+                product_data["mpn"] = str(product.sku)
 
             request = self.service.products().insert(merchantId=self.merchant_id, body=product_data)
             response = request.execute()

@@ -2880,24 +2880,109 @@ class AdminGoogleMerchantView(APIView):
 
 class GoogleMerchantFeedView(APIView):
     """
-    Public XML feed for Google Merchant Center.
+    Public XML feed (RSS 2.0 with Google Base schema) for Google Merchant Center.
+    Fully compliant with Google Shopping specifications, free shipping across India,
+    and direct public CDN/API image links.
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        products = Product.objects.filter(is_active=True, approval_status='approved').select_related('shop')
-        
+        import xml.etree.ElementTree as ET
+        from django.utils.html import strip_tags
+
+        products = Product.objects.filter(is_active=True, approval_status='approved').prefetch_related('images').select_related('category', 'shop').order_by('-created_at')
+
+        rss = ET.Element("rss", version="2.0")
+        rss.set("xmlns:g", "http://base.google.com/ns/1.0")
+        channel = ET.SubElement(rss, "channel")
+
         frontend_url = getattr(settings, 'APP_URL', 'https://vorionmart.com').rstrip('/')
-        base_url = request.build_absolute_uri('/') .rstrip('/')
-        
-        context = {
-            'products': products,
-            'frontend_url': frontend_url,
-            'base_url': base_url,
-        }
-        
-        xml_content = render_to_string('google_merchant_feed.xml', context)
-        return HttpResponse(xml_content, content_type='application/xml')
+        api_host = os.environ.get('PUBLIC_API_HOST', 'api.vorionmart.com')
+
+        ET.SubElement(channel, "title").text = "VorionMart Product Feed"
+        ET.SubElement(channel, "link").text = frontend_url
+        ET.SubElement(channel, "description").text = "VorionMart Shopping Feed for Google Merchant Center"
+
+        def resolve_image_url(raw_url):
+            if not raw_url:
+                return None
+            clean_str = str(raw_url).strip()
+            if not clean_str:
+                return None
+            if clean_str.startswith(('http://', 'https://')):
+                if '/media/' in clean_str:
+                    media_path = clean_str[clean_str.index('/media/'):]
+                    return f"https://{api_host}{media_path}"
+                return clean_str
+            clean_path = '/' + clean_str.lstrip('/')
+            return f"https://{api_host}{clean_path}"
+
+        for p in products:
+            item = ET.SubElement(channel, "item")
+            ET.SubElement(item, "g:id").text = str(p.id)
+            ET.SubElement(item, "g:title").text = strip_tags(p.name or "")[:150]
+
+            clean_desc = strip_tags(p.description or "").strip()
+            if not clean_desc:
+                clean_desc = p.name or "Premium quality product from VorionMart"
+            ET.SubElement(item, "g:description").text = clean_desc[:5000]
+            ET.SubElement(item, "g:link").text = f"{frontend_url}/products/{p.slug}"
+
+            # Main image
+            main_image_url = None
+            if p.image:
+                main_image_url = resolve_image_url(p.image.url)
+            elif p.images.exists():
+                primary = p.images.filter(is_primary=True).first() or p.images.first()
+                if primary and primary.image:
+                    main_image_url = resolve_image_url(primary.image.url)
+
+            if main_image_url:
+                ET.SubElement(item, "g:image_link").text = main_image_url
+
+            # Additional gallery images (up to 10)
+            if p.images.exists():
+                for add_img in p.images.all()[:10]:
+                    if add_img.image:
+                        add_url = resolve_image_url(add_img.image.url)
+                        if add_url and add_url != main_image_url:
+                            ET.SubElement(item, "g:additional_image_link").text = add_url
+
+            ET.SubElement(item, "g:condition").text = "new"
+            ET.SubElement(item, "g:availability").text = "in_stock" if p.stock > 0 else "out_of_stock"
+
+            current_price = float(p.current_price or 0.0)
+            mrp = float(p.mrp or 0.0)
+            if mrp > current_price > 0:
+                ET.SubElement(item, "g:price").text = f"{mrp:.2f} INR"
+                ET.SubElement(item, "g:sale_price").text = f"{current_price:.2f} INR"
+            else:
+                ET.SubElement(item, "g:price").text = f"{current_price:.2f} INR"
+
+            ET.SubElement(item, "g:brand").text = "VorionMart"
+
+            category_name = p.category.name if p.category else "General"
+            ET.SubElement(item, "g:product_type").text = category_name
+            ET.SubElement(item, "g:google_product_category").text = category_name
+
+            if p.sku:
+                ET.SubElement(item, "g:mpn").text = str(p.sku)
+                ET.SubElement(item, "g:identifier_exists").text = "yes"
+            else:
+                ET.SubElement(item, "g:identifier_exists").text = "no"
+
+            # Mandatory Shipping block for Google Merchant Center Shipping Calculator
+            shipping = ET.SubElement(item, "g:shipping")
+            ET.SubElement(shipping, "g:country").text = "IN"
+            ET.SubElement(shipping, "g:service").text = "Standard Delivery"
+            ET.SubElement(shipping, "g:price").text = "0.00 INR"
+
+            # Shipping Weight
+            weight = float(p.weight_kg or 0.5)
+            ET.SubElement(item, "g:shipping_weight").text = f"{weight:.2f} kg"
+
+        xml_str = ET.tostring(rss, encoding='utf-8', method='xml')
+        return HttpResponse(xml_str, content_type='application/xml; charset=utf-8')
 
 class BlogPostViewSet(viewsets.ModelViewSet):
     """ViewSet for blog posts."""
@@ -3005,54 +3090,6 @@ class AdminSEOReportView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
-class AdminGoogleMerchantView(APIView):
-    permission_classes = [IsAuthenticated, AdminDashboardPermission]
-
-    def get(self, request):
-        return Response({"message": "Google Merchant settings here."})
-
-    def post(self, request):
-        return Response({"message": "Syncing to Merchant Center..."})
-
-import xml.etree.ElementTree as ET
-from django.http import HttpResponse
-
-class GoogleMerchantFeedView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        products = Product.objects.filter(is_active=True, stock__gt=0)
-        
-        rss = ET.Element("rss", version="2.0")
-        rss.set("xmlns:g", "http://base.google.com/ns/1.0")
-        channel = ET.SubElement(rss, "channel")
-        
-        ET.SubElement(channel, "title").text = "VorionMart Product Feed"
-        base_url = getattr(settings, 'APP_URL', 'https://vorionmart.com').rstrip('/')
-        ET.SubElement(channel, "link").text = base_url
-        ET.SubElement(channel, "description").text = "Premium products from VorionMart"
-
-        for p in products:
-            item = ET.SubElement(channel, "item")
-            ET.SubElement(item, "g:id").text = str(p.id)
-            ET.SubElement(item, "g:title").text = str(p.name)[:150]
-            ET.SubElement(item, "g:description").text = str(p.description)[:5000] if p.description else "Premium quality product"
-            ET.SubElement(item, "g:link").text = f"{base_url}/products/{p.slug}"
-            if p.image:
-                ET.SubElement(item, "g:image_link").text = f"{base_url}{p.image.url}"
-            
-            ET.SubElement(item, "g:condition").text = "new"
-            ET.SubElement(item, "g:availability").text = "in_stock" if p.stock > 0 else "out_of_stock"
-            
-            price = p.current_price or p.price or 0
-            ET.SubElement(item, "g:price").text = f"{price} INR"
-            ET.SubElement(item, "g:brand").text = "VorionMart"
-            
-            # Additional fields
-            ET.SubElement(item, "g:identifier_exists").text = "no"
-
-        xml_str = ET.tostring(rss, encoding='utf-8', method='xml')
-        return HttpResponse(xml_str, content_type='application/xml')
 
 
 class AdminCouponViewSet(viewsets.ModelViewSet):
