@@ -23,7 +23,7 @@ export default function CartPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-32 lg:pb-10">
+        <div className="min-h-screen pb-32 lg:pb-10">
             {/* Mobile Header */}
             <div className="lg:hidden bg-white border-b border-gray-100 px-4 py-3 sticky top-0 z-30 shadow-sm">
                 <div className="flex items-center justify-between">

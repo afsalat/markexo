@@ -585,11 +585,9 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen">
                 {/* Breadcrumb */}
-
-                {/* Breadcrumb */}
-                <div className="hidden lg:block bg-gray-50 border-b border-gray-100" data-aos="fade-down" data-aos-delay="0">
+                <div className="hidden lg:block bg-white/60 backdrop-blur-md border-b border-slate-200/50" data-aos="fade-down" data-aos-delay="0">
                     <div className="container mx-auto px-4 py-4">
                         <nav className="flex items-center gap-2 text-sm text-gray-500">
                             <Link href="/" className="hover:text-accent-500 transition-colors">Home</Link>
@@ -876,25 +874,32 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                     <p className="hidden lg:block text-sm text-accent-600 font-medium">{shareMessage}</p>
                                 )}
 
-                                {!isOutOfStock && (
-                                    <button
-                                        onClick={handleBuyNow}
-                                        className="hidden lg:block w-full py-4 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-bold text-lg hover:from-primary-500 hover:to-primary-600 transition-all shadow-lg active:scale-[0.98]"
-                                    >
-                                        Buy Now — Pay on Delivery
-                                    </button>
-                                )}
+                                {/* Buy Now & WhatsApp in One Line */}
+                                <div className="hidden lg:grid grid-cols-2 gap-3 w-full">
+                                    {!isOutOfStock ? (
+                                        <button
+                                            onClick={handleBuyNow}
+                                            className="w-full py-3.5 px-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-bold text-sm xl:text-base hover:from-primary-500 hover:to-primary-600 transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center text-center leading-tight whitespace-nowrap"
+                                        >
+                                            Buy Now — Pay on Delivery
+                                        </button>
+                                    ) : (
+                                        <div className="w-full py-3.5 px-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-bold text-xs uppercase flex items-center justify-center text-center">
+                                            Out of Stock
+                                        </div>
+                                    )}
 
-                                {/* WhatsApp Support/Order Button */}
-                                <a
-                                    href={`https://wa.me/917356216468?text=${encodeURIComponent(`Hi, I'm interested in buying ${productData.name} (₹${displaySalePrice}). Can you help me?`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="hidden lg:flex w-full py-4 bg-[#25D366] text-white rounded-xl font-bold text-lg hover:bg-[#128C7E] transition-all shadow-lg active:scale-[0.98] items-center justify-center gap-2"
-                                >
-                                    <MessageSquare size={22} />
-                                    Order via WhatsApp
-                                </a>
+                                    {/* WhatsApp Support/Order Button */}
+                                    <a
+                                        href={`https://wa.me/917356216468?text=${encodeURIComponent(`Hi, I'm interested in buying ${productData.name} (₹${displaySalePrice}). Can you help me?`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full py-3.5 px-3 bg-[#25D366] text-white rounded-xl font-bold text-sm xl:text-base hover:bg-[#128C7E] transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 text-center leading-tight whitespace-nowrap"
+                                    >
+                                        <MessageSquare size={19} className="shrink-0" />
+                                        <span>Order via WhatsApp</span>
+                                    </a>
+                                </div>
                             </div>
 
                             {/* Trust Features Grid */}
@@ -922,7 +927,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                     {/* Product Detailed Content Sections */}
                     <div className="space-y-4 lg:space-y-12 mb-8 lg:mb-16">
                         {/* Description Section */}
-                        <div className="bg-white border border-gray-100 rounded-2xl lg:rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
+                        <div className="bg-white/95 backdrop-blur-sm border border-white/80 rounded-2xl lg:rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(160,175,200,0.22)]" data-aos="fade-up">
                             <div className="px-4 lg:px-6 py-3 lg:py-5 border-b border-gray-100 bg-gray-50/50">
                                 <h2 className="text-base lg:text-xl font-bold text-gray-900 flex items-center gap-2">
                                     <Package className="text-accent-500 w-4 h-4 lg:w-[22px] lg:h-[22px]" />
@@ -1012,7 +1017,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                         )}
 
                         {/* Specifications Section */}
-                        <div className="bg-white border border-gray-100 rounded-2xl lg:rounded-3xl overflow-hidden shadow-sm" data-aos="fade-up">
+                        <div className="bg-white/95 backdrop-blur-sm border border-white/80 rounded-2xl lg:rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(160,175,200,0.22)]" data-aos="fade-up">
                             <div className="px-4 lg:px-6 py-3 lg:py-5 border-b border-gray-100 bg-gray-50/50">
                                 <h2 className="text-base lg:text-xl font-bold text-gray-900 flex items-center gap-2">
                                     <Award className="text-accent-500 w-4 h-4 lg:w-[22px] lg:h-[22px]" />
@@ -1039,7 +1044,7 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                         </div>
 
                         {/* Reviews Section */}
-                        <div id="reviews" className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm scroll-mt-24" data-aos="fade-up">
+                        <div id="reviews" className="bg-white/95 backdrop-blur-sm border border-white/80 rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(160,175,200,0.22)] scroll-mt-24" data-aos="fade-up">
                             <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
                                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                     <Star className="text-amber-400 fill-amber-400" size={22} />

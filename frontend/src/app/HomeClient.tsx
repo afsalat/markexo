@@ -405,7 +405,7 @@ export default function HomePage() {
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen">
             {/* ========================================
                 SEARCH & LOCATION SCANNER (Mobile App View)
             ======================================== */}

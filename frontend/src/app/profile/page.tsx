@@ -100,7 +100,7 @@ export default function ProfilePage() {
     ];
 
     return (
-        <div className="min-h-screen bg-white lg:bg-gray-50 py-4 lg:py-12 pb-24 lg:pb-12">
+        <div className="min-h-screen py-4 lg:py-12 pb-24 lg:pb-12">
             <div className="container mx-auto px-4 lg:px-4">
                 <div className="flex flex-col lg:flex-row gap-0 lg:gap-8">
                     {/* Sidebar / Mobile Header */}

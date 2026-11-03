@@ -575,7 +575,7 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pb-0">
+        <div className="min-h-screen pb-0">
             {/* Mobile Compact Header */}
             <div className="lg:hidden bg-white border-b border-gray-100 px-4 py-3 sticky top-0 z-30 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
