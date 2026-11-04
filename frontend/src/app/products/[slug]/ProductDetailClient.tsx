@@ -1052,142 +1052,147 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
                                 </h2>
                             </div>
                             <div className="p-4 lg:p-8 space-y-6 lg:space-y-10">
-                                {/* Rating Summary */}
-                                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm">
-                                    <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-8">
-                                        <div className="text-center flex-shrink-0">
-                                            <div className="text-4xl lg:text-5xl font-bold text-gray-900 mb-1 lg:mb-2">
-                                                {formattedDisplayRating}
+                                {/* Left & Right: Rating Summary (Left) and Write a Review (Right) */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+                                    {/* Left: Rating Summary */}
+                                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm flex flex-col justify-center">
+                                        <div className="flex flex-col sm:flex-row items-center gap-4 lg:gap-6">
+                                            <div className="text-center flex-shrink-0 sm:pr-4 sm:border-r border-gray-200">
+                                                <div className="text-4xl lg:text-5xl font-bold text-gray-900 mb-1 lg:mb-2">
+                                                    {formattedDisplayRating}
+                                                </div>
+                                                <div className="flex items-center gap-1 mb-1 justify-center">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <Star key={star} size={16} className={`lg:w-[18px] lg:h-[18px] ${star <= roundedDisplayRating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
+                                                    ))}
+                                                </div>
+                                                <p className="text-xs lg:text-sm text-gray-500 font-medium">{displayReviewCount} review{displayReviewCount !== 1 ? 's' : ''}</p>
                                             </div>
-                                            <div className="flex items-center gap-1 mb-1 justify-center">
-                                                {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star key={star} size={16} className={`lg:w-[20px] lg:h-[20px] ${star <= roundedDisplayRating ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`} />
-                                                ))}
-                                            </div>
-                                            <p className="text-xs lg:text-sm text-gray-500">{displayReviewCount} review{displayReviewCount !== 1 ? 's' : ''}</p>
-                                        </div>
-                                        <div className="flex-1 w-full">
-                                            {[5, 4, 3, 2, 1].map((star) => {
-                                                const pct = getRatingPercent(star);
-                                                return (
-                                                    <div key={star} className="flex items-center gap-3 mb-2">
-                                                        <span className="text-sm text-gray-400 w-8">{star} ★</span>
-                                                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                            <div
-                                                                className="h-full bg-amber-400 rounded-full transition-all duration-500"
-                                                                style={{ width: `${pct}%` }}
-                                                            />
+                                            <div className="flex-1 w-full space-y-2">
+                                                {[5, 4, 3, 2, 1].map((star) => {
+                                                    const pct = getRatingPercent(star);
+                                                    return (
+                                                        <div key={star} className="flex items-center gap-2.5">
+                                                            <span className="text-xs font-semibold text-gray-500 w-7 shrink-0">{star} ★</span>
+                                                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                                                                    style={{ width: `${pct}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className="text-xs font-medium text-gray-500 w-9 text-right shrink-0">{pct}%</span>
                                                         </div>
-                                                        <span className="text-sm text-gray-500 w-10 text-right">{pct}%</span>
-                                                    </div>
-                                                );
-                                            })}
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Write a Review */}
-                                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm">
-                                    <h3 className="font-bold text-base lg:text-lg text-gray-900 mb-3 lg:mb-4">Write a Review</h3>
-                                    {isAuthenticated ? (
-                                        <form onSubmit={handleReviewSubmit} className="space-y-3 lg:space-y-4">
-                                            {/* Star Picker */}
-                                            <div>
-                                                <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-1 lg:mb-2">Your Rating</label>
-                                                <div className="flex items-center gap-1.5 lg:gap-2">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <button
-                                                            key={star}
-                                                            type="button"
-                                                            onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
-                                                            className="transition-transform hover:scale-125"
-                                                        >
-                                                            <Star
-                                                                size={22}
-                                                                className={`lg:w-[28px] lg:h-[28px] ${star <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-300'}`}
-                                                            />
-                                                        </button>
-                                                    ))}
-                                                    <span className="ml-2 text-xs lg:text-sm text-gray-500">
-                                                        {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][reviewForm.rating]}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            {/* Comment */}
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
-                                                <textarea
-                                                    value={reviewForm.comment}
-                                                    onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
-                                                    required
-                                                    rows={4}
-                                                    placeholder="Share your experience with this product..."
-                                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none transition shadow-sm"
-                                                />
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center justify-between gap-3 mb-2">
-                                                    <label className="block text-sm font-medium text-gray-700">Review Images</label>
-                                                    <span className="text-xs text-gray-500">Up to 5 images</span>
-                                                </div>
-                                                <label className="flex cursor-pointer items-center justify-center gap-3 rounded-xl border border-dashed border-gray-300 bg-white px-4 py-4 text-gray-500 transition hover:border-accent-500/60 hover:text-gray-900">
-                                                    <ImagePlus size={20} className="text-accent-500" />
-                                                    <span className="text-sm font-medium">Upload product photos</span>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        multiple
-                                                        onChange={handleReviewImageChange}
-                                                        className="hidden"
-                                                    />
-                                                </label>
-                                                {reviewImages.length > 0 && (
-                                                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                                                        {reviewImagePreviews.map(({ file, url }, index) => (
-                                                            <div key={`${file.name}-${file.lastModified}`} className="relative overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm">
-                                                                <img
-                                                                    src={url}
-                                                                    alt={file.name}
-                                                                    className="h-28 w-full object-cover"
-                                                                />
+                                    {/* Right: Write a Review */}
+                                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-6 shadow-sm flex flex-col justify-between">
+                                        <div>
+                                            <h3 className="font-bold text-base lg:text-lg text-gray-900 mb-3 lg:mb-4">Write a Review</h3>
+                                            {isAuthenticated ? (
+                                                <form onSubmit={handleReviewSubmit} className="space-y-3 lg:space-y-4">
+                                                    {/* Star Picker */}
+                                                    <div>
+                                                        <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-1 lg:mb-2">Your Rating</label>
+                                                        <div className="flex items-center gap-1.5 lg:gap-2">
+                                                            {[1, 2, 3, 4, 5].map((star) => (
                                                                 <button
+                                                                    key={star}
                                                                     type="button"
-                                                                    onClick={() => removeReviewImage(index)}
-                                                                    className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gray-900/80 text-white transition hover:bg-red-500"
-                                                                    aria-label={`Remove ${file.name}`}
+                                                                    onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                                                                    className="transition-transform hover:scale-125"
                                                                 >
-                                                                    <X size={16} />
+                                                                    <Star
+                                                                        size={22}
+                                                                        className={`lg:w-[26px] lg:h-[26px] ${star <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 hover:text-amber-300'}`}
+                                                                    />
                                                                 </button>
-                                                                <div className="truncate px-3 py-2 text-xs text-gray-500">{file.name}</div>
-                                                            </div>
-                                                        ))}
+                                                            ))}
+                                                            <span className="ml-2 text-xs lg:text-sm text-gray-500">
+                                                                {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][reviewForm.rating]}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                )}
-                                            </div>
-                                            {reviewError && (
-                                                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{reviewError}</div>
-                                            )}
-                                            {reviewSuccess && (
-                                                <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm flex items-center gap-2">
-                                                    <Check size={16} /> Thank you! Your review has been submitted.
+                                                    {/* Comment */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
+                                                        <textarea
+                                                            value={reviewForm.comment}
+                                                            onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                                                            required
+                                                            rows={3}
+                                                            placeholder="Share your experience with this product..."
+                                                            className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none transition shadow-sm text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center justify-between gap-3 mb-1.5">
+                                                            <label className="block text-xs lg:text-sm font-medium text-gray-700">Review Images</label>
+                                                            <span className="text-[11px] text-gray-500">Up to 5 images</span>
+                                                        </div>
+                                                        <label className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-dashed border-gray-300 bg-white px-3 py-3 text-gray-500 transition hover:border-accent-500/60 hover:text-gray-900">
+                                                            <ImagePlus size={18} className="text-accent-500" />
+                                                            <span className="text-xs lg:text-sm font-medium">Upload product photos</span>
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                multiple
+                                                                onChange={handleReviewImageChange}
+                                                                className="hidden"
+                                                            />
+                                                        </label>
+                                                        {reviewImages.length > 0 && (
+                                                            <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+                                                                {reviewImagePreviews.map(({ file, url }, index) => (
+                                                                    <div key={`${file.name}-${file.lastModified}`} className="relative overflow-hidden rounded-lg border border-gray-100 bg-gray-50 shadow-sm">
+                                                                        <img
+                                                                            src={url}
+                                                                            alt={file.name}
+                                                                            className="h-16 w-full object-cover"
+                                                                        />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeReviewImage(index)}
+                                                                            className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-900/80 text-white transition hover:bg-red-500"
+                                                                            aria-label={`Remove ${file.name}`}
+                                                                        >
+                                                                            <X size={12} />
+                                                                        </button>
+                                                                        <div className="truncate px-1.5 py-0.5 text-[10px] text-gray-500">{file.name}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {reviewError && (
+                                                        <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs">{reviewError}</div>
+                                                    )}
+                                                    {reviewSuccess && (
+                                                        <div className="p-2.5 bg-green-50 border border-green-200 rounded-xl text-green-600 text-xs flex items-center gap-1.5">
+                                                            <Check size={14} /> Thank you! Your review has been submitted.
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        type="submit"
+                                                        disabled={reviewSubmitting || !reviewForm.comment.trim()}
+                                                        className="px-5 py-2 bg-accent-600 hover:bg-accent-500 text-white font-semibold text-sm rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-accent-500/20"
+                                                    >
+                                                        {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
+                                                    </button>
+                                                </form>
+                                            ) : (
+                                                <div className="text-center py-6">
+                                                    <p className="text-gray-500 text-sm mb-3">Please sign in to write a review.</p>
+                                                    <Link href={loginReviewPath} className="btn-primary inline-flex items-center gap-2 text-sm px-4 py-2">
+                                                        Sign In to Review
+                                                    </Link>
                                                 </div>
                                             )}
-                                            <button
-                                                type="submit"
-                                                disabled={reviewSubmitting || !reviewForm.comment.trim()}
-                                                className="px-6 py-2.5 bg-accent-600 hover:bg-accent-500 text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent-500/20"
-                                            >
-                                                {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
-                                            </button>
-                                        </form>
-                                    ) : (
-                                        <div className="text-center py-4">
-                                            <p className="text-gray-500 mb-4">Please sign in to write a review.</p>
-                                            <Link href={loginReviewPath} className="btn-primary inline-flex items-center gap-2">
-                                                Sign In to Review
-                                            </Link>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
 
                                 {/* Individual Reviews */}
