@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Product, CartItem, fetchCart, addToCart as apiAddToCart, updateCartItem as apiUpdateCartItem, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart } from './api';
+import { trackAddToCart } from './metaPixel';
 
 interface CartContextType {
     items: CartItem[];
@@ -92,6 +93,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }, [items, isInitialized]);
 
     const addItem = useCallback(async (product: Product, quantity = 1) => {
+        // Track Meta Pixel AddToCart event
+        trackAddToCart({
+            id: product.id,
+            name: product.name,
+            price: Number(product.current_price ?? product.price ?? 0),
+            quantity,
+            category: product.category?.name,
+            currency: 'INR',
+        });
+
         // Optimistic local update
         setItems((prev) => {
             const existingItem = prev.find((item) => item.product.id === product.id);

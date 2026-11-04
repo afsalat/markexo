@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -12,6 +12,7 @@ import { useCustomerAuth } from '@/context/CustomerAuthContext';
 import { fetchProduct, fetchProducts, fetchReviews, createReview, Product, Review } from '@/lib/api';
 import ProductBenefits from '@/components/ProductBenefits';
 import { formatImageUrl } from '@/lib/imageUrl';
+import { trackViewContent } from '@/lib/metaPixel';
 
 const DESCRIPTION_TAGS = new Set([
     'A', 'BLOCKQUOTE', 'BR', 'CODE', 'EM', 'H2', 'H3', 'H4', 'LI', 'OL', 'P', 'PRE', 'STRONG', 'UL'
@@ -133,6 +134,21 @@ export default function ProductDetailClient({ slug, initialProduct }: ProductDet
     const reviewRedirectPath = `/products/${slug}?review=1#reviews`;
     const loginReviewPath = `/login?redirect=${encodeURIComponent(reviewRedirectPath)}`;
     const reviewIntent = searchParams?.get('review') === '1';
+
+    // Meta Pixel: Track ViewContent once per product view
+    const lastTrackedProductId = useRef<number | null>(null);
+    useEffect(() => {
+        if (productData && lastTrackedProductId.current !== productData.id) {
+            lastTrackedProductId.current = productData.id;
+            trackViewContent({
+                id: productData.id,
+                name: productData.name,
+                price: Number(productData.current_price ?? productData.price ?? 0),
+                category: productData.category?.name,
+                currency: 'INR',
+            });
+        }
+    }, [productData]);
 
     const normalizeProducts = (response: any): Product[] => {
         if (Array.isArray(response)) {

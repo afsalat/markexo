@@ -3,9 +3,26 @@
 import Link from 'next/link';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag, ChevronRight } from 'lucide-react';
 import { useCart } from '@/lib/cart';
+import { trackInitiateCheckout } from '@/lib/metaPixel';
 
 export default function CartPage() {
     const { items, updateQuantity, removeItem, totalAmount, totalItems } = useCart();
+
+    const handleProceedToCheckout = () => {
+        if (items.length > 0) {
+            trackInitiateCheckout({
+                items: items.map((item) => ({
+                    id: item.product.id,
+                    name: item.product.name,
+                    price: Number(item.product.current_price ?? item.product.price ?? 0),
+                    quantity: item.quantity,
+                    category: item.product.category?.name,
+                })),
+                totalValue: totalAmount,
+                currency: 'INR',
+            });
+        }
+    };
 
     if (items.length === 0) {
         return (
@@ -159,7 +176,7 @@ export default function CartPage() {
                             </div>
 
                             {/* Desktop CTA */}
-                            <Link href="/checkout" className="hidden lg:flex btn-primary w-full mt-6 items-center justify-center gap-2 py-3.5 rounded-2xl font-bold shadow-xl shadow-accent-500/20 text-base">
+                            <Link href="/checkout" onClick={handleProceedToCheckout} className="hidden lg:flex btn-primary w-full mt-6 items-center justify-center gap-2 py-3.5 rounded-2xl font-bold shadow-xl shadow-accent-500/20 text-base">
                                 Proceed to Checkout <ArrowRight size={18} />
                             </Link>
                             <Link href="/products" className="hidden lg:block text-center text-sm font-bold text-gray-400 mt-4 hover:text-black transition-colors">
@@ -176,7 +193,7 @@ export default function CartPage() {
                     <span className="text-sm text-gray-500 font-medium">Total</span>
                     <span className="text-xl font-black text-gray-900">₹{totalAmount.toLocaleString()}</span>
                 </div>
-                <Link href="/checkout" className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-base shadow-lg shadow-accent-500/20">
+                <Link href="/checkout" onClick={handleProceedToCheckout} className="btn-primary w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-base shadow-lg shadow-accent-500/20">
                     Checkout <ArrowRight size={18} />
                 </Link>
             </div>

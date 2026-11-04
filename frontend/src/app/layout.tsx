@@ -7,6 +7,7 @@ import { CustomerAuthProvider } from '@/context/CustomerAuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { SiteSettingsProvider } from '@/context/SiteSettingsContext';
 import LayoutWrapper from '@/components/LayoutWrapper';
+import MetaPixel from '@/components/analytics/MetaPixel';
 import { APP_URL } from '@/config/siteConfig';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -162,6 +163,7 @@ export default function RootLayout({
                 />
             </head>
             <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans text-gray-900 antialiased`}>
+                <MetaPixel />
                 <ThemeProvider>
                     <SiteSettingsProvider>
                         <CustomerAuthProvider>

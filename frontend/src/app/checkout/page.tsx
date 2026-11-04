@@ -9,6 +9,7 @@ import { API_BASE_URL } from '@/config/apiConfig';
 import { launchCashfreeCheckout, verifyCashfreePayment } from '@/lib/cashfree';
 import { Coupon } from '@/types/admin';
 import { Product } from '@/lib/api';
+import { trackInitiateCheckout, trackPurchase } from '@/lib/metaPixel';
 
 export default function CheckoutPage() {
     const { items, totalAmount, clearCart, updateQuantity, removeItem, addItem, totalItems } = useCart();
@@ -46,6 +47,23 @@ export default function CheckoutPage() {
     const [selectedAddonCategory, setSelectedAddonCategory] = useState<string>('all');
 
     const finalPayableAmount = Math.max(0, totalAmount - discountAmount);
+
+    // Meta Pixel: Track InitiateCheckout when checkout mounts with items
+    useEffect(() => {
+        if (items.length > 0 && !orderPlaced) {
+            trackInitiateCheckout({
+                items: items.map((item) => ({
+                    id: item.product.id,
+                    name: item.product.name,
+                    price: Number(item.product.current_price ?? item.product.price ?? 0),
+                    quantity: item.quantity,
+                    category: item.product.category?.name,
+                })),
+                totalValue: totalAmount,
+                currency: 'INR',
+            });
+        }
+    }, [items.length, orderPlaced, totalAmount]);
 
     const generateCaptcha = () => {
         const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -482,6 +500,21 @@ export default function CheckoutPage() {
                     // Verify payment confirmation with backend
                     const verifyRes = await verifyCashfreePayment(orderResponse.order_id);
                     if (verifyRes.is_paid) {
+                        // Track Meta Pixel Purchase event on verified payment
+                        const placedTotal = Number(orderResponse.total_amount) || finalPayableAmount;
+                        trackPurchase({
+                            orderId: String(orderResponse.order_id),
+                            value: placedTotal,
+                            currency: 'INR',
+                            items: items.map((item) => ({
+                                id: item.product.id,
+                                name: item.product.name,
+                                price: Number(item.product.current_price ?? item.product.price ?? 0),
+                                quantity: item.quantity,
+                                category: item.product.category?.name,
+                            })),
+                        });
+
                         setOrderId(orderResponse.order_id);
                         setOrderPlaced(true);
                         clearCart();
@@ -498,6 +531,21 @@ export default function CheckoutPage() {
                 }
             } else {
                 // COD Flow
+                // Track Meta Pixel Purchase event on successful order creation
+                const placedTotal = Number(orderResponse.total_amount) || finalPayableAmount;
+                trackPurchase({
+                    orderId: String(orderResponse.order_id),
+                    value: placedTotal,
+                    currency: 'INR',
+                    items: items.map((item) => ({
+                        id: item.product.id,
+                        name: item.product.name,
+                        price: Number(item.product.current_price ?? item.product.price ?? 0),
+                        quantity: item.quantity,
+                        category: item.product.category?.name,
+                    })),
+                });
+
                 setOrderId(orderResponse.order_id);
                 setOrderPlaced(true);
                 clearCart();
