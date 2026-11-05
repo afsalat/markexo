@@ -2,6 +2,7 @@
 Unit tests for Meta Conversions API (CAPI) service, normalization, hashing, idempotency, and view integration.
 """
 import hashlib
+import os
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
@@ -52,7 +53,7 @@ class MetaCapiNormalizationTests(TestCase):
 @override_settings(
     META_PIXEL_ID='888338177639026',
     META_CAPI_ACCESS_TOKEN='EAABtesttoken123',
-    META_CAPI_TEST_EVENT_CODE='TEST99999',
+    META_CAPI_TEST_EVENT_CODE='',
     APP_URL='https://vorionmart.com'
 )
 class MetaCapiServiceTests(TestCase):
@@ -130,7 +131,7 @@ class MetaCapiServiceTests(TestCase):
         mock_post.assert_called_once()
         args, kwargs = mock_post.call_args
         payload = kwargs['json']
-        self.assertEqual(payload['test_event_code'], 'TEST99999')
+        self.assertNotIn('test_event_code', payload)
         data = payload['data'][0]
         self.assertEqual(data['event_name'], 'Purchase')
         self.assertEqual(data['event_id'], 'AGV12345678')
@@ -145,6 +146,48 @@ class MetaCapiServiceTests(TestCase):
         self.assertEqual(data['user_data']['ph'], [hashlib.sha256(b'919876543210').hexdigest()])
         self.assertEqual(data['user_data']['fn'], [hashlib.sha256(b'rahul').hexdigest()])
         self.assertEqual(data['user_data']['ln'], [hashlib.sha256(b'sharma').hexdigest()])
+
+    @patch('api.meta_capi_service.requests.post')
+    @override_settings(META_CAPI_TEST_EVENT_CODE='')
+    def test_payload_omits_test_event_code_when_empty(self, mock_post):
+        """When META_CAPI_TEST_EVENT_CODE is empty, test_event_code must not be included."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'events_received': 1,
+            'messages': [],
+            'fbtrace_id': 'trace_no_code'
+        }
+        mock_post.return_value = mock_response
+
+        with patch.dict(os.environ, {'META_CAPI_TEST_EVENT_CODE': '', 'TEST_EVENT_CODE': ''}):
+            res = send_meta_purchase_event(self.order, force=True)
+
+        self.assertTrue(res['success'])
+        mock_post.assert_called_once()
+        payload = mock_post.call_args[1]['json']
+        self.assertNotIn('test_event_code', payload)
+
+    @patch('api.meta_capi_service.requests.post')
+    @override_settings(META_CAPI_TEST_EVENT_CODE='TEST23656')
+    def test_payload_includes_test_event_code_when_configured(self, mock_post):
+        """When META_CAPI_TEST_EVENT_CODE is TEST23656, it must be included in the payload."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'events_received': 1,
+            'messages': [],
+            'fbtrace_id': 'trace_with_code'
+        }
+        mock_post.return_value = mock_response
+
+        res = send_meta_purchase_event(self.order, force=True)
+
+        self.assertTrue(res['success'])
+        mock_post.assert_called_once()
+        payload = mock_post.call_args[1]['json']
+        self.assertIn('test_event_code', payload)
+        self.assertEqual(payload['test_event_code'], 'TEST23656')
 
     @patch('api.meta_capi_service.requests.post')
     def test_idempotency_prevents_duplicate_dispatch(self, mock_post):

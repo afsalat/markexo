@@ -305,7 +305,7 @@ OPENROUTER_API_KEY = 'sk-or-v1-0643361ed5510fbc93d7f51865a4a2d54ee8d413cbc4e6797
 # Meta Pixel & Conversions API (CAPI)
 META_PIXEL_ID = os.environ.get('META_PIXEL_ID', '888338177639026').strip()
 META_CAPI_ACCESS_TOKEN = os.environ.get('META_CAPI_ACCESS_TOKEN', '').strip()
-META_CAPI_TEST_EVENT_CODE = os.environ.get('META_CAPI_TEST_EVENT_CODE', 'TEST23656').strip()
+META_CAPI_TEST_EVENT_CODE = os.environ.get('META_CAPI_TEST_EVENT_CODE', '').strip()
 META_GRAPH_API_VERSION = os.environ.get('META_GRAPH_API_VERSION', 'v21.0').strip()
 
 
