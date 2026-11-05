@@ -302,6 +302,12 @@ FIREBASE_PROJECT_ID = os.environ.get('FIREBASE_PROJECT_ID', 'vorionmart-66c12').
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', 'AIzaSyCRjjsGU4jJZw6PHz4j0-Ay3vgv_Zu9WjY').strip()
 OPENROUTER_API_KEY = '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'
 
+# Meta Pixel & Conversions API (CAPI)
+META_PIXEL_ID = os.environ.get('META_PIXEL_ID', '888338177639026').strip()
+META_CAPI_ACCESS_TOKEN = os.environ.get('META_CAPI_ACCESS_TOKEN', '').strip()
+META_CAPI_TEST_EVENT_CODE = os.environ.get('META_CAPI_TEST_EVENT_CODE', 'TEST23656').strip()
+META_GRAPH_API_VERSION = os.environ.get('META_GRAPH_API_VERSION', 'v21.0').strip()
+
 
 LOGGING = {
     'version': 1,

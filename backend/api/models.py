@@ -456,6 +456,11 @@ class Order(models.Model):
     coupon_code = models.CharField(max_length=50, blank=True, help_text="Applied promo / coupon code")
     coupon_discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Total discount amount deducted via coupon in ₹")
 
+    # Meta Conversions API (CAPI) Tracking
+    meta_purchase_sent = models.BooleanField(default=False, db_index=True, help_text="Whether Purchase event was successfully received by Meta Conversions API")
+    meta_purchase_sent_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp when Meta CAPI confirmed receipt of Purchase event")
+    meta_purchase_fbtrace_id = models.CharField(max_length=100, blank=True, help_text="Meta Graph API trace ID")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -629,6 +634,33 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity}x {self.product_name}"
+
+
+class MetaEventLog(models.Model):
+    """Audit log for Meta Conversions API (CAPI) events."""
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+        ('skipped', 'Skipped'),
+    ]
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='meta_event_logs')
+    event_name = models.CharField(max_length=50, default='Purchase')
+    event_id = models.CharField(max_length=50, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    events_received = models.IntegerField(default=0)
+    response_code = models.IntegerField(null=True, blank=True)
+    fbtrace_id = models.CharField(max_length=100, blank=True)
+    error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['event_name', 'event_id', 'status']),
+        ]
+
+    def __str__(self):
+        return f"Meta {self.event_name} ({self.event_id}) - {self.status}"
 
 
 class Shipment(models.Model):

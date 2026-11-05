@@ -81,6 +81,7 @@ from .whatsapp import (
     send_order_alert_whatsapp,
     send_order_confirmation_whatsapp,
 )
+from .meta_capi_service import send_meta_purchase_event
 
 logger = logging.getLogger(__name__)
 
@@ -598,6 +599,12 @@ class CreateOrderView(APIView):
                 send_order_alert_whatsapp(order, getattr(site_setting, 'whatsapp_number', ''))
             except Exception:
                 logger.exception("WhatsApp notification flow failed for order %s", order.order_id)
+
+            # Trigger Meta Conversions API (CAPI) Purchase event for COD order
+            try:
+                send_meta_purchase_event(order, request=request)
+            except Exception:
+                logger.exception("Meta CAPI dispatch failed for COD order %s", order.order_id)
 
         response_data = OrderSerializer(order, context={'request': request}).data
         if cashfree_session:
@@ -2163,6 +2170,12 @@ class CashfreeVerifyPaymentView(APIView):
                 except Exception as ex:
                     logger.warning("Notification after payment failed: %s", ex)
 
+            # Trigger Meta Conversions API (CAPI) Purchase event for confirmed online payment
+            try:
+                send_meta_purchase_event(order, request=request)
+            except Exception:
+                logger.exception("Meta CAPI dispatch failed for online order %s", order.order_id)
+
         return Response({
             'success': True,
             'order_id': order.order_id,
@@ -2189,6 +2202,13 @@ class CashfreeWebhookView(APIView):
                     order.payment_status = 'paid'
                     order.status = 'confirmed'
                     order.save()
+
+                # Trigger Meta Conversions API (CAPI) Purchase event (idempotent, deduplicated against verify call)
+                try:
+                    send_meta_purchase_event(order, request=request)
+                except Exception:
+                    logger.exception("Meta CAPI dispatch from webhook failed for order %s", order.order_id)
+
         return Response({'status': 'OK'}, status=status.HTTP_200_OK)
 
 

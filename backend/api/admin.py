@@ -4,7 +4,7 @@ Django admin configuration for VorionMart.
 from django.contrib import admin
 from .models import (
     Shop, Category, Product, ProductImage, Customer,
-    Order, OrderItem, Banner, SiteSetting, Partner
+    Order, OrderItem, Banner, SiteSetting, Partner, MetaEventLog
 )
 
 
@@ -53,11 +53,19 @@ class CustomerAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['order_id', 'customer', 'total_amount', 'status', 'payment_status', 'is_cod', 'meesho_order_id', 'created_at']
-    list_filter = ['status', 'payment_status', 'is_cod', 'created_at']
-    search_fields = ['order_id', 'customer__name', 'customer__email', 'meesho_order_id']
+    list_display = ['order_id', 'customer', 'total_amount', 'status', 'payment_status', 'is_cod', 'meta_purchase_sent', 'created_at']
+    list_filter = ['status', 'payment_status', 'is_cod', 'meta_purchase_sent', 'created_at']
+    search_fields = ['order_id', 'customer__name', 'customer__email', 'meesho_order_id', 'meta_purchase_fbtrace_id']
     inlines = [OrderItemInline]
-    readonly_fields = ['order_id']
+    readonly_fields = ['order_id', 'meta_purchase_sent', 'meta_purchase_sent_at', 'meta_purchase_fbtrace_id']
+
+
+@admin.register(MetaEventLog)
+class MetaEventLogAdmin(admin.ModelAdmin):
+    list_display = ['event_name', 'event_id', 'order', 'status', 'events_received', 'response_code', 'fbtrace_id', 'created_at']
+    list_filter = ['event_name', 'status', 'created_at']
+    search_fields = ['event_id', 'order__order_id', 'fbtrace_id']
+    readonly_fields = ['order', 'event_name', 'event_id', 'status', 'events_received', 'response_code', 'fbtrace_id', 'error_message', 'created_at']
 
 
 @admin.register(Banner)
