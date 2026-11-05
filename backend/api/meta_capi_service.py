@@ -195,6 +195,15 @@ def send_meta_purchase_event(order: Order, request=None, force: bool = False) ->
     if client_ua:
         user_data['client_user_agent'] = client_ua
 
+    # Extract Meta Browser ID (_fbp) and Click ID (_fbc) cookies if available
+    if request and hasattr(request, 'COOKIES'):
+        fbp = request.COOKIES.get('_fbp')
+        if fbp:
+            user_data['fbp'] = fbp.strip()
+        fbc = request.COOKIES.get('_fbc')
+        if fbc:
+            user_data['fbc'] = fbc.strip()
+
     # 4. Product Contents & Custom Data
     order_items = list(order.items.select_related('product').all())
     contents = []

@@ -245,6 +245,71 @@ class MetaCapiServiceTests(TestCase):
         log = MetaEventLog.objects.get(order=self.order)
         self.assertEqual(log.status, 'failed')
 
+    @patch('api.meta_capi_service.requests.post')
+    @override_settings(META_CAPI_ACCESS_TOKEN='')
+    def test_missing_token_safely_skips_dispatch(self, mock_post):
+        """When META_CAPI_ACCESS_TOKEN is missing or empty, dispatch must be safely skipped."""
+        with patch.dict(os.environ, {'META_CAPI_ACCESS_TOKEN': ''}):
+            res = send_meta_purchase_event(self.order)
+
+        self.assertFalse(res['success'])
+        self.assertTrue(res['skipped'])
+        self.assertEqual(res['reason'], 'token_not_configured')
+        mock_post.assert_not_called()
+
+        self.order.refresh_from_db()
+        self.assertFalse(self.order.meta_purchase_sent)
+
+    def test_event_timestamp_is_integer_seconds(self):
+        """event_time must be Unix timestamp in seconds (integer), not milliseconds."""
+        with patch('api.meta_capi_service.requests.post') as mock_post:
+            mock_post.return_value.status_code = 200
+            mock_post.return_value.json.return_value = {'events_received': 1, 'fbtrace_id': 'tr_123'}
+
+            send_meta_purchase_event(self.order, force=True)
+
+            mock_post.assert_called_once()
+            payload = mock_post.call_args[1]['json']
+            data = payload['data'][0]
+            event_time = data['event_time']
+
+            self.assertIsInstance(event_time, int)
+            expected_seconds = int(self.order.created_at.timestamp())
+            self.assertEqual(event_time, expected_seconds)
+            self.assertEqual(len(str(event_time)), 10)
+
+    @patch('api.meta_capi_service.requests.post')
+    def test_fbp_and_fbc_cookies_extracted_when_present(self, mock_post):
+        """When _fbp and _fbc cookies are present in request, they must be added to user_data."""
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {'events_received': 1, 'fbtrace_id': 'tr_cookie'}
+
+        mock_request = MagicMock()
+        mock_request.COOKIES = {
+            '_fbp': 'fb.1.1730819000.1234567890',
+            '_fbc': 'fb.1.1730819000.IwAR2xyz123'
+        }
+        mock_request.META = {'REMOTE_ADDR': '127.0.0.1'}
+
+        send_meta_purchase_event(self.order, request=mock_request, force=True)
+
+        mock_post.assert_called_once()
+        payload = mock_post.call_args[1]['json']
+        user_data = payload['data'][0]['user_data']
+
+        self.assertEqual(user_data.get('fbp'), 'fb.1.1730819000.1234567890')
+        self.assertEqual(user_data.get('fbc'), 'fb.1.1730819000.IwAR2xyz123')
+
+    def test_docker_env_settings_exist(self):
+        """Verify settings attributes for Docker CAPI pass-through exist."""
+        from django.conf import settings
+        self.assertTrue(hasattr(settings, 'META_PIXEL_ID'))
+        self.assertTrue(hasattr(settings, 'META_CAPI_ACCESS_TOKEN'))
+        self.assertTrue(hasattr(settings, 'META_CAPI_TEST_EVENT_CODE'))
+        self.assertTrue(hasattr(settings, 'META_GRAPH_API_VERSION'))
+        self.assertIsInstance(settings.META_PIXEL_ID, str)
+        self.assertIsInstance(settings.META_GRAPH_API_VERSION, str)
+
 
 class MetaCapiViewIntegrationTests(TestCase):
     def setUp(self):
